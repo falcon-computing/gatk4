@@ -94,7 +94,7 @@ gcloud beta dataproc clusters create ${CLUSTER_NAME} \
     --num-worker-local-ssds 1 \
     --metadata "reference=$REF_DIR" \
     --metadata "sample=$SAMP_INPUT" \
-    --image-version 1.2 \
+    --image-version 1.3 \
     --project ${PROJECT} \
     --initialization-actions ${INIT_ACTION} \
     --initialization-action-timeout 10m \
