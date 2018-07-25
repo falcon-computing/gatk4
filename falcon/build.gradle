@@ -29,6 +29,7 @@ repositories {
 }
 
 dependencies {
+    //note the correct version
     testCompile 'org.testng:testng:6.11'
     compile 'commons-io:commons-io:2.5'
     //compile 'org.broadinstitute.gatk:gatk-engine:3.8'
