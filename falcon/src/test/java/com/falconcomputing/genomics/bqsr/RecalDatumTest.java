@@ -14,10 +14,10 @@ import htsjdk.samtools.SAMUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import org.broadinstitute.gatk.engine.recalibration.*;
+import org.broadinstitute.hellbender.utils.recalibration.*;
 import org.apache.commons.math.optimization.fitting.GaussianFunction;
-import org.broadinstitute.gatk.utils.MathUtils;
-import org.broadinstitute.gatk.utils.QualityUtils;
+import org.broadinstitute.hellbender.utils.MathUtils;
+import org.broadinstitute.hellbender.utils.QualityUtils;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
