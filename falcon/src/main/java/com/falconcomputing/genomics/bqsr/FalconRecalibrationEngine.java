@@ -102,38 +102,38 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     return true;
   }
 
-  //// This init() function is used for GATK BaseRecalibrator
-  //public void init(final Covariate[] _covariates,
-  //                 final int _numReadGroups) throws AccelerationException {
+  // This init() function is used for GATK BaseRecalibrator
+  public void init(final Covariate[] _covariates,
+                   final int _numReadGroups) throws AccelerationException {
 
-  //  this.covariates = _covariates;
-  //  this.numCovariates = covariates.length;
-  //  this.numReadGroups = _numReadGroups;
-  //  this.baq = new BAQ(BAQGOP); // setup the BAQ object with the provided gap open penalty
+    this.covariates = _covariates;
+    this.numCovariates = covariates.length;
+    this.numReadGroups = _numReadGroups;
+    this.baq = new BAQ(BAQGOP); // setup the BAQ object with the provided gap open penalty
 
-  //  final int[] covariatesDimensions = new int[numCovariates];
+    final int[] covariatesDimensions = new int[numCovariates];
 
-  //  for (int i = 0; i < covariates.length; i++) {
-  //    covariatesDimensions[i] = covariates[i].maximumKeyValue() + 1;
-  //  }
+    for (int i = 0; i < covariates.length; i++) {
+      covariatesDimensions[i] = covariates[i].maximumKeyValue() + 1;
+    }
 
-  //  // call native method to initialize the covariatesTable
-  //  // TODO: need to make sure thread-safety
-  //  initNative(numReadGroups, numEvents, numCovariates,
-  //             covariatesDimensions,
-  //             LOW_QUAL_TAIL,
-  //             MISMATCHES_CONTEXT_SIZE,
-  //             INDELS_CONTEXT_SIZE,
-  //             MAXIMUM_CYCLE_VALUE,
-  //             CUSHION_FOR_INDEL);
+    // call native method to initialize the covariatesTable
+    // TODO: need to make sure thread-safety
+    initNative(numReadGroups, numEvents, numCovariates,
+               covariatesDimensions,
+               LOW_QUAL_TAIL,
+               MISMATCHES_CONTEXT_SIZE,
+               INDELS_CONTEXT_SIZE,
+               MAXIMUM_CYCLE_VALUE,
+               CUSHION_FOR_INDEL);
 
-  //  recalTables = new RecalibrationTables(covariates, numReadGroups);
+    recalTables = new RecalibrationTables(covariates, numReadGroups);
 
-  //  if (!initialized) {
-  //    initialized = true;
-  //  }
-  //  logger.debug("Initialized FalconRecalibrationEngine");
-  //}
+    if (!initialized) {
+      initialized = true;
+    }
+    logger.debug("Initialized FalconRecalibrationEngine");
+  }
 
   //// This init() function is used for GATK PrintReads
   //public void init(final Covariate[] _covariates,
@@ -825,31 +825,31 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   //  return bqTag;
   //}
 
-  //private native static void initNative(
-  //    int numReadGroups,
-  //    int numEvents,
-  //    int numCovariates,
-  //    int[] covariatesDimensions,
-  //    byte LOW_QUAL_TAIL,
-  //    int MISMATCHES_CONTEXT_SIZE,
-  //    int INDELS_CONTEXT_SIZE,
-  //    int MAXIMUM_CYCLE_VALUE,
-  //    int CUSHION_FOR_INDEL);
+  private native static void initNative(
+      int numReadGroups,
+      int numEvents,
+      int numCovariates,
+      int[] covariatesDimensions,
+      byte LOW_QUAL_TAIL,
+      int MISMATCHES_CONTEXT_SIZE,
+      int INDELS_CONTEXT_SIZE,
+      int MAXIMUM_CYCLE_VALUE,
+      int CUSHION_FOR_INDEL);
 
-  //private native static void initNative(
-  //    int numEvents,
-  //    Covariate[] covariates,
-  //    byte[] quantizationTable,
-  //    byte[] staticQuantizedMapping,
-  //    boolean disableIndelQuals,
-  //    int preserveQLessThan,
-  //    double globalQScorePrior,
-  //    boolean emitOriginalQuals,
-  //    byte LOW_QUAL_TAIL,
-  //    int MISMATCHES_CONTEXT_SIZE,
-  //    int INDELS_CONTEXT_SIZE,
-  //    int MAXIMUM_CYCLE_VALUE,
-  //    int CUSHION_FOR_INDEL);
+  private native static void initNative(
+      int numEvents,
+      Covariate[] covariates,
+      byte[] quantizationTable,
+      byte[] staticQuantizedMapping,
+      boolean disableIndelQuals,
+      int preserveQLessThan,
+      double globalQScorePrior,
+      boolean emitOriginalQuals,
+      byte LOW_QUAL_TAIL,
+      int MISMATCHES_CONTEXT_SIZE,
+      int INDELS_CONTEXT_SIZE,
+      int MAXIMUM_CYCLE_VALUE,
+      int CUSHION_FOR_INDEL);
 
   //private native void setTableNative(
   //    long numOccurance,
