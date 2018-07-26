@@ -33,7 +33,7 @@ dependencies {
     testCompile 'org.testng:testng:6.11'
     compile 'commons-io:commons-io:2.5'
     //compile 'org.broadinstitute.gatk:gatk-engine:3.8'
-    compile 'org.broadinstitute:gatk:4.0.6.0-24-gb24352d-SNAPSHOT'
+    compile 'org.broadinstitute:gatk:4.0.6.0-29-gde82d98-SNAPSHOT'
     //compile 'org.broadinstitute.gatk:gatk-tools-protected:3.8'
     //compile 'org.broadinstitute.gatk:gatk-utils:3.8'
     //compile 'org.broadinstitute:gatk-native-bindings:0.1.0-rc-1'
