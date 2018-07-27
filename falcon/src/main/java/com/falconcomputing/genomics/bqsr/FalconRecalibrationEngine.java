@@ -712,139 +712,139 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     return state >> 2;
   }
 
-  //private static byte capBaseByBAQ(final byte oq,
-  //                                 final byte bq,
-  //                                 final int state,
-  //                                 final int expectedPos)
-  //{
-  //  byte b;
-  //  boolean isIndel = stateIsIndel(state);
-  //  int pos = stateAlignedPosition(state);
-  //  if (isIndel || pos != expectedPos) // we are an indel or we don't align to our best current position
-  //    b = minBaseQual; // just take b = minBaseQuality
-  //  else
-  //    b = bq < oq ? bq : oq;
+  private static byte capBaseByBAQ(final byte oq,
+                                   final byte bq,
+                                   final int state,
+                                   final int expectedPos)
+  {
+    byte b;
+    boolean isIndel = stateIsIndel(state);
+    int pos = stateAlignedPosition(state);
+    if (isIndel || pos != expectedPos) // we are an indel or we don't align to our best current position
+      b = minBaseQual; // just take b = minBaseQuality
+    else
+      b = bq < oq ? bq : oq;
 
-  //  return b;
-  //}
+    return b;
+  }
 
-  //// same function as calculateBAQArrayNative()
-  //public byte[] calculateBAQArrayNative_mock(
-  //            byte[] refBases,
-  //            byte[] bases,
-  //            byte[] basesQuals,
-  //            byte[] cigarOps,
-  //            int[] cigarLens,
-  //            int refOffset)
-  //{
-  //  int readLength = bases.length;
+  // same function as calculateBAQArrayNative()
+  public byte[] calculateBAQArrayNative_mock(
+              byte[] refBases,
+              byte[] bases,
+              byte[] basesQuals,
+              byte[] cigarOps,
+              int[] cigarLens,
+              int refOffset)
+  {
+    int readLength = bases.length;
 
-  //  // calculate query range (BAQ.calculateQueryRange())
-  //  int queryStart = -1;
-  //  int queryStop = -1;
-  //  int readI = 0;
-  //  // iterate over the cigar elements to determine the start and stop of the read bases for the BAQ calculation
-  //  //for (CigarElement elt : cigarElements) {
-  //  for (int i = 0; i < cigarOps.length; i++) {
-  //    switch (cigarOps[i]) {
-  //      case 'N':
-  //        return null; // cannot handle these
-  //      case 'H':
-  //      case 'P':
-  //      case 'D':
-  //        break; // ignore pads, hard clips, and deletions
-  //      case 'I':
-  //      case 'S':
-  //      case 'M':
-  //      case '=': //case EQ:
-  //      case 'X':
-  //        int prev = readI;
-  //        readI += cigarLens[i];
-  //        if ( includeClippedBases || cigarOps[i] != 'S') {
-  //          if ( queryStart == -1 )
-  //            queryStart = prev;
-  //          queryStop = readI;
-  //        }
-  //        // in the else case we aren't including soft clipped bases, so we don't update
-  //        // queryStart or queryStop
-  //        break;
-  //      default: throw new ReviewedGATKException("BUG: Unexpected CIGAR element in read");
-  //    }
-  //  }
+    // calculate query range (BAQ.calculateQueryRange())
+    int queryStart = -1;
+    int queryStop = -1;
+    int readI = 0;
+    // iterate over the cigar elements to determine the start and stop of the read bases for the BAQ calculation
+    //for (CigarElement elt : cigarElements) {
+    for (int i = 0; i < cigarOps.length; i++) {
+      switch (cigarOps[i]) {
+        case 'N':
+          return null; // cannot handle these
+        case 'H':
+        case 'P':
+        case 'D':
+          break; // ignore pads, hard clips, and deletions
+        case 'I':
+        case 'S':
+        case 'M':
+        case '=': //case EQ:
+        case 'X':
+          int prev = readI;
+          readI += cigarLens[i];
+          if ( includeClippedBases || cigarOps[i] != 'S') {
+            if ( queryStart == -1 )
+              queryStart = prev;
+            queryStop = readI;
+          }
+          // in the else case we aren't including soft clipped bases, so we don't update
+          // queryStart or queryStop
+          break;
+        default: throw new GATKException("BUG: Unexpected CIGAR element in read");
+      }
+    }
 
-  //  if (queryStop == queryStart) {
-  //    // this read is completely clipped away, and yet is present in the file for some reason
-  //    // usually they are flagged as non-PF, but it's possible to push them through the BAM
-  //    //System.err.printf("WARNING -- read is completely clipped away: " + read.format());
-  //    return null;
-  //  }
+    if (queryStop == queryStart) {
+      // this read is completely clipped away, and yet is present in the file for some reason
+      // usually they are flagged as non-PF, but it's possible to push them through the BAM
+      //System.err.printf("WARNING -- read is completely clipped away: " + read.format());
+      return null;
+    }
 
-  //  //BAQ.BAQCalculationResult baqResult = new BAQ.BAQCalculationResult(query, quals, ref);
-  //  int queryLen = queryStop - queryStart;
-  //  final int[] baqState = new int[basesQuals.length];
-  //  final byte[] baqBq = new byte[basesQuals.length];
+    //BAQ.BAQCalculationResult baqResult = new BAQ.BAQCalculationResult(query, quals, ref);
+    int queryLen = queryStop - queryStart;
+    final int[] baqState = new int[basesQuals.length];
+    final byte[] baqBq = new byte[basesQuals.length];
 
-  //  Arrays.fill(baqState, 0);
-  //  Arrays.fill(baqBq, (byte)0);
+    Arrays.fill(baqState, 0);
+    Arrays.fill(baqBq, (byte)0);
 
-  //  baq.hmm_glocal(refBases, bases, queryStart, queryLen, basesQuals, baqState, baqBq);
+    baq.hmm_glocal(refBases, bases, queryStart, queryLen, basesQuals, baqState, baqBq);
 
-  //  readI = 0;
-  //  int refI = 0;
-  //  //for (CigarElement elt : cigarElements) {
-  //  for (int k = 0; k < cigarOps.length; k++) {
-  //    int l = cigarLens[k];
-  //    switch (cigarOps[k]) {
-  //      case 'N': // cannot handle these
-  //        return null;
-  //      case 'H':
-  //      case 'P': // ignore pads and hard clips
-  //        break;
-  //      case 'S':
-  //        refI += l; // move the reference too, in addition to I
-  //      case 'I':
-  //        // todo -- is it really the case that we want to treat I and S the same?
-  //        for (int i = readI; i < readI + l; i++) baqBq[i] = basesQuals[i];
-  //        readI += l;
-  //        break;
-  //      case 'D':
-  //        refI += l;
-  //        break;
-  //      case 'M':
-  //      case '=':
-  //      case 'X':
-  //        for (int i = readI; i < readI + l; i++) {
-  //          int expectedPos = refI - refOffset + (i - readI);
-  //          baqBq[i] = capBaseByBAQ(basesQuals[i], baqBq[i], baqState[i], expectedPos);
-  //        }
-  //        readI += l; refI += l;
-  //        break;
-  //      default:
-  //        throw new ReviewedGATKException("BUG: Unexpected CIGAR element in read");
-  //    }
-  //  }
-  //  if (readI != readLength) // odd cigar string
-  //    System.arraycopy(basesQuals, 0, baqBq, 0, baqBq.length);
+    readI = 0;
+    int refI = 0;
+    //for (CigarElement elt : cigarElements) {
+    for (int k = 0; k < cigarOps.length; k++) {
+      int l = cigarLens[k];
+      switch (cigarOps[k]) {
+        case 'N': // cannot handle these
+          return null;
+        case 'H':
+        case 'P': // ignore pads and hard clips
+          break;
+        case 'S':
+          refI += l; // move the reference too, in addition to I
+        case 'I':
+          // todo -- is it really the case that we want to treat I and S the same?
+          for (int i = readI; i < readI + l; i++) baqBq[i] = basesQuals[i];
+          readI += l;
+          break;
+        case 'D':
+          refI += l;
+          break;
+        case 'M':
+        case '=':
+        case 'X':
+          for (int i = readI; i < readI + l; i++) {
+            int expectedPos = refI - refOffset + (i - readI);
+            baqBq[i] = capBaseByBAQ(basesQuals[i], baqBq[i], baqState[i], expectedPos);
+          }
+          readI += l; refI += l;
+          break;
+        default:
+          throw new GATKException("BUG: Unexpected CIGAR element in read");
+      }
+    }
+    if (readI != readLength) // odd cigar string
+      System.arraycopy(basesQuals, 0, baqBq, 0, baqBq.length);
 
-  //  //BAQ.encodeBQTag(read, hmmResult.bq);
+    //BAQ.encodeBQTag(read, hmmResult.bq);
 
-  //  final byte[] bqTag = new byte[baqBq.length];
-  //  for (int i = 0; i < bqTag.length; i++) {
-  //    final int bq = (int)basesQuals[i] + 64;
-  //    final int baq_i = (int)baqBq[i];
-  //    final int tag = bq - baq_i;
-  //    // problem with the calculation of the correction factor; this is our problem
-  //    if (tag < 0) {
-  //      throw new ReviewedGATKException("BAQ tag calculation error. BAQ value above base quality");
-  //    }
-  //    // the original quality is too high, almost certainly due to using the wrong encoding in the BAM file
-  //    if (tag > Byte.MAX_VALUE) {
-  //      throw new ReviewedGATKException("we encountered an extremely high quality score (" + (int)basesQuals[i] + ") with BAQ correction factor of " + baq_i);
-  //    }
-  //    bqTag[i] = (byte)tag;
-  //  }
-  //  return bqTag;
-  //}
+    final byte[] bqTag = new byte[baqBq.length];
+    for (int i = 0; i < bqTag.length; i++) {
+      final int bq = (int)basesQuals[i] + 64;
+      final int baq_i = (int)baqBq[i];
+      final int tag = bq - baq_i;
+      // problem with the calculation of the correction factor; this is our problem
+      if (tag < 0) {
+        throw new GATKException("BAQ tag calculation error. BAQ value above base quality");
+      }
+      // the original quality is too high, almost certainly due to using the wrong encoding in the BAM file
+      if (tag > Byte.MAX_VALUE) {
+        throw new GATKException("we encountered an extremely high quality score (" + (int)basesQuals[i] + ") with BAQ correction factor of " + baq_i);
+      }
+      bqTag[i] = (byte)tag;
+    }
+    return bqTag;
+  }
 
   private native static void initNative(
       int numReadGroups,

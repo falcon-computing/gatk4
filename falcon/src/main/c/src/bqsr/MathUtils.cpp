@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <limits>
 #include <stdexcept>
+#include <stdio>
 
 #include "Common.h"
 #include "MathUtils.h"
@@ -80,6 +81,7 @@ double MathUtils::bayesianEstimateOfEmpiricalQuality(
 double MathUtils::log10QempPrior(double Qempirical, double Qreported) {
   int difference = std::min(std::abs((int)(Qempirical - Qreported)),
                             (int)MAX_GATK_USABLE_Q_SCORE);
+  fprintf(stderr, difference);
   return log10QempPriorCache[difference];
 }
 

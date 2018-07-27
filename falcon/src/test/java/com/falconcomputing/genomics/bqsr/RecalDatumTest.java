@@ -43,7 +43,9 @@ public class RecalDatumTest extends RecalDatum {
     for (double e : qemp) {
       for (double r : qreported) {
         final double gatk_res = RecalDatum.log10QempPrior(e, r);
+        System.out.println(gatk_res);
         final double falcon_res = engine.log10QempPriorNative(e, r);
+        System.out.printf("java out: %f , native out: %f\n", gatk_res, falcon_res);
         Assert.assertEquals(falcon_res, gatk_res, 1e-8);
       }
     }
@@ -87,12 +89,12 @@ public class RecalDatumTest extends RecalDatum {
  //   }
  // }
 
- // @BeforeMethod
- // public void setUp() {
- //   engine = new FalconRecalibrationEngine(RAC, null);
- //   final boolean isLoaded = engine.load(null);
- //   Assert.assertTrue(isLoaded);
- // }
+  @BeforeMethod
+  public void setUp() {
+    engine = new FalconRecalibrationEngine(RAC, null);
+    final boolean isLoaded = engine.load(null);
+    Assert.assertTrue(isLoaded);
+  }
 
  // @AfterMethod
  // public void tearDown() {
