@@ -137,58 +137,58 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     logger.debug("Initialized FalconRecalibrationEngine");
   }
 
-  //// This init() function is used for GATK PrintReads
-  //public void init(final Covariate[] _covariates,
-  //                 final RecalibrationTables _recalTables,
-  //                 final List<Byte> quantizedQuals,
-  //                 final byte[] staticQuantizedMapping,
-  //                 final boolean disableIndelQuals,
-  //                 final int preserveQLessThan,
-  //                 final double globalQScorePrior,
-  //                 final boolean emitOriginalQuals) 
-  //  throws AccelerationException
-  //{
-  //  this.covariates = _covariates;
-  //  this.numCovariates = covariates.length;
-  //  this.recalTables = _recalTables;
+  // This init() function is used for GATK PrintReads
+  public void init(final StandardCovariateList _covariates,
+                   final RecalibrationTables _recalTables,
+                   final List<Byte> quantizedQuals,
+                   final byte[] staticQuantizedMapping,
+                   final boolean disableIndelQuals,
+                   final int preserveQLessThan,
+                   final double globalQScorePrior,
+                   final boolean emitOriginalQuals)
+    throws AccelerationException
+  {
+    this.covariates = _covariates;
+    this.numCovariates = covariates.size();
+    this.recalTables = _recalTables;
 
-  //  this.numReadGroups = _recalTables.getReadGroupTable().getDimensions()[0];
+    this.numReadGroups = _recalTables.getReadGroupTable().getDimensions()[0];
 
-  //  final byte[] quantizationTable = new byte[quantizedQuals.size()];
-  //  for (int i = 0; i < quantizedQuals.size(); i++) {
-  //    quantizationTable[i] = quantizedQuals.get(i);
-  //  }
+    final byte[] quantizationTable = new byte[quantizedQuals.size()];
+    for (int i = 0; i < quantizedQuals.size(); i++) {
+      quantizationTable[i] = quantizedQuals.get(i);
+    }
 
-  //  // call native method to initialize the RecalibrationTable
-  //  initNative(numEvents, _covariates,
-  //             quantizationTable,
-  //             staticQuantizedMapping,
-  //             disableIndelQuals,
-  //             preserveQLessThan,
-  //             globalQScorePrior,
-  //             emitOriginalQuals,
-  //             LOW_QUAL_TAIL,
-  //             MISMATCHES_CONTEXT_SIZE,
-  //             INDELS_CONTEXT_SIZE,
-  //             MAXIMUM_CYCLE_VALUE,
-  //             CUSHION_FOR_INDEL);
+    // call native method to initialize the RecalibrationTable
+    initNative(numEvents, _covariates,
+               quantizationTable,
+               staticQuantizedMapping,
+               disableIndelQuals,
+               preserveQLessThan,
+               globalQScorePrior,
+               emitOriginalQuals,
+               LOW_QUAL_TAIL,
+               MISMATCHES_CONTEXT_SIZE,
+               INDELS_CONTEXT_SIZE,
+               MAXIMUM_CYCLE_VALUE,
+               CUSHION_FOR_INDEL);
 
-  //  // initialize table contents
-  //  for (int i = 0; i < numCovariates; i++) {
-  //    final NestedIntegerArray<RecalDatum> table = _recalTables.getTable(i);
-  //    for (final NestedIntegerArray.Leaf<RecalDatum> leaf : table.getAllLeaves()) {
-  //      setTableNative(leaf.value.getNumObservations(),
-  //          leaf.value.getNumMismatches(),
-  //          leaf.value.getEstimatedQReported(),
-  //          leaf.keys, i);
-  //    }
-  //  }
+    // initialize table contents
+    for (int i = 0; i < numCovariates; i++) {
+      final NestedIntegerArray<RecalDatum> table = _recalTables.getTable(i);
+      for (final NestedIntegerArray.Leaf<RecalDatum> leaf : table.getAllLeaves()) {
+        setTableNative(leaf.value.getNumObservations(),
+            leaf.value.getNumMismatches(),
+            leaf.value.getEstimatedQReported(),
+            leaf.keys, i);
+      }
+    }
 
-  //  if (!initialized) {
-  //    initialized = true;
-  //  }
-  //  logger.debug("Initialized FalconRecalibrationEngine with RecalibrationTables");
-  //}
+    if (!initialized) {
+      initialized = true;
+    }
+    logger.debug("Initialized FalconRecalibrationEngine with RecalibrationTables");
+  }
 
   //// This function is for unit testing only
   //protected int[][][] computeContextCovariates(final GATKSAMRecord read) {
@@ -840,7 +840,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
   private native static void initNative(
       int numEvents,
-      Covariate[] covariates,
+      //Covariate[] covariates,
+      StandardCovariateList covariates,
       byte[] quantizationTable,
       byte[] staticQuantizedMapping,
       boolean disableIndelQuals,
@@ -853,12 +854,12 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       int MAXIMUM_CYCLE_VALUE,
       int CUSHION_FOR_INDEL);
 
-  //private native void setTableNative(
-  //    long numOccurance,
-  //    double numMismatches,
-  //    double estimatedQReported,
-  //    int[] keys,
-  //    int  cov_idx);
+  private native void setTableNative(
+      long numOccurance,
+      double numMismatches,
+      double estimatedQReported,
+      int[] keys,
+      int  cov_idx);
 
   //// These routines are used for unit tests, in real use
   //// all of them will be combined into updateTableNative()
