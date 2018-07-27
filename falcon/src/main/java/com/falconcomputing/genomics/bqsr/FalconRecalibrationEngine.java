@@ -19,6 +19,7 @@ import htsjdk.samtools.reference.ReferenceSequence;
 
 import org.apache.log4j.Logger;
 
+import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.recalibration.covariates.*;
 import org.broadinstitute.hellbender.utils.recalibration.*;
 import org.broadinstitute.gatk.nativebindings.NativeLibrary;
@@ -287,161 +288,162 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     return keys;
   }
 
-  //public byte[] calculateBAQArray(final GATKSAMRecord read) {
-  //  if (baq.excludeReadFromBAQ(read)) {
-  //    // in this case, simply return the original tag
-  //    return BAQ.getBAQTag(read);
-  //  }
+  public byte[] calculateBAQArray(final SAMRecord read) {
+    final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
+    if (baq.excludeReadFromBAQ(togatkread)) {
+      // in this case, simply return the original tag
+      return BAQ.getBAQTag(togatkread);
+    }
 
-  //  int offset = baq.getBandWidth() / 2;
-  //  long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
-  //  long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(read), 1);
-  //  long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(read);
+    int offset = baq.getBandWidth() / 2;
+    long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
+    long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
+    long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
 
-  //  if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
-  //    return null;
-  //  }
-  //  else {
-  //    ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
+    if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
+      return null;
+    }
+    else {
+      ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
 
-  //    // preparing input arguments for native calls
-  //    byte[] refBases = refSeq.getBases();
-  //    byte[] bases = read.getReadBases();
-  //    byte[] quals = read.getBaseQualities();      // in general we are overwriting quals, so just get a pointer to them
+      // preparing input arguments for native calls
+      byte[] refBases = refSeq.getBases();
+      byte[] bases = read.getReadBases();
+      byte[] quals = read.getBaseQualities();      // in general we are overwriting quals, so just get a pointer to them
 
-  //    // prepare cigar arrays
-  //    final List<CigarElement> cigarElements = read.getCigar().getCigarElements();
-  //    final int numCigarElements = cigarElements.size();
-  //    byte[] cigarOps = new byte[numCigarElements];
-  //    int[] cigarLens = new int[numCigarElements];
-  //    int idx = 0;
-  //    for (CigarElement elt : cigarElements) {
-  //      cigarOps[idx] = CigarOperator.enumToCharacter(elt.getOperator());
-  //      cigarLens[idx] = elt.getLength();
-  //      idx++;
-  //    }
+      // prepare cigar arrays
+      final List<CigarElement> cigarElements = read.getCigar().getCigarElements();
+      final int numCigarElements = cigarElements.size();
+      byte[] cigarOps = new byte[numCigarElements];
+      int[] cigarLens = new int[numCigarElements];
+      int idx = 0;
+      for (CigarElement elt : cigarElements) {
+        cigarOps[idx] = CigarOperator.enumToCharacter(elt.getOperator());
+        cigarLens[idx] = elt.getLength();
+        idx++;
+      }
 
-  //    byte[] bqTag = calculateBAQArrayNative(
-  //        refBases, bases, quals,
-  //        cigarOps, cigarLens,
-  //        (int)(start - readStart));
+      byte[] bqTag = calculateBAQArrayNative(
+          refBases, bases, quals,
+          cigarOps, cigarLens,
+          (int)(start - readStart));
 
-  //    //byte[] bqTag2 = calculateBAQArrayNative_mock(
-  //    //    refBases, bases, quals,
-  //    //    cigarOps, cigarLens,
-  //    //    (int)(start - readStart));
+      //byte[] bqTag2 = calculateBAQArrayNative_mock(
+      //    refBases, bases, quals,
+      //    cigarOps, cigarLens,
+      //    (int)(start - readStart));
 
-  //    if (bqTag == null) {
-  //      if (read.getStringAttribute(BAQ_TAG) != null) {
-  //        // clear the attribute
-  //        read.setAttribute(BAQ_TAG, null);
-  //      }
-  //      return null;
-  //    }
-  //    else {
+      if (bqTag == null) {
+        if (read.getStringAttribute(BAQ_TAG) != null) {
+          // clear the attribute
+          read.setAttribute(BAQ_TAG, null);
+        }
+        return null;
+      }
+      else {
 
-  //      //boolean isError = false;
-  //      //for (int i = 0; i < bqTag.length; i++) {
-  //      //  if (bqTag[i] != bqTag2[i]) {
-  //      //    logger.error("bqTag mismatch");
-  //      //    isError = true;
-  //      //    break;
-  //      //  }
-  //      //}
-  //      //if (isError) {
-  //      //  System.out.println("FALCON: " + Arrays.toString(bqTag));
-  //      //  System.out.println("GATK: " + Arrays.toString(bqTag2));
-  //      //}
+        //boolean isError = false;
+        //for (int i = 0; i < bqTag.length; i++) {
+        //  if (bqTag[i] != bqTag2[i]) {
+        //    logger.error("bqTag mismatch");
+        //    isError = true;
+        //    break;
+        //  }
+        //}
+        //if (isError) {
+        //  System.out.println("FALCON: " + Arrays.toString(bqTag));
+        //  System.out.println("GATK: " + Arrays.toString(bqTag2));
+        //}
 
-  //      // TODO: is this really necessary?
-  //      String baqStr = new String(bqTag);
-  //      read.setAttribute(BAQ_TAG, baqStr);
+        // TODO: is this really necessary?
+        String baqStr = new String(bqTag);
+        read.setAttribute(BAQ_TAG, baqStr);
 
-  //      return bqTag;
-  //    }
-  //  }
-  //}
+        return bqTag;
+      }
+    }
+  }
 
-  //public double[][] calculateFractionalErrorArray(final GATKSAMRecord read,
-  //                    final GATKSAMRecord org_read,
-  //                    final ReferenceContext ref) {
+  public double[][] calculateFractionalErrorArray(final SAMRecord read,
+                      final GATKSAMRecord org_read,
+                      final ReferenceContext ref) {
 
-  //  // put the check of baq.isExcludeFromBAQ() outside, since we need
-  //  // to pass the read BAQ tag to native if it is available
-  //  final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
-  //  final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
+    // put the check of baq.isExcludeFromBAQ() outside, since we need
+    // to pass the read BAQ tag to native if it is available
+    final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
+    final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
 
-  //  // preparation for BAQ calculation
-  //  int refOffset = -1;
-  //  byte[] refForBAQ = null;
+    // preparation for BAQ calculation
+    int refOffset = -1;
+    byte[] refForBAQ = null;
 
-  //  // skip calcBAQFromHMM() and directly return readBAQ if it's not null
-  //  if (!isExcludeFromBAQ) {
-  //    final int offset = baq.getBandWidth() / 2;
-  //    final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
-  //    final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(read), 1);
-  //    final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(read);
+    // skip calcBAQFromHMM() and directly return readBAQ if it's not null
+    if (!isExcludeFromBAQ) {
+      final int offset = baq.getBandWidth() / 2;
+      final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
+      final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(read), 1);
+      final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(read);
 
-  //    if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
-  //      // meaning null return from calculateBAQArray
-  //      // return null;
-  //      // Note: Here should not return null, since if nErrors is zero BAQArray
-  //      // calculation is skipped, native func knows from negative refOffset
-  //      //logger.info("baq array cannot be calculated because stop is out-of-bound");
-  //      ;
-  //    }
-  //    else {
-  //      refOffset = (int)(start - readStart);
+      if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
+        // meaning null return from calculateBAQArray
+        // return null;
+        // Note: Here should not return null, since if nErrors is zero BAQArray
+        // calculation is skipped, native func knows from negative refOffset
+        //logger.info("baq array cannot be calculated because stop is out-of-bound");
+        ;
+      }
+      else {
+        refOffset = (int)(start - readStart);
 
-  //      // ref seq for baq calculation
-  //      ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
-  //      refForBAQ = refSeq.getBases();
-  //    }
-  //  }
+        // ref seq for baq calculation
+        ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
+        refForBAQ = refSeq.getBases();
+      }
+    }
 
-  //  // ref seqs for SNP error calculation
-  //  final byte[] refBases = Arrays.copyOfRange(ref.getBases(),
-  //                      read.getAlignmentStart() - org_read.getAlignmentStart(),
-  //                      ref.getBases().length + read.getAlignmentEnd() - org_read.getAlignmentEnd());
+    // ref seqs for SNP error calculation
+    final byte[] refBases = Arrays.copyOfRange(ref.getBases(),
+                        read.getAlignmentStart() - org_read.getAlignmentStart(),
+                        ref.getBases().length + read.getAlignmentEnd() - org_read.getAlignmentEnd());
 
-  //  final byte[] bases = read.getReadBases();
-  //  final byte[] quals = read.getBaseQualities();      // in general we are overwriting quals, so just get a pointer to them
-  //  final int readLength = bases.length;
-  //  final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    final byte[] bases = read.getReadBases();
+    final byte[] quals = read.getBaseQualities();      // in general we are overwriting quals, so just get a pointer to them
+    final int readLength = bases.length;
+    final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
 
-  //  // prepare cigar arrays
-  //  final List<CigarElement> cigarElements = read.getCigar().getCigarElements();
-  //  final int numCigarElements = cigarElements.size();
-  //  byte[] cigarOps = new byte[numCigarElements];
-  //  int[] cigarLens = new int[numCigarElements];
-  //  int idx = 0;
-  //  for (CigarElement elt : cigarElements) {
-  //    cigarOps[idx] = CigarOperator.enumToCharacter(elt.getOperator());
-  //    cigarLens[idx] = elt.getLength();
-  //    idx++;
-  //  }
+    // prepare cigar arrays
+    final List<CigarElement> cigarElements = read.getCigar().getCigarElements();
+    final int numCigarElements = cigarElements.size();
+    byte[] cigarOps = new byte[numCigarElements];
+    int[] cigarLens = new int[numCigarElements];
+    int idx = 0;
+    for (CigarElement elt : cigarElements) {
+      cigarOps[idx] = CigarOperator.enumToCharacter(elt.getOperator());
+      cigarLens[idx] = elt.getLength();
+      idx++;
+    }
 
-  //  final double[] errors = calculateErrorsNative(
-  //                                bases, quals, refForBAQ, refBases,
-  //                                cigarOps, cigarLens,
-  //                                readBAQArray,
-  //                                isExcludeFromBAQ, isNegativeStrand,
-  //                                refOffset);
+    final double[] errors = calculateErrorsNative(
+                                  bases, quals, refForBAQ, refBases,
+                                  cigarOps, cigarLens,
+                                  readBAQArray,
+                                  isExcludeFromBAQ, isNegativeStrand,
+                                  refOffset);
 
-  //  if (errors == null) {
-  //    // return null baqArray
-  //    return null;
-  //  }
+    if (errors == null) {
+      // return null baqArray
+      return null;
+    }
 
-  //  final double[][] ret = new double[numEvents][readLength];
-  //  idx = 0;
-  //  for (int k = 0; k < numEvents; k++) {
-  //    for (int i = 0; i < readLength; i++) {
-  //      ret[k][i] = errors[idx++];
-  //    }
-  //  }
-  //  return ret;
-  //}
+    final double[][] ret = new double[numEvents][readLength];
+    idx = 0;
+    for (int k = 0; k < numEvents; k++) {
+      for (int i = 0; i < readLength; i++) {
+        ret[k][i] = errors[idx++];
+      }
+    }
+    return ret;
+  }
 
   //// This function is used to update recalibration tables in
   //// GATK BaseRecalibrator.map()
@@ -902,13 +904,13 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       boolean isSecondOfPair,
       int platformType);
 
-  //private native byte[] calculateBAQArrayNative(
-  //    byte[] refBases,
-  //    byte[] bases,
-  //    byte[] baseQuals,
-  //    byte[] cigarOps,
-  //    int[] cigarLens,
-  //    int refOffset);
+  private native byte[] calculateBAQArrayNative(
+      byte[] refBases,
+      byte[] bases,
+      byte[] baseQuals,
+      byte[] cigarOps,
+      int[] cigarLens,
+      int refOffset);
 
   //private native double[] calculateErrorsNative(
   //    byte[] bases,
