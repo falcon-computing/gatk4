@@ -365,14 +365,14 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   }
 
   public double[][] calculateFractionalErrorArray(final SAMRecord read,
-                      final GATKSAMRecord org_read,
+                      final SAMRecord org_read,
                       final ReferenceContext ref) {
 
     // put the check of baq.isExcludeFromBAQ() outside, since we need
     // to pass the read BAQ tag to native if it is available
-    final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
-    final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
-
+    final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
+    final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(togatkread);
+    final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(togatkread) : null;
     // preparation for BAQ calculation
     int refOffset = -1;
     byte[] refForBAQ = null;
@@ -381,8 +381,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     if (!isExcludeFromBAQ) {
       final int offset = baq.getBandWidth() / 2;
       final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
-      final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(read), 1);
-      final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(read);
+      final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
+      final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
 
       if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
         // meaning null return from calculateBAQArray
@@ -912,17 +912,17 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       int[] cigarLens,
       int refOffset);
 
-  //private native double[] calculateErrorsNative(
-  //    byte[] bases,
-  //    byte[] quals,
-  //    byte[] refForBAQ,
-  //    byte[] refBases,
-  //    byte[] cigarOps,
-  //    int[]  cigarLens,
-  //    byte[] readBAQArray,
-  //    boolean isExcludeFromBAQ,
-  //    boolean isNegativeStrand,
-  //    int refOffset);
+  private native double[] calculateErrorsNative(
+      byte[] bases,
+      byte[] quals,
+      byte[] refForBAQ,
+      byte[] refBases,
+      byte[] cigarOps,
+      int[]  cigarLens,
+      byte[] readBAQArray,
+      boolean isExcludeFromBAQ,
+      boolean isNegativeStrand,
+      int refOffset);
 
   //// This is the actual native impl for applications
   //private native int updateTableNative(
