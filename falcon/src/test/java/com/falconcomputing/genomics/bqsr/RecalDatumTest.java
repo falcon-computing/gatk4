@@ -43,33 +43,33 @@ public class RecalDatumTest extends RecalDatum {
     for (double e : qemp) {
       for (double r : qreported) {
         final double gatk_res = RecalDatum.log10QempPrior(e, r);
-        System.out.println(gatk_res);
+        //System.out.println(gatk_res);
         final double falcon_res = engine.log10QempPriorNative(e, r);
-        System.out.printf("java out: %f , native out: %f\n", gatk_res, falcon_res);
+        //System.out.printf("java out: %f , native out: %f\n", gatk_res, falcon_res);
         Assert.assertEquals(falcon_res, gatk_res, 1e-8);
       }
     }
   }
 
- // @Test(enabled = true)
- // public void TestLog10Likelihood() {
- //   final double[] qemp = {20, 30, 40, 50, 60, 70, 80, 90};
- //   final long[] numObservations = {1, 2, 3, 10};
- //   final long[] numMismatches = {0, 1, 2, 5};
- //   for (double e : qemp) {
- //     for (long o : numObservations) {
- //       for (long m : numMismatches) {
- //         if (m >= o) continue;
- //         final double gatk_res = RecalDatum.log10QempLikelihood(e, o, m);
- //         final double falcon_res = engine.log10QempLikelihoodNative(e, o, m);
- //         if (gatk_res != falcon_res) {
- //           logger.info(String.format("error happens at %f, %d, %d with magnitude of %f", e, o, m, Math.abs(gatk_res - falcon_res)));
- //         }
- //         Assert.assertEquals(falcon_res, gatk_res, 1e-8);
- //       }
- //     }
- //   }
- // }
+  @Test(enabled = true)
+  public void TestLog10Likelihood() {
+    final double[] qemp = {20, 30, 40, 50, 60, 70, 80, 90};
+    final long[] numObservations = {1, 2, 3, 10};
+    final long[] numMismatches = {0, 1, 2, 5};
+    for (double e : qemp) {
+      for (long o : numObservations) {
+        for (long m : numMismatches) {
+          if (m >= o) continue;
+          final double gatk_res = RecalDatum.log10QempLikelihood(e, o, m);
+          final double falcon_res = engine.log10QempLikelihoodNative(e, o, m);
+          if (gatk_res != falcon_res) {
+            logger.info(String.format("error happens at %f, %d, %d with magnitude of %f", e, o, m, Math.abs(gatk_res - falcon_res)));
+          }
+          Assert.assertEquals(falcon_res, gatk_res, 1e-8);
+        }
+      }
+    }
+  }
 
  // @Test(enabled = true)
  // public void TestBayesianEstimate() {
@@ -96,9 +96,9 @@ public class RecalDatumTest extends RecalDatum {
     Assert.assertTrue(isLoaded);
   }
 
- // @AfterMethod
- // public void tearDown() {
- //   engine.finalizeData();
- //   engine = null;
- // }
+  @AfterMethod
+  public void tearDown() {
+    engine.finalizeData();
+    engine = null;
+  }
 }
