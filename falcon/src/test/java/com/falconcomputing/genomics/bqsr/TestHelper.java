@@ -5,7 +5,8 @@ import htsjdk.samtools.reference.ReferenceSequenceFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.SAMSequenceRecord;
 
-import org.broadinstitute.hellbender.engine.datasources.reference.*;
+//import org.broadinstitute.hellbender.engine.datasources.reference.*;
+import htsjdk.samtools.reference.*;
 import org.broadinstitute.hellbender.utils.recalibration.*;
 import org.broadinstitute.hellbender.tools.walkers.bqsr.*;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
