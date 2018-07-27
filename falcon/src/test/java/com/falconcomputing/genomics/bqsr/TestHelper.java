@@ -1,5 +1,5 @@
 package com.falconcomputing.genomics.bqsr;
-/*
+
 import htsjdk.samtools.*;
 import htsjdk.samtools.reference.ReferenceSequenceFile;
 import htsjdk.samtools.reference.ReferenceSequence;
@@ -118,4 +118,4 @@ public class TestHelper extends BaseRecalibrator {
 
 
 }
-*/
+

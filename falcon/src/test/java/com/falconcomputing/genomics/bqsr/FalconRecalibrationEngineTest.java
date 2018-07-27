@@ -3,7 +3,7 @@
  * TODO: figure out the correct license text
  */
 package com.falconcomputing.genomics.bqsr;
-/*
+
 import com.falconcomputing.genomics.NativeLibraryLoader;
 import com.falconcomputing.genomics.AccelerationException;
 
@@ -758,4 +758,3 @@ public class FalconRecalibrationEngineTest {
   }
 
 }
-*/
