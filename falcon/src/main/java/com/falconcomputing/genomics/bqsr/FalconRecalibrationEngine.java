@@ -445,98 +445,100 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     return ret;
   }
 
-  //// This function is used to update recalibration tables in
-  //// GATK BaseRecalibrator.map()
-  //public int update(final GATKSAMRecord read,
-  //                  final GATKSAMRecord org_read,
-  //                  final ReferenceContext ref,
-  //                  final boolean[] skips) throws AccelerationException
-  //{
-  //  if (finalized) {
-  //    throw new ReviewedGATKException("Covariate table already finalized");
-  //  }
-  //  else if (!initialized) {
-  //    throw new ReviewedGATKException("Covariate table already finalized");
-  //  }
+  // This function is used to update recalibration tables in
+  // GATK BaseRecalibrator.map()
+  public int update(final SAMRecord read,
+                    final SAMRecord org_read,
+                    final ReferenceContext ref,
+                    final boolean[] skips) throws AccelerationException
+  {
+    if (finalized) {
+      throw new GATKException("Covariate table already finalized");
+    }
+    else if (!initialized) {
+      throw new GATKException("Covariate table already finalized");
+    }
+    final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
+    // put the check of baq.isExcludeFromBAQ() outside, since we need
+    // to pass the read BAQ tag to native if it is available
+    final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(togatkread);
+    final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(togatkread) : null;
 
-  //  // put the check of baq.isExcludeFromBAQ() outside, since we need
-  //  // to pass the read BAQ tag to native if it is available
-  //  final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
-  //  final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
+    // preparation for BAQ calculation
+    int refOffset = 0;
+    byte[] refForBAQ = null;
 
-  //  // preparation for BAQ calculation
-  //  int refOffset = 0;
-  //  byte[] refForBAQ = null;
+    if (!isExcludeFromBAQ) {
+      final int offset = baq.getBandWidth() / 2;
+      final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
+      final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
+      final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
 
-  //  if (!isExcludeFromBAQ) {
-  //    final int offset = baq.getBandWidth() / 2;
-  //    final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
-  //    final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(read), 1);
-  //    final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(read);
+      if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
+        // meaning null baqArray
+        //return 0;
+        // Note: Here should not return, since if nErrors is zero BAQArray
+        // calculation is skipped, native func knows from negative refOffset
+        //logger.info("baq array cannot be calculated because stop is out-of-bound");
+        ;
+      }
+      else {
+        refOffset = (int)(start - readStart);
 
-  //    if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
-  //      // meaning null baqArray
-  //      //return 0;
-  //      // Note: Here should not return, since if nErrors is zero BAQArray
-  //      // calculation is skipped, native func knows from negative refOffset
-  //      //logger.info("baq array cannot be calculated because stop is out-of-bound");
-  //      ;
-  //    }
-  //    else {
-  //      refOffset = (int)(start - readStart);
+        // ref seq for baq calculation
+        ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
+        refForBAQ = refSeq.getBases();
+      }
+    }
 
-  //      // ref seq for baq calculation
-  //      ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
-  //      refForBAQ = refSeq.getBases();
-  //    }
-  //  }
+    // ref seqs for SNP error calculation
+    final byte[] refBases = Arrays.copyOfRange(ref.getBases(),
+                        read.getAlignmentStart() - org_read.getAlignmentStart(),
+                        ref.getBases().length + read.getAlignmentEnd() - org_read.getAlignmentEnd());
 
-  //  // ref seqs for SNP error calculation
-  //  final byte[] refBases = Arrays.copyOfRange(ref.getBases(),
-  //                      read.getAlignmentStart() - org_read.getAlignmentStart(),
-  //                      ref.getBases().length + read.getAlignmentEnd() - org_read.getAlignmentEnd());
+    // get inputs from read
+    final byte[] bases = read.getReadBases();
+    final byte[] baseQuals = read.getBaseQualities();
+    final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(togatkread);
+    final byte[] baseDeletionQuals = ReadUtils.getBaseDeletionQualities(togatkread);
 
-  //  // get inputs from read
-  //  final byte[] bases = read.getReadBases();
-  //  final byte[] baseQuals = read.getBaseQualities();
-  //  final byte[] baseInsertionQuals = read.getBaseInsertionQualities();
-  //  final byte[] baseDeletionQuals = read.getBaseDeletionQualities();
+    final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    final boolean isReadPaired = read.getReadPairedFlag();
+    final boolean isSecondOfPair = isReadPaired ? read.getSecondOfPairFlag() : false;
 
-  //  final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
-  //  final boolean isReadPaired = read.getReadPairedFlag();
-  //  final boolean isSecondOfPair = isReadPaired ? read.getSecondOfPairFlag() : false;
+    // prepare cigar arrays
+    final List<CigarElement> cigarElements = read.getCigar().getCigarElements();
+    final int numCigarElements = cigarElements.size();
+    final byte[] cigarOps = new byte[numCigarElements];
+    final int[] cigarLens = new int[numCigarElements];
+    int idx = 0;
+    for (CigarElement elt : cigarElements) {
+      cigarOps[idx] = CigarOperator.enumToCharacter(elt.getOperator());
+      cigarLens[idx] = elt.getLength();
+      idx++;
+    }
 
-  //  // prepare cigar arrays
-  //  final List<CigarElement> cigarElements = read.getCigar().getCigarElements();
-  //  final int numCigarElements = cigarElements.size();
-  //  final byte[] cigarOps = new byte[numCigarElements];
-  //  final int[] cigarLens = new int[numCigarElements];
-  //  int idx = 0;
-  //  for (CigarElement elt : cigarElements) {
-  //    cigarOps[idx] = CigarOperator.enumToCharacter(elt.getOperator());
-  //    cigarLens[idx] = elt.getLength();
-  //    idx++;
-  //  }
+    final SAMReadGroupRecord rg = read.getReadGroup();
+    final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
+    //final NGSPlatform ngsPlatform = read.getNGSPlatform();
+    final int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
-  //  final NGSPlatform ngsPlatform = read.getNGSPlatform();
-  //  final int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
+    String readGroupId;
+    //if (FORCE_READGROUP != null) {
+    //  readGroupId = FORCE_READGROUP;
+    //}
+    //final GATKSAMReadGroupRecord rg = read.getReadGroup();
+    final String platformUnit = rg.getPlatformUnit();
+    readGroupId = platformUnit == null ? rg.getId() : platformUnit;
 
-  //  String readGroupId;
-  //  if (FORCE_READGROUP != null) {
-  //    readGroupId = FORCE_READGROUP;
-  //  }
-  //  final GATKSAMReadGroupRecord rg = read.getReadGroup();
-  //  final String platformUnit = rg.getPlatformUnit();
-  //  readGroupId = platformUnit == null ? rg.getId() : platformUnit;
-
-  //  // call native method to update RecalibrationTables
-  //  return updateTableNative(refForBAQ, refBases,
-  //      bases, baseQuals, baseInsertionQuals, baseDeletionQuals,
-  //      cigarOps, cigarLens, readBAQArray,
-  //      readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
-  //      platformType, refOffset,
-  //      skips);
-  //}
+    // call native method to update RecalibrationTables
+    return updateTableNative(refForBAQ, refBases,
+        bases, baseQuals, baseInsertionQuals, baseDeletionQuals,
+        cigarOps, cigarLens, readBAQArray,
+        readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
+        platformType, refOffset,
+        skips);
+  }
 
   //public byte[][] recalibrate(final GATKSAMRecord read) 
   //  throws AccelerationException
@@ -924,25 +926,25 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       boolean isNegativeStrand,
       int refOffset);
 
-  //// This is the actual native impl for applications
-  //private native int updateTableNative(
-  //    byte[] refForBAQ,
-  //    byte[] refBases,
-  //    byte[] bases,
-  //    byte[] baseQuals,
-  //    byte[] baseInsertionQuals,
-  //    byte[] baseDeletionQuals,
-  //    byte[] cigarOps,
-  //    int[]  cigarLens,
-  //    byte[] readBAQArray,
-  //    String readGroupId,
-  //    boolean isNegativeStrand,
-  //    boolean isReadPaired,
-  //    boolean isSecondOfPair,
-  //    boolean isExcludeFromBAQ,
-  //    int platformType,
-  //    int refOffset,
-  //    boolean[] skips);
+  // This is the actual native impl for applications
+  private native int updateTableNative(
+      byte[] refForBAQ,
+      byte[] refBases,
+      byte[] bases,
+      byte[] baseQuals,
+      byte[] baseInsertionQuals,
+      byte[] baseDeletionQuals,
+      byte[] cigarOps,
+      int[]  cigarLens,
+      byte[] readBAQArray,
+      String readGroupId,
+      boolean isNegativeStrand,
+      boolean isReadPaired,
+      boolean isSecondOfPair,
+      boolean isExcludeFromBAQ,
+      int platformType,
+      int refOffset,
+      boolean[] skips);
 
   //private native RecalDatumTable[] getTableNative();
 
