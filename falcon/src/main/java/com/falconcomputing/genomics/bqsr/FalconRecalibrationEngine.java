@@ -639,78 +639,78 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     }
   }
 
-  //public RecalDatumTable[] getTables() {
-  //  return getTableNative();
-  //}
+  public RecalDatumTable[] getTables() {
+    return getTableNative();
+  }
 
-  //public RecalibrationTables getRecalibrationTables() {
-  //  if (!finalized) {
-  //    updateRecalibrationTables();
-  //  }
-  //  return recalTables;
-  //}
+  public RecalibrationTables getRecalibrationTables() {
+    if (!finalized) {
+      updateRecalibrationTables();
+    }
+    return recalTables;
+  }
 
-  //public RecalibrationTables getFinalRecalibrationTables() {
-  //  finalizeData();
-  //  return recalTables;
-  //}
+  public RecalibrationTables getFinalRecalibrationTables() {
+    finalizeData();
+    return recalTables;
+  }
 
-  //public void updateReadGroupCovariates() {
-  //  if (initialized) {
-  //    // update ReadGroupCovariate class to reflect the key-idx mapping
-  //    if (!(covariates[0] instanceof ReadGroupCovariate)) {
-  //      throw new ReviewedGATKException("The first requested covariate should be " +
-  //      "ReadGroupCovariate.");
-  //    }
-  //    updateReadGroupCovariatesNative((ReadGroupCovariate)covariates[0]);
-  //  }
-  //}
+  public void updateReadGroupCovariates() {
+    if (initialized) {
+      // update ReadGroupCovariate class to reflect the key-idx mapping
+      if (!(covariates.get(0) instanceof ReadGroupCovariate)) {
+        throw new GATKException("The first requested covariate should be " +
+        "ReadGroupCovariate.");
+      }
+      updateReadGroupCovariatesNative((ReadGroupCovariate)covariates.get(0));
+    }
+  }
 
-  //public void finalizeData() {
-  //  if (!initialized || finalized) return;
+  public void finalizeData() {
+    if (!initialized || finalized) return;
 
-  //  updateReadGroupCovariates();
+    updateReadGroupCovariates();
 
-  //  // get latest recal table
-  //  updateRecalibrationTables();
+    // get latest recal table
+    updateRecalibrationTables();
 
-  //  // finalize RecalibrationTables
-  //  // renaming for GATK
-  //  RecalibrationTables finalRecalibrationTables = recalTables;
-  //  // start GATK code from org.broadinstitute.gatk.tools.walkers.bqsr.RecalibrationEngine
-  //  final NestedIntegerArray<RecalDatum> byReadGroupTable = finalRecalibrationTables.getReadGroupTable();
-  //  final NestedIntegerArray<RecalDatum> byQualTable = finalRecalibrationTables.getQualityScoreTable();
-  //  // iterate over all values in the qual table
-  //  for ( final NestedIntegerArray.Leaf<RecalDatum> leaf : byQualTable.getAllLeaves() ) {
-  //    final int rgKey = leaf.keys[0];
-  //    final int eventIndex = leaf.keys[2];
-  //    final RecalDatum rgDatum = byReadGroupTable.get(rgKey, eventIndex);
-  //    final RecalDatum qualDatum = leaf.value;
-  //    if ( rgDatum == null ) {
-  //      // create a copy of qualDatum, and initialize byReadGroup table with it
-  //      byReadGroupTable.put(new RecalDatum(qualDatum), rgKey, eventIndex);
-  //    } else {
-  //      // combine the qual datum with the existing datum in the byReadGroup table
-  //      rgDatum.combine(qualDatum);
-  //    }
-  //  }
+    // finalize RecalibrationTables
+    // renaming for GATK
+    RecalibrationTables finalRecalibrationTables = recalTables;
+    // start GATK code from org.broadinstitute.gatk.tools.walkers.bqsr.RecalibrationEngine
+    final NestedIntegerArray<RecalDatum> byReadGroupTable = finalRecalibrationTables.getReadGroupTable();
+    final NestedIntegerArray<RecalDatum> byQualTable = finalRecalibrationTables.getQualityScoreTable();
+    // iterate over all values in the qual table
+    for ( final NestedIntegerArray.Leaf<RecalDatum> leaf : byQualTable.getAllLeaves() ) {
+      final int rgKey = leaf.keys[0];
+      final int eventIndex = leaf.keys[2];
+      final RecalDatum rgDatum = byReadGroupTable.get(rgKey, eventIndex);
+      final RecalDatum qualDatum = leaf.value;
+      if ( rgDatum == null ) {
+        // create a copy of qualDatum, and initialize byReadGroup table with it
+        byReadGroupTable.put(new RecalDatum(qualDatum), rgKey, eventIndex);
+      } else {
+        // combine the qual datum with the existing datum in the byReadGroup table
+        rgDatum.combine(qualDatum);
+      }
+    }
 
-  //  logger.debug("Free resource in native space");
-  //  finalizeNative();
+    logger.debug("Free resource in native space");
+    finalizeNative();
 
-  //  // end of GATK code
-  //  finalized = true;
-  //}
+    // end of GATK code
+    finalized = true;
+  }
 
-  //// helper routines for BAQ calculation
-  //private static boolean stateIsIndel(int state) {
-  //  return (state & 3) != 0;
-  //}
+  // helper routines for BAQ calculation
+  private static boolean stateIsIndel(int state) {
+    return (state & 3) != 0;
+  }
 
-  ///** decode the bit encoded state array values */
-  //private static int stateAlignedPosition(int state) {
-  //  return state >> 2;
-  //}
+  /** decode the bit encoded state array values */
+  private static int stateAlignedPosition(int state) {
+    return state >> 2;
+  }
 
   //private static byte capBaseByBAQ(final byte oq,
   //                                 final byte bq,
