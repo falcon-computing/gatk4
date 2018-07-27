@@ -71,23 +71,25 @@ public class RecalDatumTest extends RecalDatum {
     }
   }
 
- // @Test(enabled = true)
- // public void TestBayesianEstimate() {
- //   final long[] numObservations = {1, 2, 3, 10};
- //   final long[] numMismatches = {0, 1, 2, 5};
- //   final double[] qReported = {20, 30, 40, 50, 60, 70, 80, 90};
+  @Test(enabled = true)
+  public void TestBayesianEstimate() {
+    final long[] numObservations = {1, 2, 3, 10};
+    final long[] numMismatches = {0, 1, 2, 5};
+    final double[] qReported = {20, 30, 40, 50, 60, 70, 80, 90};
 
- //   for (double q : qReported) {
- //     for (long o : numObservations) {
- //       for (long m : numMismatches) {
- //         if (m >= o) continue;
- //         final double gatk_res = RecalDatum.bayesianEstimateOfEmpiricalQuality(o, m, q);
- //         final double falcon_res = engine.bayesianEstimateOfEmpiricalQualityNative(o, m, q);
- //         Assert.assertEquals(falcon_res, gatk_res, 1e-8);
- //       }
- //     }
- //   }
- // }
+    for (double q : qReported) {
+      for (long o : numObservations) {
+        for (long m : numMismatches) {
+          if (m >= o) continue;
+          final double gatk_res = RecalDatum.bayesianEstimateOfEmpiricalQuality(o, m, q);
+          final double falcon_res = engine.bayesianEstimateOfEmpiricalQualityNative(o, m, q);
+          Assert.assertEquals(falcon_res, gatk_res, 1e-8);
+        }
+      }
+    }
+  }
+
+  //
 
   @BeforeMethod
   public void setUp() {
