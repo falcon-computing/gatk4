@@ -49,7 +49,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   private final int numEvents = EventType.values().length;
   private int numCovariates;
   private int numReadGroups;
-  private Covariate[] covariates;
+  //private Covariate[] covariates;
+  private StandardCovariateList covariates;
   private RecalibrationTables recalTables;
   private static boolean loaded = false;
   private boolean initialized = false;
@@ -103,18 +104,19 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   }
 
   // This init() function is used for GATK BaseRecalibrator
-  public void init(final Covariate[] _covariates,
+  public void init(final StandardCovariateList _covariates,
+  //public void init(final Covariate[] _covariates,
                    final int _numReadGroups) throws AccelerationException {
 
     this.covariates = _covariates;
-    this.numCovariates = covariates.length;
+    this.numCovariates = covariates.size();
     this.numReadGroups = _numReadGroups;
     this.baq = new BAQ(BAQGOP); // setup the BAQ object with the provided gap open penalty
 
     final int[] covariatesDimensions = new int[numCovariates];
 
-    for (int i = 0; i < covariates.length; i++) {
-      covariatesDimensions[i] = covariates[i].maximumKeyValue() + 1;
+    for (int i = 0; i < covariates.size(); i++) {
+      covariatesDimensions[i] = covariates.get(i).maximumKeyValue() + 1;
     }
 
     // call native method to initialize the covariatesTable
