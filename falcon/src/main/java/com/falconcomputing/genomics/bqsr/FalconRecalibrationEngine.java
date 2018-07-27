@@ -34,6 +34,7 @@ import htsjdk.samtools.SAMReadGroupRecord;
 //import org.broadinstitute.hellbender.utils.sam.GATKSAMRecord;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
 import org.broadinstitute.hellbender.utils.SequencerFlowClass;
+import org.broadinstitute.hellbender.utils.read.SAMRecordToGATKReadAdapter;
 
 import java.io.PrintStream;
 import java.io.File;
@@ -215,69 +216,76 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     return ret;
   }
 
-  //// This function is for unit testing only
-  //protected int[][][] computeCycleCovariates(final GATKSAMRecord read) 
-  //  throws AccelerationException {
+  // This function is for unit testing only
 
-  //  int readLength = read.getReadBases().length;
-  //  boolean isNegativeStrand = read.getReadNegativeStrandFlag();
-  //  boolean isReadPaired = read.getReadPairedFlag();
-  //  boolean isSecondOfPair;
-  //  try {
-  //    isSecondOfPair = read.getSecondOfPairFlag();
-  //  }
-  //  catch (java.lang.IllegalStateException e) {
-  //    isSecondOfPair = false;
-  //  }
-  //  NGSPlatform ngsPlatform = read.getNGSPlatform();
-  //  int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
+  //protected int[][][] computeCycleCovariates(final GATKSAMRecord read)
+  protected int[][][] computeCycleCovariates(final SAMRecord read)
+    throws AccelerationException {
 
-  //  final int[] keys = computeCycleCovariatesNative(readLength, platformType,
-  //          isNegativeStrand, isReadPaired, isSecondOfPair);
+    int readLength = read.getReadBases().length;
+    boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    boolean isReadPaired = read.getReadPairedFlag();
+    boolean isSecondOfPair;
+    try {
+      isSecondOfPair = read.getSecondOfPairFlag();
+    }
+    catch (java.lang.IllegalStateException e) {
+      isSecondOfPair = false;
+    }
+    //NGSPlatform ngsPlatform = read.getNGSPlatform();
+    final SAMReadGroupRecord rg = read.getReadGroup();
+    NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
+    int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
-  //  int[][][] ret = new int[numEvents][readLength][numCovariates];
-  //  int idx = 0;
-  //  for (int i = 0; i < readLength; i++) {
-  //    for (int j = 0; j < numCovariates; j++) {
-  //      for (EventType event : EventType.values()) {
-  //        ret[event.ordinal()][i][j] = keys[idx++];
-  //      }
-  //    }
-  //  }
-  //  return ret;
-  //}
+    final int[] keys = computeCycleCovariatesNative(readLength, platformType,
+            isNegativeStrand, isReadPaired, isSecondOfPair);
 
-  //// This function is for unit testing only
-  //protected int[] computeCovariates(final GATKSAMRecord read) {
+    int[][][] ret = new int[numEvents][readLength][numCovariates];
+    int idx = 0;
+    for (int i = 0; i < readLength; i++) {
+      for (int j = 0; j < numCovariates; j++) {
+        for (EventType event : EventType.values()) {
+          ret[event.ordinal()][i][j] = keys[idx++];
+        }
+      }
+    }
+    return ret;
+  }
 
-  //  final byte[] bases = read.getReadBases();
-  //  final byte[] baseQuals = read.getBaseQualities();
-  //  final byte[] baseInsertionQuals = read.getBaseInsertionQualities();
-  //  final byte[] baseDeletionQuals = read.getBaseDeletionQualities();
+  // This function is for unit testing only
+  protected int[] computeCovariates(final SAMRecord read) {
 
-  //  final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
-  //  final boolean isReadPaired = read.getReadPairedFlag();
-  //  final boolean isSecondOfPair = read.getSecondOfPairFlag();
+    final byte[] bases = read.getReadBases();
+    final byte[] baseQuals = read.getBaseQualities();
+    //@@peipei
 
-  //  final NGSPlatform ngsPlatform = read.getNGSPlatform();
-  //  final int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
+    final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(new SAMRecordToGATKReadAdapter(read));
+    final byte[] baseDeletionQuals = ReadUtils.getBaseDeletionQualities(new SAMRecordToGATKReadAdapter(read));
 
-  //  String readGroupId;
-  //  if (FORCE_READGROUP != null) {
-  //    readGroupId = FORCE_READGROUP;
-  //  }
-  //  final GATKSAMReadGroupRecord rg = read.getReadGroup();
-  //  final String platformUnit = rg.getPlatformUnit();
-  //  readGroupId = platformUnit == null ? rg.getId() : platformUnit;
+    final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    final boolean isReadPaired = read.getReadPairedFlag();
+    final boolean isSecondOfPair = read.getSecondOfPairFlag();
 
-  //  final int[] keys = computeCovariatesNative(bases,
-  //          baseQuals, baseInsertionQuals, baseDeletionQuals,
-  //          readGroupId,
-  //          isNegativeStrand, isReadPaired, isSecondOfPair,
-  //          platformType);
+    final SAMReadGroupRecord rg = read.getReadGroup();
+    final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
+    final int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
-  //  return keys;
-  //}
+    String readGroupId;
+    //if (FORCE_READGROUP != null) {
+    //  readGroupId = FORCE_READGROUP;
+    //}
+
+    final String platformUnit = rg.getPlatformUnit();
+    readGroupId = platformUnit == null ? rg.getId() : platformUnit;
+
+    final int[] keys = computeCovariatesNative(bases,
+            baseQuals, baseInsertionQuals, baseDeletionQuals,
+            readGroupId,
+            isNegativeStrand, isReadPaired, isSecondOfPair,
+            platformType);
+
+    return keys;
+  }
 
   //public byte[] calculateBAQArray(final GATKSAMRecord read) {
   //  if (baq.excludeReadFromBAQ(read)) {
@@ -876,23 +884,23 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       byte[] quals,
       boolean isNegativeStrand);
 
-  //private native int[] computeCycleCovariatesNative(
-  //    int readLength,
-  //    int platformType,
-  //    boolean isNegativeStrand,
-  //    boolean isReadPaired,
-  //    boolean isSecondOfPair);
+  private native int[] computeCycleCovariatesNative(
+      int readLength,
+      int platformType,
+      boolean isNegativeStrand,
+      boolean isReadPaired,
+      boolean isSecondOfPair);
 
-  //private native int[] computeCovariatesNative(
-  //    byte[] bases,
-  //    byte[] baseQuals,
-  //    byte[] baseInsertionQuals,
-  //    byte[] baseDeletionQuals,
-  //    String readGroupId,
-  //    boolean isNegativeStrand,
-  //    boolean isReadPaired,
-  //    boolean isSecondOfPair,
-  //    int platformType);
+  private native int[] computeCovariatesNative(
+      byte[] bases,
+      byte[] baseQuals,
+      byte[] baseInsertionQuals,
+      byte[] baseDeletionQuals,
+      String readGroupId,
+      boolean isNegativeStrand,
+      boolean isReadPaired,
+      boolean isSecondOfPair,
+      int platformType);
 
   //private native byte[] calculateBAQArrayNative(
   //    byte[] refBases,
