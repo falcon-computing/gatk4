@@ -28,6 +28,8 @@ import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.utils.NGSPlatform;
 import org.broadinstitute.hellbender.utils.recalibration.EventType;
+import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.SAMReadGroupRecord;
 //import org.broadinstitute.hellbender.utils.sam.GATKSAMReadGroupRecord;
 //import org.broadinstitute.hellbender.utils.sam.GATKSAMRecord;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
@@ -190,27 +192,28 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     logger.debug("Initialized FalconRecalibrationEngine with RecalibrationTables");
   }
 
-  //// This function is for unit testing only
-  //protected int[][][] computeContextCovariates(final GATKSAMRecord read) {
+  // This function is for unit testing only
+  // protected int[][][] computeContextCovariates(final GATKSAMRecord read) {
+  protected int[][][] computeContextCovariates(final SAMRecord read) {
 
-  //  final byte[] bases = read.getReadBases();
-  //  final byte[] quals = read.getBaseQualities();
-  //  final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    final byte[] bases = read.getReadBases();
+    final byte[] quals = read.getBaseQualities();
+    final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
 
-  //  final int[] keys = computeContextCovariatesNative(bases, quals, isNegativeStrand);
+    final int[] keys = computeContextCovariatesNative(bases, quals, isNegativeStrand);
 
-  //  int readLength = bases.length;
-  //  int[][][] ret = new int[numEvents][readLength][numCovariates];
-  //  int idx = 0;
-  //  for (int i = 0; i < bases.length; i++) {
-  //    for (int j = 0; j < numCovariates; j++) {
-  //      for (EventType event : EventType.values()) {
-  //        ret[event.ordinal()][i][j] = keys[idx++];
-  //      }
-  //    }
-  //  }
-  //  return ret;
-  //}
+    int readLength = bases.length;
+    int[][][] ret = new int[numEvents][readLength][numCovariates];
+    int idx = 0;
+    for (int i = 0; i < bases.length; i++) {
+      for (int j = 0; j < numCovariates; j++) {
+        for (EventType event : EventType.values()) {
+          ret[event.ordinal()][i][j] = keys[idx++];
+        }
+      }
+    }
+    return ret;
+  }
 
   //// This function is for unit testing only
   //protected int[][][] computeCycleCovariates(final GATKSAMRecord read) 
@@ -861,17 +864,17 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       int[] keys,
       int  cov_idx);
 
-  //// These routines are used for unit tests, in real use
-  //// all of them will be combined into updateTableNative()
-  //// - computeContextCovariates()
-  //// - computeCycleCovariates()
-  //// - computeCovariates()
-  //// - calculateBAQArray()
-  //// - calculateErrors()
-  //private native int[] computeContextCovariatesNative(
-  //    byte[] bases,
-  //    byte[] quals,
-  //    boolean isNegativeStrand);
+  // These routines are used for unit tests, in real use
+  // all of them will be combined into updateTableNative()
+  // - computeContextCovariates()
+  // - computeCycleCovariates()
+  // - computeCovariates()
+  // - calculateBAQArray()
+  // - calculateErrors()
+  private native int[] computeContextCovariatesNative(
+      byte[] bases,
+      byte[] quals,
+      boolean isNegativeStrand);
 
   //private native int[] computeCycleCovariatesNative(
   //    int readLength,
