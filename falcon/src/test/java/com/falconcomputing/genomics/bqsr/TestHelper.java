@@ -1,5 +1,5 @@
 package com.falconcomputing.genomics.bqsr;
-
+/*
 import htsjdk.samtools.*;
 import htsjdk.samtools.reference.ReferenceSequenceFile;
 import htsjdk.samtools.reference.ReferenceSequence;
@@ -23,8 +23,9 @@ import java.nio.file.*;
 import java.util.*;
 import java.net.*;
 
+
 public class TestHelper extends BaseRecalibrator {
-  /*
+
   final static int BUFFER = 10000;
   final static byte[] Xs = new byte[BUFFER];
 
@@ -114,6 +115,7 @@ public class TestHelper extends BaseRecalibrator {
     final GenomeLoc loc = glocParser.createGenomeLoc(read);
     return new ReferenceContext(glocParser, loc, loc, new Provider(loc));
   }
-  */
+
 
 }
+*/

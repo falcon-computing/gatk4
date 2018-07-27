@@ -3,7 +3,7 @@
  * TODO: figure out the correct license text
  */
 package com.falconcomputing.genomics.bqsr;
-
+/*
 import com.falconcomputing.genomics.NativeLibraryLoader;
 import com.falconcomputing.genomics.AccelerationException;
 
@@ -55,7 +55,7 @@ import java.util.*;
 import java.net.*;
 
 public class FalconRecalibrationEngineTest {
-  /*
+
   private final static Logger logger = LogManager.getLogger(FalconRecalibrationEngineTest.class);
   private final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
 
@@ -756,5 +756,6 @@ public class FalconRecalibrationEngineTest {
     Assert.assertEquals(r1.getEstimatedQReported(), r2.getEstimatedQReported());
     Assert.assertEquals(r1.getEmpiricalQuality(), r2.getEmpiricalQuality());
   }
-  */
+
 }
+*/
