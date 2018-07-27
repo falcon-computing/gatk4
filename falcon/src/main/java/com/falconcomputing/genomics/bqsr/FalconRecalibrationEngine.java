@@ -19,6 +19,7 @@ import htsjdk.samtools.reference.ReferenceSequence;
 
 import org.apache.log4j.Logger;
 
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.recalibration.covariates.*;
 import org.broadinstitute.hellbender.utils.recalibration.*;
@@ -540,44 +541,47 @@ public class FalconRecalibrationEngine implements NativeLibrary {
         skips);
   }
 
-  //public byte[][] recalibrate(final GATKSAMRecord read) 
-  //  throws AccelerationException
-  //{
-  //  if (!initialized) return null;
+  public byte[][] recalibrate(final SAMRecord read)
+    throws AccelerationException
+  {
+    if (!initialized) return null;
 
-  //  try {
-  //  // these parameters are used to compute covariates
-  //  final byte[] bases = read.getReadBases();
-  //  final byte[] baseQuals = read.getBaseQualities();
-  //  final byte[] baseInsertionQuals = read.getBaseInsertionQualities();
-  //  final byte[] baseDeletionQuals = read.getBaseDeletionQualities();
+    try {
+    // these parameters are used to compute covariates
+      final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
+    final byte[] bases = read.getReadBases();
+    final byte[] baseQuals = read.getBaseQualities();
+    final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(togatkread);
+    final byte[] baseDeletionQuals = ReadUtils.getBaseDeletionQualities(togatkread);
 
-  //  final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
-  //  final boolean isReadPaired = read.getReadPairedFlag();
-  //  final boolean isSecondOfPair = read.getSecondOfPairFlag();
+    final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    final boolean isReadPaired = read.getReadPairedFlag();
+    final boolean isSecondOfPair = read.getSecondOfPairFlag();
 
-  //  final NGSPlatform ngsPlatform = read.getNGSPlatform();
-  //  final int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
+    //final NGSPlatform ngsPlatform = read.getNGSPlatform();
+    final SAMReadGroupRecord rg = read.getReadGroup();
+    final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
+    final int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
-  //  String readGroupId;
-  //  if (FORCE_READGROUP != null) {
-  //    readGroupId = FORCE_READGROUP;
-  //  }
-  //  final GATKSAMReadGroupRecord rg = read.getReadGroup();
-  //  final String platformUnit = rg.getPlatformUnit();
-  //  readGroupId = platformUnit == null ? rg.getId() : platformUnit;
+    String readGroupId;
+    //if (FORCE_READGROUP != null) {
+    //  readGroupId = FORCE_READGROUP;
+    //}
+    //final GATKSAMReadGroupRecord rg = read.getReadGroup();
+    final String platformUnit = rg.getPlatformUnit();
+    readGroupId = platformUnit == null ? rg.getId() : platformUnit;
 
-  //  // return qualities of each events, if it's null it means
-  //  // disableIndelQuals is true
-  //  return recalibrateNative(bases,
-  //          baseQuals, baseInsertionQuals, baseDeletionQuals,
-  //          readGroupId,
-  //          isNegativeStrand, isReadPaired, isSecondOfPair,
-  //          platformType);
-  //  } catch (Exception e) {
-  //    throw new AccelerationException(e.getMessage());
-  //  }
-  //}
+    // return qualities of each events, if it's null it means
+    // disableIndelQuals is true
+    return recalibrateNative(bases,
+            baseQuals, baseInsertionQuals, baseDeletionQuals,
+            readGroupId,
+            isNegativeStrand, isReadPaired, isSecondOfPair,
+            platformType);
+    } catch (Exception e) {
+      throw new AccelerationException(e.getMessage());
+    }
+  }
 
   //protected class RecalDatumTable {
   //  final public long[]   numOccurance;
