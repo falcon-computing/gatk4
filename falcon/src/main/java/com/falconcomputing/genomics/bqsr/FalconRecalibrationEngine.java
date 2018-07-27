@@ -583,61 +583,61 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     }
   }
 
-  //protected class RecalDatumTable {
-  //  final public long[]   numOccurance;
-  //  final public double[] numMismatches;
-  //  final public int      tableSize;
-  //  final public int[]    tableDimensions;
-  //  final public int      tableDimensionsSize;
+  protected class RecalDatumTable {
+    final public long[]   numOccurance;
+    final public double[] numMismatches;
+    final public int      tableSize;
+    final public int[]    tableDimensions;
+    final public int      tableDimensionsSize;
 
-  //  public RecalDatumTable(int tableSize, int numDimensions) {
-  //    this.numOccurance = new long[tableSize];
-  //    this.numMismatches = new double[tableSize];
-  //    this.tableSize = tableSize;
-  //    this.tableDimensions = new int[numDimensions];
-  //    this.tableDimensionsSize = numDimensions;
-  //  }
-  //}
+    public RecalDatumTable(int tableSize, int numDimensions) {
+      this.numOccurance = new long[tableSize];
+      this.numMismatches = new double[tableSize];
+      this.tableSize = tableSize;
+      this.tableDimensions = new int[numDimensions];
+      this.tableDimensionsSize = numDimensions;
+    }
+  }
 
-  //public void updateRecalibrationTables() {
-  //  if (initialized && !finalized) {
-  //    // get data from native
-  //    final RecalDatumTable[] nativeTables = getTableNative();
+  public void updateRecalibrationTables() {
+    if (initialized && !finalized) {
+      // get data from native
+      final RecalDatumTable[] nativeTables = getTableNative();
 
-  //    // set table contents
-  //    // skip readgroup table, generate it later, as the same as
-  //    // RecalibrationEngine.finalizeData()
-  //    for (int i = 0; i < numCovariates - 1; i++) {
-  //      NestedIntegerArray<RecalDatum> table = recalTables.getTable(i+1);
-  //      for (int k = 0; k < nativeTables[i].tableSize; k++) {
-  //        if (nativeTables[i].numOccurance[k] == 0) continue;
-  //        final long   numOccur = nativeTables[i].numOccurance[k];
-  //        final double numError = nativeTables[i].numMismatches[k];
+      // set table contents
+      // skip readgroup table, generate it later, as the same as
+      // RecalibrationEngine.finalizeData()
+      for (int i = 0; i < numCovariates - 1; i++) {
+        NestedIntegerArray<RecalDatum> table = recalTables.getTable(i+1);
+        for (int k = 0; k < nativeTables[i].tableSize; k++) {
+          if (nativeTables[i].numOccurance[k] == 0) continue;
+          final long   numOccur = nativeTables[i].numOccurance[k];
+          final double numError = nativeTables[i].numMismatches[k];
 
-  //        int idx = k;
-  //        final int[] keys = new int[nativeTables[i].tableDimensionsSize];
+          int idx = k;
+          final int[] keys = new int[nativeTables[i].tableDimensionsSize];
 
-  //        // keys: event, rg, qual, cov
-  //        // tableDimensions: numEvents, numRG, numQual, numCov
-  //        for (int j = 0; j < nativeTables[i].tableDimensionsSize; j++) {
-  //          keys[j] = idx % nativeTables[i].tableDimensions[j];
-  //          idx = idx / nativeTables[i].tableDimensions[j];
-  //        }
-  //        int eventIndex = keys[0];
-  //        byte qual = (byte)keys[2];
+          // keys: event, rg, qual, cov
+          // tableDimensions: numEvents, numRG, numQual, numCov
+          for (int j = 0; j < nativeTables[i].tableDimensionsSize; j++) {
+            keys[j] = idx % nativeTables[i].tableDimensions[j];
+            idx = idx / nativeTables[i].tableDimensions[j];
+          }
+          int eventIndex = keys[0];
+          byte qual = (byte)keys[2];
 
-  //        if (i == 0) { // Qual table
-  //          table.put(new RecalDatum(numOccur, numError, qual),
-  //                    keys[1], keys[2], eventIndex);
-  //        }
-  //        else { // optional tables
-  //          table.put(new RecalDatum(numOccur, numError, qual),
-  //                    keys[1], keys[2], keys[3], eventIndex);
-  //        }
-  //      }
-  //    }
-  //  }
-  //}
+          if (i == 0) { // Qual table
+            table.put(new RecalDatum(numOccur, numError, qual),
+                      keys[1], keys[2], eventIndex);
+          }
+          else { // optional tables
+            table.put(new RecalDatum(numOccur, numError, qual),
+                      keys[1], keys[2], keys[3], eventIndex);
+          }
+        }
+      }
+    }
+  }
 
   //public RecalDatumTable[] getTables() {
   //  return getTableNative();
@@ -950,7 +950,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       int refOffset,
       boolean[] skips);
 
-  //private native RecalDatumTable[] getTableNative();
+  private native RecalDatumTable[] getTableNative();
 
   private native void updateReadGroupCovariatesNative(ReadGroupCovariate cov);
 
