@@ -29,7 +29,8 @@ import org.broadinstitute.hellbender.utils.recalibration.covariates.StandardCova
 import java.io.Serializable;
 import java.util.Arrays;
 
-public final class BaseRecalibrationEngine implements Serializable {
+//public final class BaseRecalibrationEngine implements Serializable {
+public class BaseRecalibrationEngine implements Serializable {
     private static final long serialVersionUID = 1L;
 
     protected static final Logger logger = LogManager.getLogger(BaseRecalibrationEngine.class);
@@ -41,6 +42,10 @@ public final class BaseRecalibrationEngine implements Serializable {
      * The solution is to cache this array here.
      */
     private final EventType[] cachedEventTypes;
+
+    public BaseRecalibrationEngine() {
+
+    }
 
     /**
      * Reference window function for BQSR. For each read, returns an interval representing the span of

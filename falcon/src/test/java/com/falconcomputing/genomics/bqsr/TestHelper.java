@@ -1,12 +1,14 @@
 package com.falconcomputing.genomics.bqsr;
-
+/*
 import htsjdk.samtools.*;
 import htsjdk.samtools.reference.ReferenceSequenceFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.SAMSequenceRecord;
 
+
 //import org.broadinstitute.hellbender.engine.datasources.reference.*;
-import htsjdk.samtools.reference.*;
+import org.broadinstitute.hellbender.engine.ReferenceDataSource;
+//import htsjdk.samtools.reference.*;
 import org.broadinstitute.hellbender.utils.recalibration.*;
 import org.broadinstitute.hellbender.tools.walkers.bqsr.*;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
@@ -23,8 +25,11 @@ import java.nio.file.*;
 import java.util.*;
 import java.net.*;
 
+//
+import org.broadinstitute.hellbender.utils.recalibration.BaseRecalibrationEngine;
 
-public class TestHelper extends BaseRecalibrator {
+
+public class TestHelper extends BaseRecalibrationEngine {
 
   final static int BUFFER = 10000;
   final static byte[] Xs = new byte[BUFFER];
@@ -50,11 +55,13 @@ public class TestHelper extends BaseRecalibrator {
     return refReader;
   }
 
-  public int[] falconCalculateIsSNP(final GATKSAMRecord read, final ReferenceContext ref, final GATKSAMRecord org_read) {
+  //public int[] falconCalculateIsSNP(final GATKSAMRecord read, final ReferenceContext ref, final GATKSAMRecord org_read) {
+  public int[] falconCalculateIsSNP(final SAMRecord read, final ReferenceContext ref, final SAMRecord org_read) {
     return calculateIsSNP(read, ref, org_read);
   }
 
-  public int[] falconCalculateIsIndel(final GATKSAMRecord read, EventType event) {
+  //public int[] falconCalculateIsIndel(final GATKSAMRecord read, EventType event) {
+  public int[] falconCalculateIsIndel(final SAMRecord read, EventType event) {
     return calculateIsIndel(read, event);
   }
 
@@ -66,56 +73,60 @@ public class TestHelper extends BaseRecalibrator {
     return calculateFractionalErrorArray(errorArray, baqArray);
   }
 
-  public byte[] falconFlatBAQArray(final GATKSAMRecord read) {
+  //public byte[] falconFlatBAQArray(final GATKSAMRecord read) {
+  public byte[] falconFlatBAQArray(final SAMRecord read) {
     return flatBAQArray(read);
   }
 
-  public byte[] falconCalculateBAQArray(final GATKSAMRecord read) {
+  //public byte[] falconCalculateBAQArray(final GATKSAMRecord read) {
+  public byte[] falconCalculateBAQArray(final SAMRecord read) {
       baq.baqRead(read, refReader, BAQ.CalculationMode.RECALCULATE, BAQ.QualityMode.ADD_TAG);
       return BAQ.getBAQTag(read);
   }
 
-  private byte[] getReferenceBases(GenomeLoc genomeLoc) {
-    SAMSequenceRecord sequenceInfo = refReader.getSequenceDictionary().getSequence(genomeLoc.getContig());
+  //private byte[] getReferenceBases(GenomeLoc genomeLoc) {
+  //  SAMSequenceRecord sequenceInfo = refReader.getSequenceDictionary().getSequence(genomeLoc.getContig());
 
-    long start = genomeLoc.getStart();
-    long stop = Math.min( genomeLoc.getStop(), sequenceInfo.getSequenceLength() );
+  //  long start = genomeLoc.getStart();
+  //  long stop = Math.min( genomeLoc.getStop(), sequenceInfo.getSequenceLength() );
 
-    // Read with no aligned bases?  Return an empty array.
-    if(stop - start + 1 == 0)
-    return new byte[0];
+  //  // Read with no aligned bases?  Return an empty array.
+  //  if(stop - start + 1 == 0)
+  //  return new byte[0];
 
-    ReferenceSequence subsequence = refReader.getSubsequenceAt(genomeLoc.getContig(), start, stop);
+  //  ReferenceSequence subsequence = refReader.getSubsequenceAt(genomeLoc.getContig(), start, stop);
 
-    int overhang = (int)(genomeLoc.getStop() - stop);
-    if ( overhang > 0 ) {
-      if ( overhang > BUFFER ) // todo -- this is a bit dangerous
-      throw new ReviewedGATKException("Insufficient buffer size for Xs overhanging genome -- expand BUFFER");
-      byte[] all = new byte[subsequence.getBases().length + overhang];
-      System.arraycopy(subsequence.getBases(), 0, all, 0, subsequence.getBases().length);
-      System.arraycopy(Xs, 0, all, subsequence.getBases().length, overhang);
-      return all;
-    } else {
-      // fast path
-      return subsequence.getBases();
-    }
-  }
+  //  int overhang = (int)(genomeLoc.getStop() - stop);
+  //  if ( overhang > 0 ) {
+  //    if ( overhang > BUFFER ) // todo -- this is a bit dangerous
+  //    throw new GATKException("Insufficient buffer size for Xs overhanging genome -- expand BUFFER");
+  //    byte[] all = new byte[subsequence.getBases().length + overhang];
+  //    System.arraycopy(subsequence.getBases(), 0, all, 0, subsequence.getBases().length);
+  //    System.arraycopy(Xs, 0, all, subsequence.getBases().length, overhang);
+  //    return all;
+  //  } else {
+  //    // fast path
+  //    return subsequence.getBases();
+  //  }
+  //}
 
-  private class Provider implements ReferenceContext.ReferenceContextRefProvider {
-    GenomeLoc loc;
-    public Provider(GenomeLoc loc) {
-      this.loc = loc;
-    }
-    public byte[] getBases() {
-      return getReferenceBases(loc);
-    }
-  }
+  //private class Provider implements ReferenceContext.ReferenceContextRefProvider {
+  //  GenomeLoc loc;
+  //  public Provider(GenomeLoc loc) {
+  //    this.loc = loc;
+  //  }
+  //  public byte[] getBases() {
+  //    return getReferenceBases(loc);
+  //  }
+  //}
 
-  public ReferenceContext getRefContext(GATKSAMRecord read) {
-    final GenomeLoc loc = glocParser.createGenomeLoc(read);
-    return new ReferenceContext(glocParser, loc, loc, new Provider(loc));
-  }
+  ////public ReferenceContext getRefContext(GATKSAMRecord read) {
+  //public ReferenceContext getRefContext(SAMRecord read) {
+  //  final GenomeLoc loc = glocParser.createGenomeLoc(read);
+  //  return new ReferenceContext(glocParser, loc, loc, new Provider(loc));
+  //}
 
 
 }
 
+*/
