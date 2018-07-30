@@ -43,9 +43,9 @@ public class BaseRecalibrationEngine implements Serializable {
      */
     private final EventType[] cachedEventTypes;
 
-    public BaseRecalibrationEngine() {
+    //public BaseRecalibrationEngine() {
 
-    }
+    //}
 
     /**
      * Reference window function for BQSR. For each read, returns an interval representing the span of

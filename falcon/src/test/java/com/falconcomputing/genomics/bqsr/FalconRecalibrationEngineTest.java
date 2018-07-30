@@ -729,7 +729,8 @@ public class FalconRecalibrationEngineTest {
   */
   @BeforeMethod
   public void setUp() {
-    engine = new FalconRecalibrationEngine(RAC, helper.getRefReader());
+    //engine = new FalconRecalibrationEngine(RAC, helper.getRefReader());
+    engine = new FalconRecalibrationEngine(RAC, null);
     final boolean isLoaded = engine.load(null);
     Assert.assertTrue(isLoaded);
   }
