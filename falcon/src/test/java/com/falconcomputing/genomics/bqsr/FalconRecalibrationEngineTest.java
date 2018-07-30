@@ -152,15 +152,18 @@ public class FalconRecalibrationEngineTest {
   public void TestLicense() {
     ;
   }
-  /*
+
   @Test(enabled = true, groups = {"bqsr"})
   public void TestBasicInterface() {
 
-    final Covariate[] covariates = getCovariates();
+    //final Covariate[] covariates = getCovariates();
+    final StandardCovariateList covariates = getCovariates();
     final int numReadGroups = 2;
-    int numCovariates = covariates.length;
+    //int numCovariates = covariates.length;
+    int numCovariates = covariates.size();
     int numEvents = EventType.values().length;
-    int qualLength = covariates[1].maximumKeyValue()+1;
+    //int qualLength = covariates[1].maximumKeyValue()+1;
+    int qualLength = covariates.get(1).maximumKeyValue()+1;
 
     // Initialize the table
     try {
@@ -176,7 +179,8 @@ public class FalconRecalibrationEngineTest {
 
     // Test the dimensions of the table to make sure the interface is correct
     for (int i = 1; i < numCovariates; i++) { // skip the first table
-      int covLength = covariates[i].maximumKeyValue()+1;
+      //int covLength = covariates[i].maximumKeyValue()+1;
+      int covLength = covariates.get(1).maximumKeyValue()+1;
       int expectedTableSize = numReadGroups*numEvents;
       expectedTableSize = expectedTableSize*qualLength;
       if (i > 1)
@@ -200,7 +204,7 @@ public class FalconRecalibrationEngineTest {
       }
     }
   }
-
+  /*
   @Test(enabled = true, groups = {"bqsr"})
   public void TestCycleCovariatesOnSynthesizedData() {
 
@@ -729,6 +733,7 @@ public class FalconRecalibrationEngineTest {
   */
   @BeforeMethod
   public void setUp() {
+      //TODO
     //engine = new FalconRecalibrationEngine(RAC, helper.getRefReader());
     engine = new FalconRecalibrationEngine(RAC, null);
     final boolean isLoaded = engine.load(null);
@@ -740,7 +745,7 @@ public class FalconRecalibrationEngineTest {
     engine.finalizeData();
     engine = null;
   }
-  /*
+/*
   private final Covariate[] getCovariates() {
     Pair<ArrayList<Covariate>, ArrayList<Covariate>> all_covariates = RecalUtils.initializeCovariates(RAC);
     ArrayList<Covariate> requiredCovariates = all_covariates.getFirst();
@@ -759,7 +764,12 @@ public class FalconRecalibrationEngineTest {
     }
     return covariates;
   }
-
+  */
+  private final StandardCovariateList getCovariates() {
+      //TODO: second argument needs to be changed
+    return new StandardCovariateList(RAC, Collections.singletonList("readGroup"));
+  }
+  /*
   private final RecalibrationReport getRecalReport() {
     return new RecalibrationReport(grpPath.toFile());
   }
