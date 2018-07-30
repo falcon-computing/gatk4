@@ -180,7 +180,7 @@ public class FalconRecalibrationEngineTest {
     // Test the dimensions of the table to make sure the interface is correct
     for (int i = 1; i < numCovariates; i++) { // skip the first table
       //int covLength = covariates[i].maximumKeyValue()+1;
-      int covLength = covariates.get(1).maximumKeyValue()+1;
+      int covLength = covariates.get(i).maximumKeyValue()+1;
       int expectedTableSize = numReadGroups*numEvents;
       expectedTableSize = expectedTableSize*qualLength;
       if (i > 1)
