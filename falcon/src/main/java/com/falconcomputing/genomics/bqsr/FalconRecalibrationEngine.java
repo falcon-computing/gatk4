@@ -37,6 +37,7 @@ import htsjdk.samtools.SAMReadGroupRecord;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
 import org.broadinstitute.hellbender.utils.SequencerFlowClass;
 import org.broadinstitute.hellbender.utils.read.SAMRecordToGATKReadAdapter;
+import htsjdk.samtools.SAMTag;
 
 import java.io.PrintStream;
 import java.io.File;
@@ -221,22 +222,29 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   // This function is for unit testing only
 
   //protected int[][][] computeCycleCovariates(final GATKSAMRecord read)
-  protected int[][][] computeCycleCovariates(final SAMRecord read)
+  //protected int[][][] computeCycleCovariates(final SAMRecord read)
+  protected int[][][] computeCycleCovariates(final GATKRead read)
     throws AccelerationException {
 
-    int readLength = read.getReadBases().length;
-    boolean isNegativeStrand = read.getReadNegativeStrandFlag();
-    boolean isReadPaired = read.getReadPairedFlag();
+    //int readLength = read.getReadBases().length;
+    int readLength = read.getBases().length;
+    //boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    //boolean isReadPaired = read.getReadPairedFlag();
+    boolean isNegativeStrand = read.isReverseStrand();
+    boolean isReadPaired = read.isPaired();
     boolean isSecondOfPair;
     try {
-      isSecondOfPair = read.getSecondOfPairFlag();
+      //isSecondOfPair = read.getSecondOfPairFlag();
+      isSecondOfPair = read.isSecondOfPair();
     }
     catch (java.lang.IllegalStateException e) {
       isSecondOfPair = false;
     }
     //NGSPlatform ngsPlatform = read.getNGSPlatform();
-    final SAMReadGroupRecord rg = read.getReadGroup();
-    NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
+    //final SAMReadGroupRecord rg = read.getReadGroup();
+    final String rg = read.getReadGroup();
+    //NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
+    NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);
     int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
     final int[] keys = computeCycleCovariatesNative(readLength, platformType,
@@ -255,21 +263,31 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   }
 
   // This function is for unit testing only
-  protected int[] computeCovariates(final SAMRecord read) {
+  //protected int[] computeCovariates(final SAMRecord read) {
+  protected int[] computeCovariates(final GATKRead read) {
 
-    final byte[] bases = read.getReadBases();
+    //final byte[] bases = read.getReadBases();
+    final byte[] bases = read.getBases();
     final byte[] baseQuals = read.getBaseQualities();
     //@@peipei
 
-    final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(new SAMRecordToGATKReadAdapter(read));
-    final byte[] baseDeletionQuals = ReadUtils.getBaseDeletionQualities(new SAMRecordToGATKReadAdapter(read));
+    //final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(new SAMRecordToGATKReadAdapter(read));
+    //final byte[] baseDeletionQuals = ReadUtils.getBaseDeletionQualities(new SAMRecordToGATKReadAdapter(read));
+    final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(read);
+    final byte[] baseDeletionQuals = ReadUtils.getBaseDeletionQualities(read);
 
-    final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
-    final boolean isReadPaired = read.getReadPairedFlag();
-    final boolean isSecondOfPair = read.getSecondOfPairFlag();
 
-    final SAMReadGroupRecord rg = read.getReadGroup();
-    final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
+    //final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    //final boolean isReadPaired = read.getReadPairedFlag();
+    //final boolean isSecondOfPair = read.getSecondOfPairFlag();
+    final boolean isNegativeStrand = read.isReverseStrand();
+    final boolean isReadPaired = read.isPaired();
+    final boolean isSecondOfPair = read.isSecondOfPair();
+
+    //final SAMReadGroupRecord rg = read.getReadGroup();
+    //final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
+    final String rg = read.getReadGroup();
+    final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);
     final int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
     String readGroupId;
@@ -277,8 +295,10 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     //  readGroupId = FORCE_READGROUP;
     //}
 
-    final String platformUnit = rg.getPlatformUnit();
-    readGroupId = platformUnit == null ? rg.getId() : platformUnit;
+    //final String platformUnit = rg.getPlatformUnit();
+    final String platformUnit = read.getAttributeAsString(SAMTag.PU.name());
+    //readGroupId = platformUnit == null ? rg.getId() : platformUnit;
+    readGroupId = platformUnit == null ? rg : platformUnit;
 
     final int[] keys = computeCovariatesNative(bases,
             baseQuals, baseInsertionQuals, baseDeletionQuals,

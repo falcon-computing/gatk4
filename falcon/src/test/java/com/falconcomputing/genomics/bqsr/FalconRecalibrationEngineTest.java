@@ -258,12 +258,13 @@ public class FalconRecalibrationEngineTest {
     // set read group to test unsupported platform
 
     //final GATKSAMReadGroupRecord rg = new GATKSAMReadGroupRecord("@RG\tID:test\tSM:test\tPL:bgiseq");
+    //read.setReadGroup(rg);
     final SAMReadGroupRecord rg = new SAMReadGroupRecord("@RG\tID:test\tSM:test\tPL:bgiseq");
     togatkread.setReadGroup(rg.getId());
 
     try {
-      //final int[][][] falcon_keys = engine.computeCycleCovariates(read);
-      final int[][][] falcon_keys = engine.computeCycleCovariates(togatkread.getEncapsulatedSamRecord());
+      final int[][][] falcon_keys = engine.computeCycleCovariates(togatkread);
+      //final int[][][] falcon_keys = engine.computeCycleCovariates(togatkread.getEncapsulatedSamRecord());
     }
     catch (AccelerationException e) {
       logger.info("caught exception for unsupported platform");
