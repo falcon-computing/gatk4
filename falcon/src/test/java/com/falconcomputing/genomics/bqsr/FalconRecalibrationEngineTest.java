@@ -263,7 +263,7 @@ public class FalconRecalibrationEngineTest {
 
     try {
       //final int[][][] falcon_keys = engine.computeCycleCovariates(read);
-      final int[][][] falcon_keys = engine.computeCycleCovariates(((SAMRecordToGATKReadAdapter)togatkread).getEncapsulatedSamRecord());
+      final int[][][] falcon_keys = engine.computeCycleCovariates(togatkread.getEncapsulatedSamRecord());
     }
     catch (AccelerationException e) {
       logger.info("caught exception for unsupported platform");
