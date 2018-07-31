@@ -274,6 +274,48 @@ public class FalconRecalibrationEngineTest {
   }
 
 
+  //@Test(enabled = true, groups = {"bqsr"})
+  //public void TestCycleCovariates() {
+  //  //final Covariate[] covariates = getCovariates();
+  //  //final  StandardCovariateList covariates = getCovariates();
+  //  final SamReader reader = getInputBamRecords();
+  //  final SAMFileHeader header = reader.getFileHeader();
+  //  final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
+  //  final int numReadGroups = header.getReadGroups().size();
+  //  try {
+  //    engine.init(covariates, numReadGroups);
+  //  }
+  //  catch (AccelerationException e) {
+  //    logger.error("exception caught in init(): "+ e.getMessage());
+  //    return;
+  //  }
+
+  //  for (SAMRecord record : reader) {
+  //    //final GATKSAMRecord read = new GATKSAMRecord(record);
+  //    final GATKRead read = new SAMRecordToGATKReadAdapter(record);
+  //    final ReadCovariates cov = RecalUtils.computeCovariates(read, covariates);
+  //    try {
+  //      final int[][][] falcon_keys = engine.computeCycleCovariates(read);
+  //      final int contextCovIdx = 3;
+
+  //      for (EventType event : EventType.values()) {
+  //        //System.out.println(Arrays.toString(falcon_keys[event.ordinal()]));
+  //        final int[][] gatk_keys = cov.getKeySet(event);
+  //        //for (int i = 0; i < read.getReadBases().length; i++) {
+  //        for (int i = 0; i < read.getBases().length; i++) {
+  //          //System.out.println(Arrays.toString(gatk_keys[i]));
+  //          Assert.assertEquals(
+  //                  falcon_keys[event.ordinal()][i][contextCovIdx],
+  //                  gatk_keys[i][contextCovIdx]);
+  //        }
+  //      }
+  //    }
+  //    catch (AccelerationException e) {
+  //      Assert.fail("should not caught exception here: " + e.getMessage());
+  //    }
+  //  }
+  //}
+
   @Test(enabled = true, groups = {"bqsr"})
   public void TestCycleCovariates() {
     //final Covariate[] covariates = getCovariates();
@@ -289,11 +331,11 @@ public class FalconRecalibrationEngineTest {
       logger.error("exception caught in init(): "+ e.getMessage());
       return;
     }
-
+    final CovariateKeyCache keyCache= new CovariateKeyCache();
     for (SAMRecord record : reader) {
       //final GATKSAMRecord read = new GATKSAMRecord(record);
       final GATKRead read = new SAMRecordToGATKReadAdapter(record);
-      final ReadCovariates cov = RecalUtils.computeCovariates(read, covariates);
+      final ReadCovariates cov = RecalUtils.computeCovariates(read, header, covariates, true, keyCache);
       try {
         final int[][][] falcon_keys = engine.computeCycleCovariates(read);
         final int contextCovIdx = 3;
@@ -315,6 +357,7 @@ public class FalconRecalibrationEngineTest {
       }
     }
   }
+
   /*
   @Test(enabled = true, groups = {"bqsr"})
   public void TestContextCovariates() {
