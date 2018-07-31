@@ -273,12 +273,14 @@ public class FalconRecalibrationEngineTest {
     Assert.fail("should have caught exception");
   }
 
-  /*
+
   @Test(enabled = true, groups = {"bqsr"})
   public void TestCycleCovariates() {
-    final Covariate[] covariates = getCovariates();
+    //final Covariate[] covariates = getCovariates();
+    //final  StandardCovariateList covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
+    final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
     final int numReadGroups = header.getReadGroups().size();
     try {
       engine.init(covariates, numReadGroups);
@@ -289,7 +291,8 @@ public class FalconRecalibrationEngineTest {
     }
 
     for (SAMRecord record : reader) {
-      final GATKSAMRecord read = new GATKSAMRecord(record);
+      //final GATKSAMRecord read = new GATKSAMRecord(record);
+      final GATKRead read = new SAMRecordToGATKReadAdapter(record);
       final ReadCovariates cov = RecalUtils.computeCovariates(read, covariates);
       try {
         final int[][][] falcon_keys = engine.computeCycleCovariates(read);
@@ -298,7 +301,8 @@ public class FalconRecalibrationEngineTest {
         for (EventType event : EventType.values()) {
           //System.out.println(Arrays.toString(falcon_keys[event.ordinal()]));
           final int[][] gatk_keys = cov.getKeySet(event);
-          for (int i = 0; i < read.getReadBases().length; i++) {
+          //for (int i = 0; i < read.getReadBases().length; i++) {
+            for (int i = 0; i < read.getBases().length; i++) {
             //System.out.println(Arrays.toString(gatk_keys[i]));
             Assert.assertEquals(
                   falcon_keys[event.ordinal()][i][contextCovIdx],
@@ -311,7 +315,7 @@ public class FalconRecalibrationEngineTest {
       }
     }
   }
-
+  /*
   @Test(enabled = true, groups = {"bqsr"})
   public void TestContextCovariates() {
     final Covariate[] covariates = getCovariates();
@@ -790,7 +794,7 @@ public class FalconRecalibrationEngineTest {
   private final RecalibrationReport getRecalReport() {
     return new RecalibrationReport(grpPath.toFile());
   }
-
+ */
   private final SamReader getInputBamRecords() {
 
     final SamReaderFactory readerFactory = SamReaderFactory.make();
@@ -800,7 +804,7 @@ public class FalconRecalibrationEngineTest {
 
     return reader;
   }
-
+/*
   private static void compareRecalibrationTables(
         final int numCovariates,
         final RecalibrationTables our_table,
