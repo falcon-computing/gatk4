@@ -17,6 +17,8 @@ import htsjdk.tribble.Feature;
 //import org.broadinstitute.gatk.engine.CommandLineGATK;
 import org.broadinstitute.hellbender.engine.filters.*;
 import org.broadinstitute.hellbender.transformers.ReadTransformer;
+import org.broadinstitute.hellbender.utils.iterators.SamReaderQueryingIterator;
+import org.broadinstitute.hellbender.utils.read.SAMRecordToGATKReadAdapter;
 import org.broadinstitute.hellbender.utils.recalibration.*;
 import org.broadinstitute.hellbender.utils.recalibration.covariates.*;
 
@@ -77,6 +79,10 @@ import org.broadinstitute.hellbender.utils.QualityUtils;
 
 //import org.broadinstitute.gatk.utils.sam.*;
 
+import org.broadinstitute.hellbender.utils.read.ArtificialReadUtils;
+import org.broadinstitute.hellbender.utils.read.GATKRead;
+import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.SAMReadGroupRecord;
 
 
 import org.testng.Assert;
@@ -204,7 +210,7 @@ public class FalconRecalibrationEngineTest {
       }
     }
   }
-  /*
+
   @Test(enabled = true, groups = {"bqsr"})
   public void TestCycleCovariatesOnSynthesizedData() {
 
@@ -239,16 +245,25 @@ public class FalconRecalibrationEngineTest {
     quals.put(EventType.BASE_INSERTION, insertionQuals);
     quals.put(EventType.BASE_DELETION, deletionQuals);
 
-    final GATKSAMRecord read = ArtificialSAMUtils.createArtificialRead(bases, baseQuals, readLength + "M");
-    read.setBaseQualities(insertionQuals, EventType.BASE_INSERTION);
-    read.setBaseQualities(deletionQuals, EventType.BASE_DELETION);
+    //final GATKSAMRecord read = ArtificialSAMUtils.createArtificialRead(bases, baseQuals, readLength + "M");
+
+    final SAMRecord read = ArtificialReadUtils.createArtificialSAMRecord(bases, baseQuals, readLength + "M");
+    //final GATKRead read = ArtificialReadUtils.createArtificialRead(bases, baseQuals, readLength + "M");
+    final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
+    //read.setBaseQualities(insertionQuals, EventType.BASE_INSERTION);
+    //read.setBaseQualities(deletionQuals, EventType.BASE_DELETION);
+    togatkread.setBaseQualities(insertionQuals);
+    togatkread.setBaseQualities(deletionQuals);
 
     // set read group to test unsupported platform
-    final GATKSAMReadGroupRecord rg = new GATKSAMReadGroupRecord("@RG\tID:test\tSM:test\tPL:bgiseq");
-    read.setReadGroup(rg);
+
+    //final GATKSAMReadGroupRecord rg = new GATKSAMReadGroupRecord("@RG\tID:test\tSM:test\tPL:bgiseq");
+    final SAMReadGroupRecord rg = new SAMReadGroupRecord("@RG\tID:test\tSM:test\tPL:bgiseq");
+    togatkread.setReadGroup(rg.getId());
 
     try {
-      final int[][][] falcon_keys = engine.computeCycleCovariates(read);
+      //final int[][][] falcon_keys = engine.computeCycleCovariates(read);
+      final int[][][] falcon_keys = engine.computeCycleCovariates(((SAMRecordToGATKReadAdapter)togatkread).getEncapsulatedSamRecord());
     }
     catch (AccelerationException e) {
       logger.info("caught exception for unsupported platform");
@@ -257,6 +272,7 @@ public class FalconRecalibrationEngineTest {
     Assert.fail("should have caught exception");
   }
 
+  /*
   @Test(enabled = true, groups = {"bqsr"})
   public void TestCycleCovariates() {
     final Covariate[] covariates = getCovariates();
