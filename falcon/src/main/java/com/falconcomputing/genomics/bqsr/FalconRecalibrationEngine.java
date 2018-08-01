@@ -45,6 +45,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.lang.Exception;
+import htsjdk.samtools.SAMFileHeader;
 
 public class FalconRecalibrationEngine implements NativeLibrary {
   private final static Logger logger = Logger.getLogger(FalconRecalibrationEngine.class);
@@ -220,11 +221,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   }
 
   // This function is for unit testing only
-
-  //protected int[][][] computeCycleCovariates(final GATKSAMRecord read)
-  //protected int[][][] computeCycleCovariates(final SAMRecord read)
   protected int[][][] computeCycleCovariates(final GATKRead read)
-    throws AccelerationException {
+          throws AccelerationException {
 
     //int readLength = read.getReadBases().length;
     int readLength = read.getBases().length;
@@ -247,17 +245,55 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);
     int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
-    System.out.println("@@@@@@@@@");
-    System.out.println("!!!!!!!!!!!!!!!");
-    //logger.info(read.getAttributeAsString(SAMTag.PL.name()));
-    System.out.println(NGSPlatform.isKnown(rg)?"true":"false");
-    //logger.info(ngsPlatform.knownPlatformsString());
-    System.out.println(rg);
-    //final List<String> names = new LinkedList<>();
-    //names.addAll(Arrays.asList(ngsPlatform.BAM_PL_NAMES));
-    System.out.println(ngsPlatform.getDefaultPlatform());
-    System.out.println(platformType);
-    System.out.println("!!!!!!!");
+
+    final int[] keys = computeCycleCovariatesNative(readLength, platformType,
+            isNegativeStrand, isReadPaired, isSecondOfPair);
+
+    int[][][] ret = new int[numEvents][readLength][numCovariates];
+    int idx = 0;
+    for (int i = 0; i < readLength; i++) {
+      for (int j = 0; j < numCovariates; j++) {
+        for (EventType event : EventType.values()) {
+          ret[event.ordinal()][i][j] = keys[idx++];
+        }
+      }
+    }
+    return ret;
+  }
+  //protected int[][][] computeCycleCovariates(final GATKSAMRecord read)
+  //protected int[][][] computeCycleCovariates(final SAMRecord read)
+  protected int[][][] computeCycleCovariates(final GATKRead read, final SAMFileHeader header)
+    throws AccelerationException {
+
+    //int readLength = read.getReadBases().length;
+    int readLength = read.getBases().length;
+    //boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    //boolean isReadPaired = read.getReadPairedFlag();
+    boolean isNegativeStrand = read.isReverseStrand();
+    boolean isReadPaired = read.isPaired();
+    boolean isSecondOfPair;
+    try {
+      //isSecondOfPair = read.getSecondOfPairFlag();
+      isSecondOfPair = read.isSecondOfPair();
+    }
+    catch (java.lang.IllegalStateException e) {
+      isSecondOfPair = false;
+    }
+    //NGSPlatform ngsPlatform = read.getNGSPlatform();
+    //final SAMReadGroupRecord rg = read.getReadGroup();
+    final String rg = header.getReadGroup(read.getReadGroup()).getSAMString();
+    //NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
+    NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);
+    int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
+
+
+   // System.out.println("@@@@@@@@@");
+   // System.out.println("!!!!!!!!!!!!!!!");
+   // System.out.println(NGSPlatform.isKnown(rg)?"true":"false");
+   // System.out.println(rg);
+   // System.out.println(ngsPlatform.getDefaultPlatform());
+   // System.out.println(platformType);
+   // System.out.println("!!!!!!!");
 
     final int[] keys = computeCycleCovariatesNative(readLength, platformType,
             isNegativeStrand, isReadPaired, isSecondOfPair);

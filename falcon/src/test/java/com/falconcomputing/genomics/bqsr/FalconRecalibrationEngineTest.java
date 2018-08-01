@@ -338,11 +338,11 @@ public class FalconRecalibrationEngineTest {
       //final GATKSAMRecord read = new GATKSAMRecord(record);
       final GATKRead read = new SAMRecordToGATKReadAdapter(record);
       //RecalUtils.parsePlatformForRead(read, header, RAC);
-      //final SAMReadGroupRecord rg = new SAMReadGroupRecord("@RG\tID:SEQ01\tLB:L1\tPL:illumina\tSM:SEQ01");
+      //new SAMReadGroupRecord("@RG\tID:SEQ01\tLB:L1\tPL:illumina\tSM:SEQ01");
       //read.setReadGroup(rg.getId());
       final ReadCovariates cov = RecalUtils.computeCovariates(read, header, covariates, true, keyCache);
       try {
-        final int[][][] falcon_keys = engine.computeCycleCovariates(read);
+        final int[][][] falcon_keys = engine.computeCycleCovariates(read, header);
         final int contextCovIdx = 3;
 
         for (EventType event : EventType.values()) {
