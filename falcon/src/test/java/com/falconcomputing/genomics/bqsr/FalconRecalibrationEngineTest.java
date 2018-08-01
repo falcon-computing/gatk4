@@ -421,7 +421,8 @@ public class FalconRecalibrationEngineTest {
       return;
     }
 
-    int numCovariates = covariates.length;
+    //int numCovariates = covariates.length;
+    int numCovariates = covariates.size();
 
     final CovariateKeyCache keyCache= new CovariateKeyCache();
     for (SAMRecord record : reader) {
