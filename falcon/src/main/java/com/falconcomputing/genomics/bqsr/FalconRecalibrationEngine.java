@@ -199,11 +199,14 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
   // This function is for unit testing only
   // protected int[][][] computeContextCovariates(final GATKSAMRecord read) {
-  protected int[][][] computeContextCovariates(final SAMRecord read) {
+  //protected int[][][] computeContextCovariates(final SAMRecord read) {
+  protected int[][][] computeContextCovariates(final GATKRead read) {
 
-    final byte[] bases = read.getReadBases();
+    //final byte[] bases = read.getReadBases();
+    final byte[] bases = read.getBases();
     final byte[] quals = read.getBaseQualities();
-    final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    //final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    final boolean isNegativeStrand = read.isReverseStrand();
 
     final int[] keys = computeContextCovariatesNative(bases, quals, isNegativeStrand);
 
@@ -283,9 +286,10 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     //final SAMReadGroupRecord rg = read.getReadGroup();
     //read.getReadGroup() is to get individual readID, like SEQ01,
     //header.getReadGroup(read.getReadGroup()))
-    //is to use SEQ01 in header, to find the corresponding ReadGroup,
-    // after getting readGroup, use .getSAMString() to get the whole line for that readGroup
+    //is to use SEQ01 in header, to find the corresponding SAMReadGroupRecord,
+    // after getting SAMReadGroupRecord, use .getSAMString() to get the whole line for that readGroup
     //@RG     ID:SEQ01        LB:L1   PL:illumina     SM:SEQ01
+    // for a SAMReadGroupRecord, getReadGroupId() or getId() gives SEQ01,not whole line
     final String rg = header.getReadGroup(read.getReadGroup()).getSAMString();
     //NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
     NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);

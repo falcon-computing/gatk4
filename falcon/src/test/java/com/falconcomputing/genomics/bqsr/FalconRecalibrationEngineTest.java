@@ -363,12 +363,13 @@ public class FalconRecalibrationEngineTest {
     }
   }
 
-  /*
+
   @Test(enabled = true, groups = {"bqsr"})
   public void TestContextCovariates() {
-    final Covariate[] covariates = getCovariates();
+    //final Covariate[] covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
+    final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
     final int numReadGroups = header.getReadGroups().size();
     logger.info(String.format("number of read groups: %d", numReadGroups));
 
@@ -380,9 +381,12 @@ public class FalconRecalibrationEngineTest {
       return;
     }
 
+    final CovariateKeyCache keyCache= new CovariateKeyCache();
     for (SAMRecord record : reader) {
-      final GATKSAMRecord read = new GATKSAMRecord(record);
-      final ReadCovariates cov = RecalUtils.computeCovariates(read, covariates);
+      //final GATKSAMRecord read = new GATKSAMRecord(record);
+      final GATKRead read = new SAMRecordToGATKReadAdapter(record);
+      final ReadCovariates cov = RecalUtils.computeCovariates(read, header, covariates, true, keyCache);
+      //final ReadCovariates cov = RecalUtils.computeCovariates(read, covariates);
 
       final int[][][] falcon_keys = engine.computeContextCovariates(read);
 
@@ -390,7 +394,8 @@ public class FalconRecalibrationEngineTest {
       for (EventType event : EventType.values()) {
         //System.out.println(Arrays.toString(falcon_keys[event.ordinal()]));
         final int[][] gatk_keys = cov.getKeySet(event);
-        for (int i = 0; i < read.getReadBases().length; i++) {
+        //for (int i = 0; i < read.getReadBases().length; i++) {
+        for (int i = 0; i < read.getBases().length; i++) {
           //System.out.println(Arrays.toString(gatk_keys[i]));
           Assert.assertEquals(
               falcon_keys[event.ordinal()][i][contextCovIdx],
@@ -399,7 +404,7 @@ public class FalconRecalibrationEngineTest {
       }
     }
   }
-
+/*
   @Test(enabled = true, groups = {"bqsr"})
   public void TestCovariates() {
     final Covariate[] covariates = getCovariates();
