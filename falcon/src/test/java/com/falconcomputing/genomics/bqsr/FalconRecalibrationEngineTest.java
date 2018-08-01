@@ -445,17 +445,21 @@ public class FalconRecalibrationEngineTest {
       }
     }
   }
-  /*
+
   @Test(enabled = true, groups = {"bqsr"})
   public void TestReadGroupCovariate() {
-    final Covariate[] covariates = getCovariates();
+    //final Covariate[] covariates = getCovariates();
     // create a separate covariate class to compare
-    final Covariate[] gatk_covariates = getCovariates();
-
+    //final Covariate[] gatk_covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
+
+    final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
+    final StandardCovariateList gatk_covariates = new StandardCovariateList(RAC, header);
+
     final int numReadGroups = header.getReadGroups().size();
-    final int numCovariates = covariates.length;
+    //final int numCovariates = covariates.length;
+    final int numCovariates = covariates.size();
 
     try {
       engine.init(covariates, numReadGroups);
@@ -466,16 +470,20 @@ public class FalconRecalibrationEngineTest {
     }
 
     int numRecords = 0;
+    final CovariateKeyCache keyCache= new CovariateKeyCache();
     for (SAMRecord record : reader) {
-      final GATKSAMRecord read = new GATKSAMRecord(record);
-      final ReadCovariates cov = RecalUtils.computeCovariates(read, gatk_covariates);
-      final int[] falcon_keys = engine.computeCovariates(read);
+      //final GATKSAMRecord read = new GATKSAMRecord(record);
+      final GATKRead read = new SAMRecordToGATKReadAdapter(record);
+      //final ReadCovariates cov = RecalUtils.computeCovariates(read, gatk_covariates);
+      final ReadCovariates cov = RecalUtils.computeCovariates(read, header, gatk_covariates, true, keyCache);
+      //final int[] falcon_keys = engine.computeCovariates(read);
+      final int[] falcon_keys = engine.computeCovariates(read, header);
     }
     engine.updateReadGroupCovariates();
 
     // check read group covariates
-    final ReadGroupCovariate falcon_rgCov = (ReadGroupCovariate)covariates[0];
-    final ReadGroupCovariate gatk_rgCov = (ReadGroupCovariate)gatk_covariates[0];
+    final ReadGroupCovariate falcon_rgCov = (ReadGroupCovariate)covariates.get(0);
+    final ReadGroupCovariate gatk_rgCov = (ReadGroupCovariate)gatk_covariates.get(0);
     Assert.assertEquals(gatk_rgCov.maximumKeyValue(), falcon_rgCov.maximumKeyValue());
 
     for (int i = 0; i < gatk_rgCov.maximumKeyValue(); i++) {
@@ -484,7 +492,7 @@ public class FalconRecalibrationEngineTest {
       Assert.assertEquals(gatk_rg, falcon_rg);
     }
   }
-
+  /*
   @Test(enabled = true, groups = {"bqsr"})
   public void TestBAQCalculation() {
     final Covariate[] covariates = getCovariates();
