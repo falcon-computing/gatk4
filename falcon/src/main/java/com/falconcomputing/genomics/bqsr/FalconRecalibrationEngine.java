@@ -321,7 +321,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
   // This function is for unit testing only
   //protected int[] computeCovariates(final SAMRecord read) {
-  protected int[] computeCovariates(final GATKRead read) {
+  protected int[] computeCovariates(final GATKRead read, final SAMFileHeader header) {
 
     //final byte[] bases = read.getReadBases();
     final byte[] bases = read.getBases();
@@ -343,8 +343,10 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
     //final SAMReadGroupRecord rg = read.getReadGroup();
     //final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
-    final String rg = read.getReadGroup();
-    final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);
+    //final String rg = read.getReadGroup();
+    //final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);
+    final String rg = header.getReadGroup(read.getReadGroup()).getSAMString();
+    NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);
     final int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
     String readGroupId;
@@ -355,7 +357,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     //final String platformUnit = rg.getPlatformUnit();
     final String platformUnit = read.getAttributeAsString(SAMTag.PU.name());
     //readGroupId = platformUnit == null ? rg.getId() : platformUnit;
-    readGroupId = platformUnit == null ? rg : platformUnit;
+    //readGroupId = platformUnit == null ? rg : platformUnit;
+    readGroupId = platformUnit == null ? header.getReadGroup(read.getReadGroup()).getId() : platformUnit;
 
     final int[] keys = computeCovariatesNative(bases,
             baseQuals, baseInsertionQuals, baseDeletionQuals,

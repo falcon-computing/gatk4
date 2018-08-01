@@ -404,12 +404,13 @@ public class FalconRecalibrationEngineTest {
       }
     }
   }
-/*
+
   @Test(enabled = true, groups = {"bqsr"})
   public void TestCovariates() {
-    final Covariate[] covariates = getCovariates();
+    //final Covariate[] covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
+    final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
     final int numReadGroups = header.getReadGroups().size();
 
     try {
@@ -422,11 +423,15 @@ public class FalconRecalibrationEngineTest {
 
     int numCovariates = covariates.length;
 
+    final CovariateKeyCache keyCache= new CovariateKeyCache();
     for (SAMRecord record : reader) {
-      final GATKSAMRecord read = new GATKSAMRecord(record);
-      final ReadCovariates cov = RecalUtils.computeCovariates(read, covariates);
-      final int[] falcon_keys = engine.computeCovariates(read);
-      int readLength = read.getReadBases().length;
+      //final GATKSAMRecord read = new GATKSAMRecord(record);
+      final GATKRead read = new SAMRecordToGATKReadAdapter(record);
+      //final ReadCovariates cov = RecalUtils.computeCovariates(read, covariates);
+      final ReadCovariates cov = RecalUtils.computeCovariates(read, header, covariates, true, keyCache);
+      final int[] falcon_keys = engine.computeCovariates(read, header);
+      //int readLength = read.getReadBases().length;
+      int readLength = read.getBases().length;
 
       int idx = 0;
       for (int i = 0; i < readLength; i++) {
@@ -439,7 +444,7 @@ public class FalconRecalibrationEngineTest {
       }
     }
   }
-
+  /*
   @Test(enabled = true, groups = {"bqsr"})
   public void TestReadGroupCovariate() {
     final Covariate[] covariates = getCovariates();
