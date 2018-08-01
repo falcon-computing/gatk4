@@ -259,8 +259,8 @@ public class FalconRecalibrationEngineTest {
 
     //final GATKSAMReadGroupRecord rg = new GATKSAMReadGroupRecord("@RG\tID:test\tSM:test\tPL:bgiseq");
     //read.setReadGroup(rg);
-    //final SAMReadGroupRecord rg = new SAMReadGroupRecord("@RG\tID:test\tSM:test\tPL:bgiseq");
-    final SAMReadGroupRecord rg = new SAMReadGroupRecord("@RG\tID:test\tSM:test\tPL:ILLUMINA");
+    final SAMReadGroupRecord rg = new SAMReadGroupRecord("@RG\tID:test\tSM:test\tPL:bgiseq");
+    //final SAMReadGroupRecord rg = new SAMReadGroupRecord("@RG\tID:test\tSM:test\tPL:ILLUMINA");
     togatkread.setReadGroup(rg.getId());
 
     try {
