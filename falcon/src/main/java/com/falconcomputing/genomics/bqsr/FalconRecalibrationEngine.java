@@ -355,9 +355,9 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     //}
 
     //final String platformUnit = rg.getPlatformUnit();
-    final String platformUnit = read.getAttributeAsString(SAMTag.PU.name());
+    //final String platformUnit = read.getAttributeAsString(SAMTag.PU.name());
+    final String platformUnit = header.getReadGroup(read.getReadGroup()).getPlatformUnit();
     //readGroupId = platformUnit == null ? rg.getId() : platformUnit;
-    //readGroupId = platformUnit == null ? rg : platformUnit;
     readGroupId = platformUnit == null ? header.getReadGroup(read.getReadGroup()).getId() : platformUnit;
 
     final int[] keys = computeCovariatesNative(bases,
