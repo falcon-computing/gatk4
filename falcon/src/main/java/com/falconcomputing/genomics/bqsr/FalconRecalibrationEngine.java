@@ -281,6 +281,11 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     }
     //NGSPlatform ngsPlatform = read.getNGSPlatform();
     //final SAMReadGroupRecord rg = read.getReadGroup();
+    //read.getReadGroup() is to get individual readID, like SEQ01,
+    //header.getReadGroup(read.getReadGroup()))
+    //is to use SEQ01 in header, to find the corresponding ReadGroup,
+    // after getting readGroup, use .getSAMString() to get the whole line for that readGroup
+    //@RG     ID:SEQ01        LB:L1   PL:illumina     SM:SEQ01
     final String rg = header.getReadGroup(read.getReadGroup()).getSAMString();
     //NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
     NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);
