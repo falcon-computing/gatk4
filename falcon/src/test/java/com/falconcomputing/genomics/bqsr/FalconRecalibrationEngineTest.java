@@ -332,10 +332,12 @@ public class FalconRecalibrationEngineTest {
       logger.error("exception caught in init(): "+ e.getMessage());
       return;
     }
+
     final CovariateKeyCache keyCache= new CovariateKeyCache();
     for (SAMRecord record : reader) {
       //final GATKSAMRecord read = new GATKSAMRecord(record);
       final GATKRead read = new SAMRecordToGATKReadAdapter(record);
+      RecalUtils.parsePlatformForRead(read, header, RAC);
       final ReadCovariates cov = RecalUtils.computeCovariates(read, header, covariates, true, keyCache);
       try {
         final int[][][] falcon_keys = engine.computeCycleCovariates(read);
