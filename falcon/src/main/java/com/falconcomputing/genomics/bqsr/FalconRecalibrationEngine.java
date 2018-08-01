@@ -104,7 +104,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     }
     if (!loaded) {
       loaded = true;
-      //logger.info("Falcon Genomics Acceleration Library is loaded.");
+      logger.info("Falcon Genomics Acceleration Library is loaded.");
     }
     return true;
   }
@@ -246,6 +246,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     //NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
     NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);
     int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
+
+
 
     final int[] keys = computeCycleCovariatesNative(readLength, platformType,
             isNegativeStrand, isReadPaired, isSecondOfPair);
