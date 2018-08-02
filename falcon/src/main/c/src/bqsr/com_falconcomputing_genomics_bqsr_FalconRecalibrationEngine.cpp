@@ -7,6 +7,7 @@
 #include "MathUtils.h"
 #include "RecalibrationTable.h"
 #include "SimpleTimer.h"
+#include <iostream>
 
 int g_numReadGroups = 0;
 int g_numEvents = 0;
@@ -207,6 +208,16 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
   //env->ReleaseIntArrayElements(covariatesDimensions, dims, 0);
   if (qtable_size) env->ReleaseByteArrayElements(jquantizationTable, quantizationTable, 0);
   if (sqmap_size) env->ReleaseByteArrayElements(jstaticQuantizedMapping, staticQuantizedMapping, 0);
+}
+
+JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_initReadGroupNative(
+    JNIEnv *env, jobject,
+    jstring readGroupId){
+    char* cname;
+    cname = (*env)->GetStringUTFChars(env, readGroupId, NULL);
+    std::string str(cname);
+    std::cout << "in Native C: "<<str;
+
 }
 
 JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_setTableNative(

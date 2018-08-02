@@ -33,6 +33,11 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
 JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_setTableNative
   (JNIEnv *, jobject, jlong, jdouble, jdouble, jintArray, jint);
 
+
+//TODO: maually change header file
+JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_initReadGroupNative
+(JNIEnv *, jobject, jstring readGroupId);
+
 /*
  * Class:     com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine
  * Method:    computeContextCovariatesNative
