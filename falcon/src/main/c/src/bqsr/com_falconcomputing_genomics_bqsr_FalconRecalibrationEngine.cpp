@@ -216,7 +216,7 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
     const char* cname;
     cname = (env)-> GetStringUTFChars(readGroupId, 0);
     std::string str(cname);
-    std::cout << "in Native C"<< str<<std::endl;
+    //std::cout << "in Native C"<< str<<std::endl;
     cov->addReadGroup(str);
     env->ReleaseStringUTFChars(readGroupId, cname);
 
