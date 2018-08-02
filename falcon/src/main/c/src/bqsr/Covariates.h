@@ -29,6 +29,8 @@ class Covariates {
       const bool isReadPaired,
       const bool isSecondOfPair);
 
+    void Covariates::addReadGroup(const std::string readGroup);
+
     void computeReadGroupCovariates(int* keys,
       const int readLength,
       const std::string readGroup);

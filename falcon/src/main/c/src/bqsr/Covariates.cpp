@@ -3,6 +3,8 @@
 
 #include "Common.h"
 #include "Covariates.h"
+#include <iostream>
+#include <string>
 
 const int LENGTH_BITS = 4;
 const int LENGTH_MASK = 15;
@@ -200,6 +202,22 @@ void Covariates::initReadGroup(const std::string readGroup) {
 
   // record the idx for the string
   readGroupIdxTable.push_back(readGroup);
+}
+
+//added by Peipei in bqsr init table
+void Covariates::addReadGroup(const std::string readGroup){
+    int readGroupId;
+    if (readGroupTable.count(readGroup)){
+        readGroupId = readGroupTable[readGroup];
+    }
+    else{
+        std::cout<<"First time See: "<<readGroup<<" map to Id: "readGroupIdx<<std::endl;
+        readGroupTable[readGroup] = readGroupIdx;
+        readGroupId = readGroupIdx;
+        readGroupIdx++;
+        readGroupIdxTable.push_back(readGroup);
+
+    }
 }
 
 void Covariates::computeReadGroupCovariates(int* keys,

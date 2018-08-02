@@ -34,8 +34,8 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
   (JNIEnv *, jobject, jlong, jdouble, jdouble, jintArray, jint);
 
 
-//TODO: maually change header file
-JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_initReadGroupNative
+//TODO: maually change header file by Peipei
+JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_bqsrInitReadGroupNative
 (JNIEnv *, jobject, jstring readGroupId);
 
 /*

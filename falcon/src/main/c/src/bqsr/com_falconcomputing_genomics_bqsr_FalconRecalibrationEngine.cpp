@@ -210,13 +210,14 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
   if (sqmap_size) env->ReleaseByteArrayElements(jstaticQuantizedMapping, staticQuantizedMapping, 0);
 }
 
-JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_initReadGroupNative(
+JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_bqsrInitReadGroupNative(
     JNIEnv *env, jobject,
     jstring readGroupId){
-    char* cname;
+    const char* cname;
     cname = (env)-> GetStringUTFChars(readGroupId, 0);
     std::string str(cname);
-    std::cout << "in Native C: "<< str;
+    std::cout << "in Native C"<< str<<std::endl;
+    cov->addReadGroup(str);
     env->ReleaseStringUTFChars(readGroupId, cname);
 
 }

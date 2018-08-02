@@ -170,11 +170,12 @@ public class FalconRecalibrationEngine implements NativeLibrary {
             MAXIMUM_CYCLE_VALUE,
             CUSHION_FOR_INDEL);
 
+    //after initNative, call bqsrInitReadGroupNative for readGroupCovariate
     final List<String> allReadGroups = ReadGroupCovariate.getReadGroupIDs(header);
     allReadGroups.forEach(
             readGroupId -> {
               System.out.println(readGroupId);
-              //initReadGroupNative(readGroupId);
+              bqsrInitReadGroupNative(readGroupId);
             }
     );
 
@@ -973,7 +974,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     return bqTag;
   }
 
-  private native static void initReadGroupNative(
+  private native static void bqsrInitReadGroupNative(
           String readGroupId
   );
 
