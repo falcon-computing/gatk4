@@ -211,7 +211,7 @@ void Covariates::addReadGroup(const std::string readGroup){
         readGroupId = readGroupTable[readGroup];
     }
     else{
-        std::cout<<"First time See: "<<readGroup<<" map to Id: "<<readGroupIdx<<std::endl;
+        //std::cout<<"First time See: "<<readGroup<<" map to Id: "<<readGroupIdx<<std::endl;
         readGroupTable[readGroup] = readGroupIdx;
         readGroupId = readGroupIdx;
         readGroupIdx++;

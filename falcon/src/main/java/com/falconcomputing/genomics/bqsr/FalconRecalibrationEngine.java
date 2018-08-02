@@ -174,7 +174,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     final List<String> allReadGroups = ReadGroupCovariate.getReadGroupIDs(header);
     allReadGroups.forEach(
             readGroupId -> {
-              System.out.println(readGroupId);
+              //System.out.println(readGroupId);
               bqsrInitReadGroupNative(readGroupId);
             }
     );
