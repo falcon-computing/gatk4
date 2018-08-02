@@ -144,6 +144,50 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     logger.debug("Initialized FalconRecalibrationEngine");
   }
 
+  // This init() function is used for GATK BaseRecalibrator with header
+  public void init(final StandardCovariateList _covariates,
+                   //public void init(final Covariate[] _covariates,
+                   final int _numReadGroups, final SAMFileHeader header) throws AccelerationException {
+
+    this.covariates = _covariates;
+    this.numCovariates = covariates.size();
+    this.numReadGroups = _numReadGroups;
+    this.baq = new BAQ(BAQGOP); // setup the BAQ object with the provided gap open penalty
+
+    final int[] covariatesDimensions = new int[numCovariates];
+
+    for (int i = 0; i < covariates.size(); i++) {
+      covariatesDimensions[i] = covariates.get(i).maximumKeyValue() + 1;
+    }
+
+    // call native method to initialize the covariatesTable
+    // TODO: need to make sure thread-safety
+    initNative(numReadGroups, numEvents, numCovariates,
+            covariatesDimensions,
+            LOW_QUAL_TAIL,
+            MISMATCHES_CONTEXT_SIZE,
+            INDELS_CONTEXT_SIZE,
+            MAXIMUM_CYCLE_VALUE,
+            CUSHION_FOR_INDEL);
+
+    final List<String> allReadGroups = ReadGroupCovariate.getReadGroupIDs(header);
+    allReadGroups.forEach(
+            readGroupId -> {
+              System.out.println(readGroupId);
+              //initReadGroupNative(readGroupId);
+            }
+    );
+
+    recalTables = new RecalibrationTables(covariates, numReadGroups);
+
+    if (!initialized) {
+      initialized = true;
+    }
+    logger.debug("Initialized FalconRecalibrationEngine");
+  }
+
+
+
   // This init() function is used for GATK PrintReads
   public void init(final StandardCovariateList _covariates,
                    final RecalibrationTables _recalTables,
@@ -326,6 +370,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     //final byte[] bases = read.getReadBases();
     final byte[] bases = read.getBases();
     final byte[] baseQuals = read.getBaseQualities();
+
     //@@peipei
 
     //final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(new SAMRecordToGATKReadAdapter(read));
@@ -346,6 +391,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     //final String rg = read.getReadGroup();
     //final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);
     final String rg = header.getReadGroup(read.getReadGroup()).getSAMString();
+    // equivalent to
+    // final String rg = ReadUtils.getSAMReadGroupRecord(read,header).getSAMString();
     NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);
     final int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
@@ -925,6 +972,10 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     }
     return bqTag;
   }
+
+  private native static void initReadGroupNative(
+          String readGroupId
+  );
 
   private native static void initNative(
       int numReadGroups,

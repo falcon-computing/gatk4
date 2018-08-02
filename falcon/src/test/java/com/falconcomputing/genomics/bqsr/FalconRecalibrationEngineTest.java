@@ -414,7 +414,7 @@ public class FalconRecalibrationEngineTest {
     final int numReadGroups = header.getReadGroups().size();
 
     try {
-      engine.init(covariates, numReadGroups);
+      engine.init(covariates, numReadGroups, header);
     }
     catch (AccelerationException e) {
       logger.error("exception caught in init(): "+ e.getMessage());
