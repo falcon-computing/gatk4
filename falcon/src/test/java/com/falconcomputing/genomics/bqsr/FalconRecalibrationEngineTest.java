@@ -539,8 +539,8 @@ public class FalconRecalibrationEngineTest {
       }
       else {
         Assert.assertEquals(falcon_baqArray.length, gatk_baqArray.length);
-        System.out.println(Arrays.toString(falcon_baqArray));
-        System.out.println(Arrays.toString(gatk_baqArray));
+        //System.out.println(Arrays.toString(falcon_baqArray));
+        //System.out.println(Arrays.toString(gatk_baqArray));
         for (int i = 0; i < gatk_baqArray.length; i++) {
           Assert.assertEquals(falcon_baqArray[i], gatk_baqArray[i]);
         }
