@@ -106,7 +106,7 @@ public class FalconRecalibrationEngineTest {
   private final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
 
   //TODO
-  //private TestHelper helper;
+  private TestHelper helper;
 
   // this part is initialized every time we run a test
   private FalconRecalibrationEngine engine;
@@ -151,7 +151,10 @@ public class FalconRecalibrationEngineTest {
       return;
     }
     //TODO
-    //helper = new TestHelper(refPath.toFile());
+    final SamReader reader = getInputBamRecords();
+    final SAMFileHeader header = reader.getFileHeader();
+    //helper = new TestHelper(refPath.toFile(), RAC, header);
+    helper = new TestHelper(refPath, RAC, header);
   }
 
   @Test(enabled = true, groups = {"bqsr"})
@@ -492,17 +495,75 @@ public class FalconRecalibrationEngineTest {
       Assert.assertEquals(gatk_rg, falcon_rg);
     }
   }
+
+  @Test(enabled = true, groups = {"bqsr"})
+  public void TestBAQCalculation() {
+    //final Covariate[] covariates = getCovariates();
+    final SamReader reader = getInputBamRecords();
+    final SAMFileHeader header = reader.getFileHeader();
+    final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
+    final int numReadGroups = header.getReadGroups().size();
+    //final int numCovariates = covariates.length;
+    final int numCovariates = covariates.size();
+
+    try {
+      //engine.init(covariates, numReadGroups);
+      engine.init(covariates, numReadGroups, header);
+    }
+    catch (AccelerationException e) {
+      logger.error("exception caught in init(): "+ e.getMessage());
+      return;
+    }
+
+    //BaseRecalibrationEngine recalibrationEngine = new BaseRecalibrationEngine(covariates, numReadGroups, RAC.RECAL_TABLE_UPDATE_LOG, false);
+
+    int numRecords = 0;
+    for (SAMRecord record : reader) {
+      //if (numRecords > 1) break;
+      final GATKRead org_read = new SAMRecordToGATKReadAdapter(record);
+      final GATKRead read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
+      //final ReferenceContext ref = helper.getRefContext(org_read);
+
+      //final int[] isSNP = helper.falconCalculateIsSNP(read, ref, org_read);
+      //final int[] isInsertion = helper.falconCalculateIsIndel(read, EventType.BASE_INSERTION);
+      //final int[] isDeletion = helper.falconCalculateIsIndel(read, EventType.BASE_DELETION);
+      //final int nErrors = helper.falconNumEvents(isSNP, isInsertion, isDeletion);
+
+      //if (nErrors == 0) continue;
+
+      final byte[] gatk_baqArray = helper.falconCalculateBAQArray(read);
+      final byte[] falcon_baqArray = engine.calculateBAQArray(read, helper.getRefDataSource());
+
+      if (gatk_baqArray == null) {
+        Assert.assertEquals(falcon_baqArray, null);
+      }
+      else {
+        Assert.assertEquals(falcon_baqArray.length, gatk_baqArray.length);
+        System.out.println(Arrays.toString(falcon_baqArray));
+        System.out.println(Arrays.toString(gatk_baqArray));
+        for (int i = 0; i < gatk_baqArray.length; i++) {
+          Assert.assertEquals(falcon_baqArray[i], gatk_baqArray[i]);
+        }
+      }
+      //System.out.println(String.format("finish read %d", numRecords));
+      numRecords++;
+    }
+  }
+
   /*
   @Test(enabled = true, groups = {"bqsr"})
   public void TestBAQCalculation() {
-    final Covariate[] covariates = getCovariates();
+    //final Covariate[] covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
+    final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
     final int numReadGroups = header.getReadGroups().size();
-    final int numCovariates = covariates.length;
+    //final int numCovariates = covariates.length;
+    final int numCovariates = covariates.size();
 
     try {
-      engine.init(covariates, numReadGroups);
+      //engine.init(covariates, numReadGroups);
+      engine.init(covariates, numReadGroups, header);
     }
     catch (AccelerationException e) {
       logger.error("exception caught in init(): "+ e.getMessage());
@@ -543,6 +604,9 @@ public class FalconRecalibrationEngineTest {
       numRecords++;
     }
   }
+
+  */
+  /*
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestFractionalErrors() {
@@ -821,7 +885,7 @@ public class FalconRecalibrationEngineTest {
   */
   @BeforeMethod
   public void setUp() {
-    //TODO
+    //TODO FalconRecalibrationEngine second argument
     //engine = new FalconRecalibrationEngine(RAC, helper.getRefReader());
     engine = new FalconRecalibrationEngine(RAC, null);
     //engine = new FalconRecalibrationEngine(RAC, helper.getRefReader());

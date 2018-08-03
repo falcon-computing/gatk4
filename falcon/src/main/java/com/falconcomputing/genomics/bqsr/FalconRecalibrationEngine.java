@@ -19,6 +19,8 @@ import htsjdk.samtools.reference.ReferenceSequence;
 
 import org.apache.log4j.Logger;
 
+import org.broadinstitute.hellbender.engine.ReferenceDataSource;
+import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.recalibration.covariates.*;
@@ -118,6 +120,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     this.covariates = _covariates;
     this.numCovariates = covariates.size();
     this.numReadGroups = _numReadGroups;
+
     this.baq = new BAQ(BAQGOP); // setup the BAQ object with the provided gap open penalty
 
     final int[] covariatesDimensions = new int[numCovariates];
@@ -417,27 +420,31 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     return keys;
   }
 
-  public byte[] calculateBAQArray(final SAMRecord read) {
-    final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
-    if (baq.excludeReadFromBAQ(togatkread)) {
+  //public byte[] calculateBAQArray(final SAMRecord read) {
+  public byte[] calculateBAQArray(final GATKRead read, final ReferenceDataSource refDS) {
+    //final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
+    if (baq.excludeReadFromBAQ(read)) {
       // in this case, simply return the original tag
-      return BAQ.getBAQTag(togatkread);
+      return BAQ.getBAQTag(read);
     }
 
-    int offset = baq.getBandWidth() / 2;
-    long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
-    long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
-    long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
+    //int offset = baq.getBandWidth() / 2;
+    //long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
+    //long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
+    //long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
+    final SimpleInterval referenceWindow = BAQ.getReferenceWindowForRead(read, baq.getBandWidth());
 
-    if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
+    //if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
+    if (referenceWindow.getEnd() > refDS.getSequenceDictionary().getSequence(read.getContig()).getSequenceLength()){
       return null;
     }
     else {
-      ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
-
+      //ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
+      final ReferenceSequence refSeq = refDS.queryAndPrefetch(referenceWindow.getContig(), referenceWindow.getStart(), referenceWindow.getEnd());
       // preparing input arguments for native calls
       byte[] refBases = refSeq.getBases();
-      byte[] bases = read.getReadBases();
+      //byte[] bases = read.getReadBases();
+      byte[] bases = read.getBases();
       byte[] quals = read.getBaseQualities();      // in general we are overwriting quals, so just get a pointer to them
 
       // prepare cigar arrays
@@ -455,7 +462,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       byte[] bqTag = calculateBAQArrayNative(
           refBases, bases, quals,
           cigarOps, cigarLens,
-          (int)(start - readStart));
+          //(int)(start - readStart));
+          (int)(referenceWindow.getStart() - read.getStart()));
 
       //byte[] bqTag2 = calculateBAQArrayNative_mock(
       //    refBases, bases, quals,
@@ -463,9 +471,13 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       //    (int)(start - readStart));
 
       if (bqTag == null) {
-        if (read.getStringAttribute(BAQ_TAG) != null) {
+        final boolean readHasBAQTag = BAQ.hasBAQTag(read);
+        //if (read.getStringAttribute(BAQ_TAG) != null) {
           // clear the attribute
-          read.setAttribute(BAQ_TAG, null);
+          //read.setAttribute(BAQ_TAG, null);
+        //}
+        if(readHasBAQTag){
+          read.clearAttribute(BAQ_TAG);
         }
         return null;
       }
