@@ -91,6 +91,8 @@ public class TestHelper extends BaseRecalibrationEngine {
       baq.baqRead(read, refDataSource, BAQ.CalculationMode.RECALCULATE, BAQ.QualityMode.ADD_TAG);
       return BAQ.getBAQTag(read);
   }
+
+
 /*
   private byte[] getReferenceBases(GenomeLoc genomeLoc) {
     SAMSequenceRecord sequenceInfo = refReader.getSequenceDictionary().getSequence(genomeLoc.getContig());

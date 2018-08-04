@@ -372,7 +372,11 @@ public class BaseRecalibrationEngine implements Serializable {
      * @param isDel storage for deletion events (must be of length read.getBases().length and initialized to all 0's)
      * @return the total number of SNP and indel events
      */
-    protected static int calculateIsSNPOrIndel(final GATKRead read, final ReferenceDataSource ref, int[] snp, int[] isIns, int[] isDel) {
+    //TODO, should consider to change back to private
+
+
+    //protected static int calculateIsSNPOrIndel(final GATKRead read, final ReferenceDataSource ref, int[] snp, int[] isIns, int[] isDel) {
+    public static int calculateIsSNPOrIndel(final GATKRead read, final ReferenceDataSource ref, int[] snp, int[] isIns, int[] isDel) {
         final byte[] refBases = ref.queryAndPrefetch(read.getContig(), read.getStart(), read.getEnd()).getBases();
         int readPos = 0;
         int refPos = 0;

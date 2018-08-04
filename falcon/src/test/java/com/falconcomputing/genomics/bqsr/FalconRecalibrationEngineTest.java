@@ -523,13 +523,20 @@ public class FalconRecalibrationEngineTest {
       final GATKRead org_read = new SAMRecordToGATKReadAdapter(record);
       final GATKRead read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
       //final ReferenceContext ref = helper.getRefContext(org_read);
+      int[] isSNP = new int[read.getLength()];
+      int[] isInsertion = new int[isSNP.length];
+      int[] isDeletion = new int[isSNP.length];
+
+      BaseRecalibrationEngine br = new BaseRecalibrationEngine(RAC, header);
+
+      final int nErrors = BaseRecalibrationEngine.calculateIsSNPOrIndel(read, helper.getRefDataSource(), isSNP, isInsertion, isDeletion);
 
       //final int[] isSNP = helper.falconCalculateIsSNP(read, ref, org_read);
       //final int[] isInsertion = helper.falconCalculateIsIndel(read, EventType.BASE_INSERTION);
       //final int[] isDeletion = helper.falconCalculateIsIndel(read, EventType.BASE_DELETION);
       //final int nErrors = helper.falconNumEvents(isSNP, isInsertion, isDeletion);
 
-      //if (nErrors == 0) continue;
+      if (nErrors == 0) continue;
 
       final byte[] gatk_baqArray = helper.falconCalculateBAQArray(read);
       final byte[] falcon_baqArray = engine.calculateBAQArray(read, helper.getRefDataSource());
@@ -549,6 +556,78 @@ public class FalconRecalibrationEngineTest {
       numRecords++;
     }
   }
+
+/*
+  @Test(enabled = true, groups = {"bqsr"})
+  public void TestFractionalErrors() {
+    final Covariate[] covariates = getCovariates();
+    final SamReader reader = getInputBamRecords();
+    final SAMFileHeader header = reader.getFileHeader();
+    final int numReadGroups = header.getReadGroups().size();
+    final int numCovariates = covariates.length;
+
+    try {
+      engine.init(covariates, numReadGroups);
+    }
+    catch (AccelerationException e) {
+      logger.error("exception caught in init(): "+ e.getMessage());
+      return;
+    }
+
+    RecalibrationEngine recalibrationEngine = new RecalibrationEngine(covariates, numReadGroups, RAC.RECAL_TABLE_UPDATE_LOG, false);
+
+    int numRecords = 0;
+    for (SAMRecord record : reader) {
+      //if (numRecords > 1) break;
+      final GATKSAMRecord org_read = new GATKSAMRecord(record);
+      final GATKSAMRecord read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
+      final ReferenceContext ref = helper.getRefContext(org_read);
+
+      int readLength = read.getReadBases().length;
+
+      final int[] isSNP = helper.falconCalculateIsSNP(read, ref, org_read);
+      final int[] isInsertion = helper.falconCalculateIsIndel(read, EventType.BASE_INSERTION);
+      final int[] isDeletion = helper.falconCalculateIsIndel(read, EventType.BASE_DELETION);
+      final int nErrors = helper.falconNumEvents(isSNP, isInsertion, isDeletion);
+
+      final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
+
+      //logger.info("isSNP = " + Arrays.toString(isSNP));
+      //logger.info("isInsertion = " + Arrays.toString(isInsertion));
+      //logger.info("isDeletion = " + Arrays.toString(isDeletion));
+      //logger.info("nErrors = " + Integer.toString(nErrors));
+
+      final double[][] errors = engine.calculateFractionalErrorArray(read, org_read, ref);
+
+      if (baqArray == null) { // some reads just can't be BAQ'ed
+        Assert.assertEquals(null, errors);
+      }
+      else {
+        //logger.info("baqArray = " + Arrays.toString(baqArray));
+        //logger.info(String.format("read %d has %d errors, and baqArray is not null", numRecords, nErrors));
+
+        //final boolean[] skip = calculateSkipArray(read, metaDataTracker); // skip known sites of variation as well as low quality and non-regular bases
+        final double[] snpErrors = helper.falconCalculateFractionalErrorArray(isSNP, baqArray);
+        final double[] insertionErrors = helper.falconCalculateFractionalErrorArray(isInsertion, baqArray);
+        final double[] deletionErrors = helper.falconCalculateFractionalErrorArray(isDeletion, baqArray);
+
+        //logger.info("snpErrors = " + Arrays.toString(snpErrors));
+        //logger.info("insertionErrors = " + Arrays.toString(insertionErrors));
+        //logger.info("deletionErrors = " + Arrays.toString(deletionErrors));
+        Assert.assertNotNull(errors);
+
+        for (int i = 0; i < readLength; i++) {
+          Assert.assertEquals(snpErrors[i], errors[0][i]);
+          Assert.assertEquals(insertionErrors[i], errors[1][i]);
+          Assert.assertEquals(deletionErrors[i], errors[2][i]);
+        }
+      }
+
+      //System.out.println(String.format("finish read %d", numRecords));
+      numRecords++;
+    }
+  }
+  */
 
   /*
   @Test(enabled = true, groups = {"bqsr"})

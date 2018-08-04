@@ -459,11 +459,11 @@ public class FalconRecalibrationEngine implements NativeLibrary {
         idx++;
       }
 
-      System.out.println(Arrays.toString(refBases));
-      System.out.println(Arrays.toString(bases));
-      System.out.println(Arrays.toString(quals));
-      System.out.println(Arrays.toString(cigarOps));
-      System.out.println(Arrays.toString(cigarLens));
+      //System.out.println(Arrays.toString(refBases));
+      //System.out.println(Arrays.toString(bases));
+      //System.out.println(Arrays.toString(quals));
+      //System.out.println(Arrays.toString(cigarOps));
+      //System.out.println(Arrays.toString(cigarLens));
 
 
       byte[] bqTag = calculateBAQArrayNative(
