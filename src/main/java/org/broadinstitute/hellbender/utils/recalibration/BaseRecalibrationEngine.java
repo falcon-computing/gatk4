@@ -244,8 +244,10 @@ public class BaseRecalibrationEngine implements Serializable {
      * Update the recalibration statistics using the information in recalInfo
      * @param recalInfo data structure holding information about the recalibration values for a single read
      */
-    private void updateRecalTablesForRead( final ReadRecalibrationInfo recalInfo ) {
-        Utils.validate(!finalized, "FinalizeData() has already been called");
+    //private void updateRecalTablesForRead( final ReadRecalibrationInfo recalInfo ) {
+    public void updateRecalTablesForRead( final ReadRecalibrationInfo recalInfo ) {
+
+            Utils.validate(!finalized, "FinalizeData() has already been called");
 
         final GATKRead read = recalInfo.getRead();
         final ReadCovariates readCovariates = recalInfo.getCovariatesValues();

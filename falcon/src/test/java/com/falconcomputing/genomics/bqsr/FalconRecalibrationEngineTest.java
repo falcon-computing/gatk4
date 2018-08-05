@@ -642,6 +642,106 @@ public class FalconRecalibrationEngineTest {
     }
   }
 
+  @Test(enabled = true, groups = {"bqsr"})
+  public void TestTableUpdateWithRealData() {
+    //final Covariate[] covariates = getCovariates();
+    final SamReader reader = getInputBamRecords();
+    final SAMFileHeader header = reader.getFileHeader();
+    final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
+    final int numReadGroups = header.getReadGroups().size();
+    final int numCovariates = covariates.size();
+
+    try {
+      //engine.init(covariates, numReadGroups);
+      engine.init(covariates, numReadGroups, header);
+    }
+    catch (AccelerationException e) {
+      logger.error("exception caught in init(): "+ e.getMessage());
+      return;
+    }
+
+    //RecalibrationEngine recalibrationEngine = new RecalibrationEngine(covariates, numReadGroups, RAC.RECAL_TABLE_UPDATE_LOG, false);
+    BaseRecalibrationEngine recalibrationEngine = new BaseRecalibrationEngine(RAC, header);
+
+    int numRecords = 0;
+    for (SAMRecord record : reader) {
+      //final GATKSAMRecord org_read = new GATKSAMRecord(record);
+      //final GATKSAMRecord read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
+      final GATKRead org_read = new SAMRecordToGATKReadAdapter(record);
+      final GATKRead read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
+
+      //final ReferenceContext ref = helper.getRefContext(org_read);
+
+      //final int readLength = read.getReadBases().length;
+      final int readLength = read.getLength();
+      final boolean[] skip = new boolean[readLength];
+      Arrays.fill(skip, false);
+
+      // perform falcon table update
+      int ret = 0;
+      try {
+        //ret = engine.update(read, org_read, ref, skip);
+        ret = engine.update(read, org_read, helper.getRefDataSource(), header, skip);
+      }
+      catch (AccelerationException e) {
+        logger.error("exception caught in init(): "+ e.getMessage());
+        return;
+      }
+
+      //final int[] isSNP = helper.falconCalculateIsSNP(read, ref, org_read);
+      //final int[] isInsertion = helper.falconCalculateIsIndel(read, EventType.BASE_INSERTION);
+      //final int[] isDeletion = helper.falconCalculateIsIndel(read, EventType.BASE_DELETION);
+      //final int nErrors = helper.falconNumEvents(isSNP, isInsertion, isDeletion);
+      //final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
+      //int readLength = read.getLength();
+      int[] isSNP = new int[read.getLength()];
+      int[] isInsertion = new int[isSNP.length];
+      int[] isDeletion = new int[isSNP.length];
+      final int nErrors = BaseRecalibrationEngine.calculateIsSNPOrIndel(read, helper.getRefDataSource(), isSNP, isInsertion, isDeletion);
+      final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
+
+
+      if (baqArray != null) { // some reads just can't be BAQ'ed
+        //final boolean[] skip = calculateSkipArray(read, metaDataTracker); // skip known sites of variation as well as low quality and non-regular bases
+
+        final double[] snpErrors = helper.falconCalculateFractionalErrorArray(isSNP, baqArray);
+        final double[] insertionErrors = helper.falconCalculateFractionalErrorArray(isInsertion, baqArray);
+        final double[] deletionErrors = helper.falconCalculateFractionalErrorArray(isDeletion, baqArray);
+
+        //final ReadCovariates cov = RecalUtils.computeCovariates(read, covariates);
+        final CovariateKeyCache keyCache= new CovariateKeyCache();
+        final ReadCovariates cov = RecalUtils.computeCovariates(read, header, covariates, true, keyCache);
+
+        // aggregate all of the info into our info object, and update the data
+        final ReadRecalibrationInfo info = new ReadRecalibrationInfo(read, cov, skip, snpErrors, insertionErrors, deletionErrors);
+        //recalibrationEngine.updateDataForRead(info);
+        recalibrationEngine.updateRecalTablesForRead(info);
+      }
+      else {
+        Assert.assertEquals(ret, 0);
+      }
+      numRecords++;
+    }
+
+    // get table results
+    recalibrationEngine.finalizeData();
+
+    RecalibrationTables gatk_table = recalibrationEngine.getFinalRecalibrationTables();
+    RecalibrationTables our_table = engine.getFinalRecalibrationTables();
+
+    // compare all tables
+    for (int i = 0; i < numCovariates; i++) {
+      List<RecalDatum> gatk_table_contents = gatk_table.getTable(i).getAllValues();
+      List<RecalDatum> our_table_contents = our_table.getTable(i).getAllValues();
+      Assert.assertEquals(our_table_contents.size(), gatk_table_contents.size());
+      //System.out.println(String.format("%d: %d == %d", i, our_table_contents.size(), gatk_table_contents.size()));
+      for (int k = 0; k < gatk_table_contents.size(); k++) {
+        //System.out.println(String.format("[%d-O] %d == %d", k, our_table_contents.get(k).getNumObservations(), gatk_table_contents.get(k).getNumObservations()));
+        //System.out.println(String.format("[%d-M] %f == %f", k, our_table_contents.get(k).getNumMismatches(), gatk_table_contents.get(k).getNumMismatches()));
+        compareRecalDatum(our_table_contents.get(k), gatk_table_contents.get(k));
+      }
+    }
+  }
 
   /*
   @Test(enabled = true, groups = {"bqsr"})
@@ -1029,7 +1129,8 @@ public class FalconRecalibrationEngineTest {
 
     return reader;
   }
-/*
+
+  /*
   private static void compareRecalibrationTables(
         final int numCovariates,
         final RecalibrationTables our_table,
@@ -1047,7 +1148,7 @@ public class FalconRecalibrationEngineTest {
       }
     }
   }
-
+*/
   private static void compareRecalDatum(final RecalDatum r1, final RecalDatum r2) {
     Assert.assertEquals(r1.getNumObservations(), r2.getNumObservations());
     Assert.assertEquals(r1.getNumMismatches(), r2.getNumMismatches());
@@ -1055,5 +1156,5 @@ public class FalconRecalibrationEngineTest {
     Assert.assertEquals(r1.getEstimatedQReported(), r2.getEstimatedQReported());
     Assert.assertEquals(r1.getEmpiricalQuality(), r2.getEmpiricalQuality());
   }
-  */
+
 }

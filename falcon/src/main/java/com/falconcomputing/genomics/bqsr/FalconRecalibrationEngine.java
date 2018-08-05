@@ -615,9 +615,14 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
   // This function is used to update recalibration tables in
   // GATK BaseRecalibrator.map()
-  public int update(final SAMRecord read,
-                    final SAMRecord org_read,
-                    final ReferenceContext ref,
+  //public int update(final SAMRecord read,
+  //                  final SAMRecord org_read,
+  //                  final ReferenceContext ref,
+  //                  final boolean[] skips) throws AccelerationException
+  public int update(final GATKRead read,
+                    final GATKRead org_read,
+                    final ReferenceDataSource refDS,
+                    final SAMFileHeader header,
                     final boolean[] skips) throws AccelerationException
   {
     if (finalized) {
@@ -626,23 +631,25 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     else if (!initialized) {
       throw new GATKException("Covariate table already finalized");
     }
-    final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
+    //final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
     // put the check of baq.isExcludeFromBAQ() outside, since we need
     // to pass the read BAQ tag to native if it is available
-    final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(togatkread);
-    final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(togatkread) : null;
+    final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
+    final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
 
     // preparation for BAQ calculation
     int refOffset = 0;
     byte[] refForBAQ = null;
 
     if (!isExcludeFromBAQ) {
-      final int offset = baq.getBandWidth() / 2;
-      final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
-      final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
-      final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
-
-      if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
+      //final int offset = baq.getBandWidth() / 2;
+      //final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
+      //final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
+      //final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
+      final SimpleInterval referenceWindow = BAQ.getReferenceWindowForRead(read, baq.getBandWidth());
+      if (referenceWindow.getEnd() > refDS.getSequenceDictionary().getSequence(read.getContig()).getSequenceLength()){
+        int i;
+      //if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
         // meaning null baqArray
         //return 0;
         // Note: Here should not return, since if nErrors is zero BAQArray
@@ -651,28 +658,31 @@ public class FalconRecalibrationEngine implements NativeLibrary {
         ;
       }
       else {
-        refOffset = (int)(start - readStart);
+        //refOffset = (int)(start - readStart);
+        refOffset = (int)(referenceWindow.getStart() - read.getStart());
 
         // ref seq for baq calculation
-        ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
+        //ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
+        final ReferenceSequence refSeq = refDS.queryAndPrefetch(referenceWindow.getContig(), referenceWindow.getStart(), referenceWindow.getEnd());
         refForBAQ = refSeq.getBases();
       }
     }
 
     // ref seqs for SNP error calculation
-    final byte[] refBases = Arrays.copyOfRange(ref.getBases(),
-                        read.getAlignmentStart() - org_read.getAlignmentStart(),
-                        ref.getBases().length + read.getAlignmentEnd() - org_read.getAlignmentEnd());
+    //final byte[] refBases = Arrays.copyOfRange(ref.getBases(),
+    //                    read.getAlignmentStart() - org_read.getAlignmentStart(),
+    //                    ref.getBases().length + read.getAlignmentEnd() - org_read.getAlignmentEnd());
+    final byte[] refBases = refDS.queryAndPrefetch(read.getContig(), read.getStart(), read.getEnd()).getBases();
 
     // get inputs from read
-    final byte[] bases = read.getReadBases();
+    final byte[] bases = read.getBases();
     final byte[] baseQuals = read.getBaseQualities();
-    final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(togatkread);
-    final byte[] baseDeletionQuals = ReadUtils.getBaseDeletionQualities(togatkread);
+    final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(read);
+    final byte[] baseDeletionQuals = ReadUtils.getBaseDeletionQualities(read);
 
-    final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
-    final boolean isReadPaired = read.getReadPairedFlag();
-    final boolean isSecondOfPair = isReadPaired ? read.getSecondOfPairFlag() : false;
+    final boolean isNegativeStrand = read.isReverseStrand();
+    final boolean isReadPaired = read.isPaired();
+    final boolean isSecondOfPair = read.isSecondOfPair();
 
     // prepare cigar arrays
     final List<CigarElement> cigarElements = read.getCigar().getCigarElements();
@@ -686,8 +696,11 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       idx++;
     }
 
-    final SAMReadGroupRecord rg = read.getReadGroup();
-    final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
+    //final SAMReadGroupRecord rg = read.getReadGroup();
+    final String rg = header.getReadGroup(read.getReadGroup()).getSAMString();
+    //final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg.getPlatform());
+    final NGSPlatform ngsPlatform = NGSPlatform.fromReadGroupPL(rg);
+
     //final NGSPlatform ngsPlatform = read.getNGSPlatform();
     final int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
@@ -696,8 +709,11 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     //  readGroupId = FORCE_READGROUP;
     //}
     //final GATKSAMReadGroupRecord rg = read.getReadGroup();
-    final String platformUnit = rg.getPlatformUnit();
-    readGroupId = platformUnit == null ? rg.getId() : platformUnit;
+    //final String platformUnit = rg.getPlatformUnit();
+    //readGroupId = platformUnit == null ? rg.getId() : platformUnit;
+    final String platformUnit = header.getReadGroup(read.getReadGroup()).getPlatformUnit();
+    readGroupId = platformUnit == null ? header.getReadGroup(read.getReadGroup()).getId() : platformUnit;
+
 
     // call native method to update RecalibrationTables
     return updateTableNative(refForBAQ, refBases,
