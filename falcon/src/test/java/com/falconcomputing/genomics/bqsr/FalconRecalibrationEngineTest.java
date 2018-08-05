@@ -733,8 +733,11 @@ public class FalconRecalibrationEngineTest {
     for (int i = 0; i < numCovariates; i++) {
       List<RecalDatum> gatk_table_contents = gatk_table.getTable(i).getAllValues();
       List<RecalDatum> our_table_contents = our_table.getTable(i).getAllValues();
+      if(our_table_contents.size()!= gatk_table_contents.size()){
+        System.out.printf("%d: gatk: %d, ours: %d\n", i, gatk_table_contents.size(), our_table_contents.size());
+      }
       Assert.assertEquals(our_table_contents.size(), gatk_table_contents.size());
-      //System.out.println(String.format("%d: %d == %d", i, our_table_contents.size(), gatk_table_contents.size()));
+      System.out.println(String.format("%d: %d == %d", i, our_table_contents.size(), gatk_table_contents.size()));
       for (int k = 0; k < gatk_table_contents.size(); k++) {
         //System.out.println(String.format("[%d-O] %d == %d", k, our_table_contents.get(k).getNumObservations(), gatk_table_contents.get(k).getNumObservations()));
         //System.out.println(String.format("[%d-M] %f == %f", k, our_table_contents.get(k).getNumMismatches(), gatk_table_contents.get(k).getNumMismatches()));
