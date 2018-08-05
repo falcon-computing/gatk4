@@ -557,38 +557,50 @@ public class FalconRecalibrationEngineTest {
     }
   }
 
-/*
+
   @Test(enabled = true, groups = {"bqsr"})
   public void TestFractionalErrors() {
-    final Covariate[] covariates = getCovariates();
+    //final Covariate[] covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
+    final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
     final int numReadGroups = header.getReadGroups().size();
-    final int numCovariates = covariates.length;
+    final int numCovariates = covariates.size();
 
     try {
-      engine.init(covariates, numReadGroups);
+      //engine.init(covariates, numReadGroups);
+      engine.init(covariates, numReadGroups, header);
     }
     catch (AccelerationException e) {
       logger.error("exception caught in init(): "+ e.getMessage());
       return;
     }
 
-    RecalibrationEngine recalibrationEngine = new RecalibrationEngine(covariates, numReadGroups, RAC.RECAL_TABLE_UPDATE_LOG, false);
+    //RecalibrationEngine recalibrationEngine = new RecalibrationEngine(covariates, numReadGroups, RAC.RECAL_TABLE_UPDATE_LOG, false);
 
     int numRecords = 0;
     for (SAMRecord record : reader) {
       //if (numRecords > 1) break;
-      final GATKSAMRecord org_read = new GATKSAMRecord(record);
-      final GATKSAMRecord read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
-      final ReferenceContext ref = helper.getRefContext(org_read);
+      //final GATKSAMRecord org_read = new GATKSAMRecord(record);
+      //final GATKSAMRecord read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
+      final GATKRead org_read = new SAMRecordToGATKReadAdapter(record);
+      final GATKRead read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
+      //final ReferenceContext ref = helper.getRefContext(org_read);
 
-      int readLength = read.getReadBases().length;
+      //int readLength = read.getReadBases().length;
+      int readLength = read.getLength();
+      int[] isSNP = new int[read.getLength()];
+      int[] isInsertion = new int[isSNP.length];
+      int[] isDeletion = new int[isSNP.length];
 
-      final int[] isSNP = helper.falconCalculateIsSNP(read, ref, org_read);
-      final int[] isInsertion = helper.falconCalculateIsIndel(read, EventType.BASE_INSERTION);
-      final int[] isDeletion = helper.falconCalculateIsIndel(read, EventType.BASE_DELETION);
-      final int nErrors = helper.falconNumEvents(isSNP, isInsertion, isDeletion);
+      BaseRecalibrationEngine br = new BaseRecalibrationEngine(RAC, header);
+
+      final int nErrors = BaseRecalibrationEngine.calculateIsSNPOrIndel(read, helper.getRefDataSource(), isSNP, isInsertion, isDeletion);
+
+      //final int[] isSNP = helper.falconCalculateIsSNP(read, ref, org_read);
+      //final int[] isInsertion = helper.falconCalculateIsIndel(read, EventType.BASE_INSERTION);
+      //final int[] isDeletion = helper.falconCalculateIsIndel(read, EventType.BASE_DELETION);
+      //final int nErrors = helper.falconNumEvents(isSNP, isInsertion, isDeletion);
 
       final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
 
@@ -597,7 +609,9 @@ public class FalconRecalibrationEngineTest {
       //logger.info("isDeletion = " + Arrays.toString(isDeletion));
       //logger.info("nErrors = " + Integer.toString(nErrors));
 
-      final double[][] errors = engine.calculateFractionalErrorArray(read, org_read, ref);
+      //final double[][] errors = engine.calculateFractionalErrorArray(read, org_read, ref);
+      final double[][] errors = engine.calculateFractionalErrorArray(read, org_read, helper.getRefDataSource());
+
 
       if (baqArray == null) { // some reads just can't be BAQ'ed
         Assert.assertEquals(null, errors);
@@ -627,7 +641,7 @@ public class FalconRecalibrationEngineTest {
       numRecords++;
     }
   }
-  */
+
 
   /*
   @Test(enabled = true, groups = {"bqsr"})

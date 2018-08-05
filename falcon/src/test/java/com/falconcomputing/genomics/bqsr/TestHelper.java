@@ -75,16 +75,16 @@ public class TestHelper extends BaseRecalibrationEngine {
   public int falconNumEvents(int[] isSNP, int[] isInsertion, int[] isDeletion) {
     return nEvents(isSNP, isInsertion, isDeletion);
   }
-
+*/
   public double[] falconCalculateFractionalErrorArray(final int[] errorArray, final byte[] baqArray) {
     return calculateFractionalErrorArray(errorArray, baqArray);
   }
 
   //public byte[] falconFlatBAQArray(final GATKSAMRecord read) {
-  public byte[] falconFlatBAQArray(final SAMRecord read) {
+  public byte[] falconFlatBAQArray(final GATKRead read) {
     return flatBAQArray(read);
   }
-*/
+
   //public byte[] falconCalculateBAQArray(final GATKSAMRecord read) {
   public byte[] falconCalculateBAQArray(final GATKRead read) {
       //baq.baqRead(read, refReader, BAQ.CalculationMode.RECALCULATE, BAQ.QualityMode.ADD_TAG);

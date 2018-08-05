@@ -512,27 +512,37 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     }
   }
 
-  public double[][] calculateFractionalErrorArray(final SAMRecord read,
-                      final SAMRecord org_read,
-                      final ReferenceContext ref) {
+  //public double[][] calculateFractionalErrorArray(final SAMRecord read,
+  //                    final SAMRecord org_read,
+  //                    final ReferenceContext ref) {
+  public double[][] calculateFractionalErrorArray(final GATKRead read,
+                                                  final GATKRead org_read,
+                                                  //final ReferenceContext ref) {
+                                                  final ReferenceDataSource refDS) {
 
     // put the check of baq.isExcludeFromBAQ() outside, since we need
     // to pass the read BAQ tag to native if it is available
-    final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
-    final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(togatkread);
-    final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(togatkread) : null;
+    //final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
+    //final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(togatkread);
+    final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
+    //final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(togatkread) : null;
+    final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
+
     // preparation for BAQ calculation
     int refOffset = -1;
     byte[] refForBAQ = null;
 
     // skip calcBAQFromHMM() and directly return readBAQ if it's not null
     if (!isExcludeFromBAQ) {
-      final int offset = baq.getBandWidth() / 2;
-      final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
-      final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
-      final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
+      //final int offset = baq.getBandWidth() / 2;
+      //final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
+      //final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
+      //final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
+      final SimpleInterval referenceWindow = BAQ.getReferenceWindowForRead(read, baq.getBandWidth());
 
-      if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
+      //if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
+      if (referenceWindow.getEnd() > refDS.getSequenceDictionary().getSequence(read.getContig()).getSequenceLength()){
+
         // meaning null return from calculateBAQArray
         // return null;
         // Note: Here should not return null, since if nErrors is zero BAQArray
@@ -541,23 +551,33 @@ public class FalconRecalibrationEngine implements NativeLibrary {
         ;
       }
       else {
-        refOffset = (int)(start - readStart);
+        //refOffset = (int)(start - readStart);
+        refOffset = (int)(referenceWindow.getStart() - read.getStart());
 
         // ref seq for baq calculation
-        ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
+        //ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
+        final ReferenceSequence refSeq = refDS.queryAndPrefetch(referenceWindow.getContig(), referenceWindow.getStart(), referenceWindow.getEnd());
         refForBAQ = refSeq.getBases();
       }
     }
 
     // ref seqs for SNP error calculation
-    final byte[] refBases = Arrays.copyOfRange(ref.getBases(),
-                        read.getAlignmentStart() - org_read.getAlignmentStart(),
-                        ref.getBases().length + read.getAlignmentEnd() - org_read.getAlignmentEnd());
+    //final byte[] refBases = Arrays.copyOfRange(ref.getBases(),
+                        //read.getAlignmentStart() - org_read.getAlignmentStart(),
+                        //ref.getBases().length + read.getAlignmentEnd() - org_read.getAlignmentEnd());
+    //final byte[] refBases = Arrays.copyOfRange(refDS.getBases(),
+    //                    read.getStart() - org_read.getStart(),
+    //                    refDS.getBases().length + read.getEnd() - org_read.getEnd());
 
-    final byte[] bases = read.getReadBases();
+    final byte[] refBases = refDS.queryAndPrefetch(read.getContig(), read.getStart(), read.getEnd()).getBases();
+
+
+    //final byte[] bases = read.getReadBases();
+    final byte[] bases = read.getBases();
     final byte[] quals = read.getBaseQualities();      // in general we are overwriting quals, so just get a pointer to them
     final int readLength = bases.length;
-    final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    //final boolean isNegativeStrand = read.getReadNegativeStrandFlag();
+    final boolean isNegativeStrand = read.isReverseStrand();
 
     // prepare cigar arrays
     final List<CigarElement> cigarElements = read.getCigar().getCigarElements();
