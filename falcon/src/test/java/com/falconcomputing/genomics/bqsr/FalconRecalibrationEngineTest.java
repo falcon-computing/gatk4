@@ -713,7 +713,10 @@ public class FalconRecalibrationEngineTest {
       //final GATKSAMRecord org_read = new GATKSAMRecord(record);
       //final GATKSAMRecord read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
       final GATKRead org_read = new SAMRecordToGATKReadAdapter(record);
-      final GATKRead read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
+      //final GATKRead read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
+      final ReadTransformer transform = recalibrationEngine.makeReadTransform();
+      final GATKRead read = transform.apply(org_read);
+      RecalUtils.parsePlatformForRead(read, header, RAC);
 
       //final ReferenceContext ref = helper.getRefContext(org_read);
 
