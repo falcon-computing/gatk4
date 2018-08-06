@@ -643,6 +643,32 @@ public class FalconRecalibrationEngineTest {
   }
 
   @Test(enabled = true, groups = {"bqsr"})
+  public void TestFinalize() {
+    //final Covariate[] covariates = getCovariates();
+    final SamReader reader = getInputBamRecords();
+    final SAMFileHeader header = reader.getFileHeader();
+    final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
+    final int numReadGroups = 2;
+    try {
+      //engine.init(covariates, numReadGroups);
+      engine.init(covariates, numReadGroups, header);
+    }
+    catch (AccelerationException e) {
+      logger.error("exception caught in init(): "+ e.getMessage());
+      return;
+    }
+    int numCovariates = covariates.size();
+    int numEvents = EventType.values().length;
+    int qualLength = covariates.get(1).maximumKeyValue()+1;
+
+    RecalibrationTables recal_table = engine.getRecalibrationTables();
+    engine.finalizeData();
+    RecalibrationTables recal_table_1 = engine.getFinalRecalibrationTables();
+    RecalibrationTables recal_table_2 = engine.getFinalRecalibrationTables();
+  }
+
+
+  @Test(enabled = true, groups = {"bqsr"})
   public void TestTableUpdateWithRealData() {
     //final Covariate[] covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
