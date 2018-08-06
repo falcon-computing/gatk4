@@ -281,7 +281,9 @@ public class BaseRecalibrationEngine implements Serializable {
         }
     }
 
-    private ReadTransformer makeReadTransform() {
+    //private ReadTransformer makeReadTransform() {
+    public ReadTransformer makeReadTransform() {
+
         ReadTransformer f0 = BaseRecalibrationEngine::consolidateCigar;
 
         ReadTransformer f = f0.andThen(this::setDefaultBaseQualities)

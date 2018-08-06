@@ -815,7 +815,7 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
 
   for (auto rg : cov->getRGKeys()) {
     jstring jreadGroup = env->NewStringUTF(rg.c_str());
-    env->CallIntMethod(readGroupCovariates, method, jreadGroup);
+    jint idx = env->CallIntMethod(readGroupCovariates, method, jreadGroup);
     DLOG(INFO) << "Set rg: " << rg << " with idx = " << idx;
   }
 }
