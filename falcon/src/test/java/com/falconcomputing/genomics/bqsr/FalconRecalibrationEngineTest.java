@@ -661,10 +661,29 @@ public class FalconRecalibrationEngineTest {
     int numEvents = EventType.values().length;
     int qualLength = covariates.get(1).maximumKeyValue()+1;
 
+
     RecalibrationTables recal_table = engine.getRecalibrationTables();
+
+    System.out.println("my test finalize");
+    for (int i = 0; i < numCovariates; i++) {
+      //List<RecalDatum> gatk_table_contents = recal_table.getTable(i).getAllValues();
+      List<RecalDatum> our_table_contents = recal_table.getTable(i).getAllValues();
+      //if (our_table_contents.size() != gatk_table_contents.size()) {
+      System.out.printf("%d: ours: %d\n", i, our_table_contents.size());
+      //}
+    }
     engine.finalizeData();
     RecalibrationTables recal_table_1 = engine.getFinalRecalibrationTables();
     RecalibrationTables recal_table_2 = engine.getFinalRecalibrationTables();
+    //RecalibrationTables our_table = engine.getFinalRecalibrationTables();
+
+    for (int i = 0; i < numCovariates; i++) {
+      //List<RecalDatum> gatk_table_contents = recal_table.getTable(i).getAllValues();
+      List<RecalDatum> our_table_contents = recal_table_1.getTable(i).getAllValues();
+      //if (our_table_contents.size() != gatk_table_contents.size()) {
+        System.out.printf("%d: ours: %d\n", i, our_table_contents.size());
+      //}
+    }
   }
 
 
