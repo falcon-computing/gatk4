@@ -804,6 +804,7 @@ public class FalconRecalibrationEngineTest {
 
 
     // compare all tables
+    //
     for (int i = 0; i < numCovariates; i++) {
       List<RecalDatum> gatk_table_contents = gatk_table.getTable(i).getAllValues();
       List<RecalDatum> our_table_contents = our_table.getTable(i).getAllValues();
