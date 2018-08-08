@@ -201,7 +201,8 @@ public class BaseRecalibrationEngine implements Serializable {
         roundTableValues(tables);
     }
 
-    private static void roundTableValues(final RecalibrationTables rt) {
+    //private static void roundTableValues(final RecalibrationTables rt) {
+    public static void roundTableValues(final RecalibrationTables rt) {
         for (int i = 0; i < rt.numTables(); i++) {
             for (final NestedIntegerArray.Leaf<RecalDatum> leaf : rt.getTable(i).getAllLeaves()) {
                 leaf.value.setNumMismatches(MathUtils.roundToNDecimalPlaces(leaf.value.getNumMismatches(), RecalUtils.NUMBER_ERRORS_DECIMAL_PLACES));

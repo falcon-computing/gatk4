@@ -846,7 +846,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       System.out.println("@@@ within src after finalizeData");
       for (int i = 0; i < 4; i++){
           System.out.println(getDebugTable().getTable(i).getAllValues().size());
-      }    
+      }
+    BaseRecalibrationEngine.roundTableValues(recalTables);
     return recalTables;
   }
 
