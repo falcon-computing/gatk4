@@ -847,6 +847,10 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       for (int i = 0; i < 4; i++){
           System.out.println(getDebugTable().getTable(i).getAllValues().size());
       }
+      // new in gatk4, comments from gatk4 are
+    /* To replicate the results of BQSR whether or not we save tables to disk (which we need in Spark),
+     * we need to trim the numbers to a few decimal placed (that's what writing and reading does).
+     */
     BaseRecalibrationEngine.roundTableValues(recalTables);
     return recalTables;
   }
