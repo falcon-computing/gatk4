@@ -825,6 +825,10 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   public RecalDatumTable[] getTables() {
     return getTableNative();
   }
+  public RecalibrationTables getDebugTable(){
+      return recalTables;
+  }
+
 
   public RecalibrationTables getRecalibrationTables() {
     if (!finalized) {
@@ -834,7 +838,15 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   }
 
   public RecalibrationTables getFinalRecalibrationTables() {
-    finalizeData();
+      System.out.println("@@@ within src before finalizeData");
+      for (int i = 0; i < 4; i++){
+          System.out.println(getDebugTable().getTable(i).getAllValues().size());
+      }    
+      finalizeData();
+      System.out.println("@@@ within src after finalizeData");
+      for (int i = 0; i < 4; i++){
+          System.out.println(getDebugTable().getTable(i).getAllValues().size());
+      }    
     return recalTables;
   }
 
@@ -851,12 +863,24 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
   public void finalizeData() {
     if (!initialized || finalized) return;
+      System.out.println("@@@ within src 0 finalizeData");
+      for (int i = 0; i < 4; i++){
+          System.out.println(getDebugTable().getTable(i).getAllValues().size());
+      }    
 
     updateReadGroupCovariates();
+      System.out.println("@@@ within src 1 finalizeData");
+      for (int i = 0; i < 4; i++){
+          System.out.println(getDebugTable().getTable(i).getAllValues().size());
+      }    
 
     // get latest recal table
     updateRecalibrationTables();
 
+      System.out.println("@@@ within src 2 finalizeData");
+      for (int i = 0; i < 4; i++){
+          System.out.println(getDebugTable().getTable(i).getAllValues().size());
+      }    
     // finalize RecalibrationTables
     // renaming for GATK
     RecalibrationTables finalRecalibrationTables = recalTables;
@@ -864,19 +888,25 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     final NestedIntegerArray<RecalDatum> byReadGroupTable = finalRecalibrationTables.getReadGroupTable();
     final NestedIntegerArray<RecalDatum> byQualTable = finalRecalibrationTables.getQualityScoreTable();
     // iterate over all values in the qual table
+    int counter=0;
     for ( final NestedIntegerArray.Leaf<RecalDatum> leaf : byQualTable.getAllLeaves() ) {
-      final int rgKey = leaf.keys[0];
-      final int eventIndex = leaf.keys[2];
-      final RecalDatum rgDatum = byReadGroupTable.get(rgKey, eventIndex);
-      final RecalDatum qualDatum = leaf.value;
-      if ( rgDatum == null ) {
-        // create a copy of qualDatum, and initialize byReadGroup table with it
-        byReadGroupTable.put(new RecalDatum(qualDatum), rgKey, eventIndex);
-      } else {
-        // combine the qual datum with the existing datum in the byReadGroup table
-        rgDatum.combine(qualDatum);
-      }
+
+        final int rgKey = leaf.keys[0];
+        final int eventIndex = leaf.keys[2];
+        final RecalDatum rgDatum = byReadGroupTable.get(rgKey, eventIndex);
+        final RecalDatum qualDatum = leaf.value;
+        if ( rgDatum == null ) {
+            // create a copy of qualDatum, and initialize byReadGroup table with it
+            byReadGroupTable.put(new RecalDatum(qualDatum), rgKey, eventIndex);
+            System.out.printf("null branch  rgKey: %d, eventIndex: %d , qualDatum: %s\n", rgKey, eventIndex, qualDatum.toString());
+        } else {
+            // combine the qual datum with the existing datum in the byReadGroup table
+            System.out.printf("else branch  rgKey: %d, eventIndex: %d, qualDatum: %s\n", rgKey, eventIndex, qualDatum.toString());
+            rgDatum.combine(qualDatum);
+        }
+        counter+=1;
     }
+    System.out.printf("@@@ counter is : %d",counter);
 
     logger.debug("Free resource in native space");
     finalizeNative();
