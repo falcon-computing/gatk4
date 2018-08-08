@@ -800,7 +800,7 @@ public class FalconRecalibrationEngineTest {
         System.out.printf("null branch  rgKey: %d, eventIndex: %d , qualDatum: %s\n", rgKey, eventIndex, qualDatum.toString());
         counter+=1;
     }    
-    System.out.printf("@@@ counter is : %d",counter);
+    System.out.printf("@@@ counter is : %d\n",counter);
 
 
     // compare all tables
