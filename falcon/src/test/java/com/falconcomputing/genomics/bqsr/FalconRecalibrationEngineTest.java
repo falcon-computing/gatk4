@@ -811,7 +811,7 @@ public class FalconRecalibrationEngineTest {
       if(our_table_contents.size()!= gatk_table_contents.size()){
         System.out.printf("%d: gatk: %d, ours: %d\n", i, gatk_table_contents.size(), our_table_contents.size());
       }
-      //
+      // starts
       Assert.assertEquals(our_table_contents.size(), gatk_table_contents.size());
       //System.out.println(String.format("%d: %d == %d", i, our_table_contents.size(), gatk_table_contents.size()));
       for (int k = 0; k < gatk_table_contents.size(); k++) {
