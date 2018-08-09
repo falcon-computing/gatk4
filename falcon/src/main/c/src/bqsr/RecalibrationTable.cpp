@@ -192,7 +192,9 @@ void RecalibrationTable::update(int readLength,
   for (int i = 1; i < numCovariates_; i++) {
     for (int j = 0; j < readLength; j++) {
       if (skips[j]) continue;
-      for (int k = 0; k < numEvents_; k++) {
+      newEvents=1;
+       for (int k = 0; k < newEvents; k++) {
+      //for (int k = 0; k < numEvents_; k++) {
         //int* key = &keys[readLength*numCovariates_*k + numCovariates_*j];
         int idx = keysToIndex(keys, i, j, k);
         if (idx < 0) continue;
