@@ -164,8 +164,8 @@ inline void Covariates::setCovariate(
   // in this version the layout of keys is the same as table update
   // keys: readLength x [qual context, cycle] x numEvents
   keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 0] = snp;
-  //keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 1] = insertion;
-  //keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 2] = deletion;
+  keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 1] = insertion;
+  keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 2] = deletion;
 }
 
 
