@@ -928,7 +928,7 @@ public class FalconRecalibrationEngineTest {
       gatk_engine.apply(read);
 
       try {
-        final byte[][] quals = engine.recalibrate(read);
+        final byte[][] quals = engine.recalibrate(read, header);
         for (final EventType errorModel : EventType.values()) { // recalibrate all three quality strings
           if (disableIndelQuals && errorModel != EventType.BASE_SUBSTITUTION) {
             continue;
