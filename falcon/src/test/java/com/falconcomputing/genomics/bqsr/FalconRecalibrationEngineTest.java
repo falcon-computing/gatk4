@@ -775,19 +775,19 @@ public class FalconRecalibrationEngineTest {
       }
       numRecords++;
     }
-    System.out.println("@@@ before finalize");
-    for (int i = 0; i < 4; i++){
-        System.out.println(engine.getDebugTable().getTable(i).getAllValues().size());
-    }
+    //System.out.println("@@@ before finalize");
+    //for (int i = 0; i < 4; i++){
+    //    System.out.println(engine.getDebugTable().getTable(i).getAllValues().size());
+    //}
 
     // get table results
     recalibrationEngine.finalizeData();
     RecalibrationTables gatk_table = recalibrationEngine.getFinalRecalibrationTables();
     RecalibrationTables our_table = engine.getFinalRecalibrationTables();
-    System.out.println("@@@ after update");
-    for (int i = 0; i < 4; i++){
-        System.out.println(engine.getDebugTable().getTable(i).getAllValues().size());
-    }
+    //System.out.println("@@@ after update");
+    //for (int i = 0; i < 4; i++){
+    //    System.out.println(engine.getDebugTable().getTable(i).getAllValues().size());
+    //}
    
     System.out.println("test gatk score");
     int counter=0;
@@ -798,10 +798,10 @@ public class FalconRecalibrationEngineTest {
         final int eventIndex = leaf.keys[2];
         final RecalDatum qualDatum = leaf.value;
         // create a copy of qualDatum, and initialize byReadGroup table with it
-        System.out.printf("null branch  rgKey: %d, eventIndex: %d , qualDatum: %s\n", rgKey, eventIndex, qualDatum.toString());
+        //System.out.printf("null branch  rgKey: %d, eventIndex: %d , qualDatum: %s\n", rgKey, eventIndex, qualDatum.toString());
         counter+=1;
     }    
-    System.out.printf("@@@ counter is : %d\n",counter);
+    //System.out.printf("@@@ counter is : %d\n",counter);
 
 
     // compare all tables
