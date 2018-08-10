@@ -864,24 +864,15 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
   public void finalizeData() {
     if (!initialized || finalized) return;
-      System.out.println("@@@ within src 0 finalizeData");
-      for (int i = 0; i < 4; i++){
-          System.out.println(getDebugTable().getTable(i).getAllValues().size());
-      }    
+
 
     updateReadGroupCovariates();
-      System.out.println("@@@ within src 1 finalizeData");
-      for (int i = 0; i < 4; i++){
-          System.out.println(getDebugTable().getTable(i).getAllValues().size());
-      }    
+
 
     // get latest recal table
     updateRecalibrationTables();
 
-      System.out.println("@@@ within src 2 finalizeData");
-      for (int i = 0; i < 4; i++){
-          System.out.println(getDebugTable().getTable(i).getAllValues().size());
-      }    
+
     // finalize RecalibrationTables
     // renaming for GATK
     RecalibrationTables finalRecalibrationTables = recalTables;
@@ -899,10 +890,10 @@ public class FalconRecalibrationEngine implements NativeLibrary {
         if ( rgDatum == null ) {
             // create a copy of qualDatum, and initialize byReadGroup table with it
             byReadGroupTable.put(new RecalDatum(qualDatum), rgKey, eventIndex);
-            System.out.printf("null branch  rgKey: %d, eventIndex: %d , qualDatum: %s\n", rgKey, eventIndex, qualDatum.toString());
+            //System.out.printf("null branch  rgKey: %d, eventIndex: %d , qualDatum: %s\n", rgKey, eventIndex, qualDatum.toString());
         } else {
             // combine the qual datum with the existing datum in the byReadGroup table
-            System.out.printf("else branch  rgKey: %d, eventIndex: %d, qualDatum: %s\n", rgKey, eventIndex, qualDatum.toString());
+            //System.out.printf("else branch  rgKey: %d, eventIndex: %d, qualDatum: %s\n", rgKey, eventIndex, qualDatum.toString());
             rgDatum.combine(qualDatum);
         }
         counter+=1;
