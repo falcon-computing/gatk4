@@ -838,15 +838,9 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   }
 
   public RecalibrationTables getFinalRecalibrationTables() {
-      System.out.println("@@@ within src before finalizeData");
-      for (int i = 0; i < 4; i++){
-          System.out.println(getDebugTable().getTable(i).getAllValues().size());
-      }    
-      finalizeData();
-      System.out.println("@@@ within src after finalizeData");
-      for (int i = 0; i < 4; i++){
-          System.out.println(getDebugTable().getTable(i).getAllValues().size());
-      }
+
+    finalizeData();
+
 
     return recalTables;
   }
@@ -871,10 +865,9 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     // get latest recal table
     updateRecalibrationTables();
 
-      System.out.println("@@@ within src 2 finalizeData");
-      for (int i = 0; i < 4; i++){
-          System.out.println(getDebugTable().getTable(i).getAllValues().size());
-      }
+
+    // here, qualityscore table, context and cycle table are updated
+    // then update ReadGroupTable table
     // finalize RecalibrationTables
     // renaming for GATK
     RecalibrationTables finalRecalibrationTables = recalTables;

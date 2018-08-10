@@ -789,7 +789,7 @@ public class FalconRecalibrationEngineTest {
     //    System.out.println(engine.getDebugTable().getTable(i).getAllValues().size());
     //}
    
-    System.out.println("test gatk score");
+    //System.out.println("test gatk score");
     int counter=0;
     final NestedIntegerArray<RecalDatum> byQualTable = gatk_table.getQualityScoreTable();
     for ( final NestedIntegerArray.Leaf<RecalDatum> leaf : byQualTable.getAllLeaves() ) {
