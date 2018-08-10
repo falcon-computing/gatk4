@@ -739,6 +739,7 @@ public class FalconRecalibrationEngineTest {
         logger.error("exception caught in init(): "+ e.getMessage());
         return;
       }
+      //
 
       //final int[] isSNP = helper.falconCalculateIsSNP(read, ref, org_read);
       //final int[] isInsertion = helper.falconCalculateIsIndel(read, EventType.BASE_INSERTION);
