@@ -822,6 +822,39 @@ public class FalconRecalibrationEngineTest {
       }
     }
   }
+
+
+  @Test(enabled = true, groups = {"pr"})
+  public void TestInitForRecalibrate() {
+    final RecalibrationReport report = getRecalReport();
+
+    final RecalibrationTables gatk_tables = report.getRecalibrationTables();
+    //final Covariate[] requestedCovariates = report.getRequestedCovariates();
+    StandardCovariateList requestedCovariates = report.getCovariates();
+    final QuantizationInfo quantizationInfo = report.getQuantizationInfo();
+
+    // here assuming staticQuantizedMapping is null
+    final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
+
+    long start_ts = System.nanoTime();
+
+    // use default parameters
+    try {
+      engine.init(requestedCovariates, gatk_tables,
+              quantizedQuals, null,
+              false, QualityUtils.MIN_USABLE_Q_SCORE,
+              -1.0, false);
+    }
+    catch (AccelerationException e) {
+      logger.error("exception caught in init(): "+ e.getMessage());
+      return;
+    }
+    logger.info(String.format("init table for PR takes %f ms", (System.nanoTime() - start_ts)/1e6));
+
+    final RecalibrationTables falcon_tables = engine.getFinalRecalibrationTables();
+
+    compareRecalibrationTables(requestedCovariates.size(), falcon_tables, gatk_tables);
+  }
   //  sd
   /*
   @Test(enabled = true, groups = {"bqsr"})
@@ -1195,11 +1228,11 @@ public class FalconRecalibrationEngineTest {
       //TODO: second argument needs to be changed
     return new StandardCovariateList(RAC, Collections.singletonList("readGroup"));
   }
-  /*
+
   private final RecalibrationReport getRecalReport() {
     return new RecalibrationReport(grpPath.toFile());
   }
- */
+
   private final SamReader getInputBamRecords() {
 
     final SamReaderFactory readerFactory = SamReaderFactory.make();
@@ -1210,7 +1243,7 @@ public class FalconRecalibrationEngineTest {
     return reader;
   }
 
-  /*
+
   private static void compareRecalibrationTables(
         final int numCovariates,
         final RecalibrationTables our_table,
@@ -1228,7 +1261,7 @@ public class FalconRecalibrationEngineTest {
       }
     }
   }
-*/
+
   private static void compareRecalDatum(final RecalDatum r1, final RecalDatum r2) {
     Assert.assertEquals(r1.getNumObservations(), r2.getNumObservations());
     Assert.assertEquals(r1.getNumMismatches(), r2.getNumMismatches());

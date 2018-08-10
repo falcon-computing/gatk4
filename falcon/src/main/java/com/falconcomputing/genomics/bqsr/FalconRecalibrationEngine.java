@@ -893,7 +893,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
         }
         counter+=1;
     }
-    System.out.printf("@@@ counter is : %d\n",counter);
+    System.out.printf("@@@ QualityTable leaves counter is : %d\n",counter);
 
     logger.debug("Free resource in native space");
     finalizeNative();
