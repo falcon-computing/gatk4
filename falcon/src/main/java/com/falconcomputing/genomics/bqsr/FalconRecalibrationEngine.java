@@ -213,9 +213,14 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     for (int i = 0; i < quantizedQuals.size(); i++) {
       quantizationTable[i] = quantizedQuals.get(i);
     }
-
+    final Covariate[] toNative = new Covariate[_covariates.size()];
+    for(int i = 0; i < _covariates.size(); i++){
+      toNative[i] = _covariates.get(i);
+    }
     // call native method to initialize the RecalibrationTable
-    initNative(numEvents, _covariates,
+    initNative(numEvents,
+               //_covariates,
+               toNative,
                quantizationTable,
                staticQuantizedMapping,
                disableIndelQuals,
@@ -1068,8 +1073,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
   private native static void initNative(
       int numEvents,
-      //Covariate[] covariates,
-      StandardCovariateList covariates,
+      Covariate[] covariates,
+      //StandardCovariateList covariates,
       byte[] quantizationTable,
       byte[] staticQuantizedMapping,
       boolean disableIndelQuals,
