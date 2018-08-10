@@ -868,11 +868,13 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
     updateReadGroupCovariates();
 
-
     // get latest recal table
     updateRecalibrationTables();
 
-
+      System.out.println("@@@ within src 2 finalizeData");
+      for (int i = 0; i < 4; i++){
+          System.out.println(getDebugTable().getTable(i).getAllValues().size());
+      }
     // finalize RecalibrationTables
     // renaming for GATK
     RecalibrationTables finalRecalibrationTables = recalTables;

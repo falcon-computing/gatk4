@@ -725,10 +725,10 @@ public class FalconRecalibrationEngineTest {
       final boolean[] skip = new boolean[readLength];
       Arrays.fill(skip, false);
 
-      System.out.println("@@@ before update");
-      for (int i = 0; i < 4; i++){
-          System.out.println(engine.getDebugTable().getTable(i).getAllValues().size());
-      }
+      //System.out.println("@@@ before update");
+      //for (int i = 0; i < 4; i++){
+          //System.out.println(engine.getDebugTable().getTable(i).getAllValues().size());
+      //}
       // perform falcon table update
       int ret = 0;
       try {
