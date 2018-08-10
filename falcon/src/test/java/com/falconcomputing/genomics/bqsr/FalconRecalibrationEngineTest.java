@@ -161,6 +161,7 @@ public class FalconRecalibrationEngineTest {
   public void TestLicense() {
     ;
   }
+  /*
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestBasicInterface() {
@@ -407,7 +408,7 @@ public class FalconRecalibrationEngineTest {
       }
     }
   }
-/*
+
   @Test(enabled = true, groups = {"bqsr"})
   public void TestCovariates() {
     //final Covariate[] covariates = getCovariates();
@@ -686,7 +687,8 @@ public class FalconRecalibrationEngineTest {
     }
   }
 
-*/
+
+
   @Test(enabled = true, groups = {"bqsr"})
   public void TestTableUpdateWithRealData() {
     //final Covariate[] covariates = getCovariates();
@@ -823,7 +825,7 @@ public class FalconRecalibrationEngineTest {
     }
   }
 
-
+*/
   @Test(enabled = true, groups = {"pr"})
   public void TestInitForRecalibrate() {
     final RecalibrationReport report = getRecalReport();
@@ -855,7 +857,7 @@ public class FalconRecalibrationEngineTest {
 
     compareRecalibrationTables(requestedCovariates.size(), falcon_tables, gatk_tables);
   }
-  //  sd
+  //  original code part
   /*
   @Test(enabled = true, groups = {"bqsr"})
   public void TestBAQCalculation() {
