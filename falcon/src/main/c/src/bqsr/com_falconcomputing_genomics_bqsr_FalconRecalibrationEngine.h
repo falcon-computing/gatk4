@@ -22,7 +22,7 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
  * Method:    initNative
  * Signature: (I[Lorg/broadinstitute/gatk/engine/recalibration/covariates/Covariate;[B[BZIDZBIIII)V
  */
-JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_initNative__I_3Lorg_broadinstitute_gatk_engine_recalibration_covariates_Covariate_2_3B_3BZIDZBIIII
+JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_initNative__I_3Lorg_broadinstitute_hellbender_utils_recalibration_covariates_Covariate_2_3B_3BZIDZBIIII
   (JNIEnv *, jclass, jint, jobjectArray, jbyteArray, jbyteArray, jboolean, jint, jdouble, jboolean, jbyte, jint, jint, jint, jint);
 
 /*
