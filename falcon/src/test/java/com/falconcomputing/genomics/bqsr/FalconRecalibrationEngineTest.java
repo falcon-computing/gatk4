@@ -84,6 +84,10 @@ import org.broadinstitute.hellbender.utils.read.GATKRead;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMReadGroupRecord;
 
+import org.broadinstitute.hellbender.transformers.BQSRReadTransformer;
+import org.broadinstitute.hellbender.tools.ApplyBQSRArgumentCollection;
+
+
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -557,7 +561,7 @@ public class FalconRecalibrationEngineTest {
       numRecords++;
     }
   }
-
+*/
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestFractionalErrors() {
@@ -825,7 +829,7 @@ public class FalconRecalibrationEngineTest {
     }
   }
 
-*/
+
   @Test(enabled = true, groups = {"pr"})
   public void TestInitForRecalibrate() {
     final RecalibrationReport report = getRecalReport();
@@ -857,6 +861,89 @@ public class FalconRecalibrationEngineTest {
 
     compareRecalibrationTables(requestedCovariates.size(), falcon_tables, gatk_tables);
   }
+
+
+  @Test(enabled = true, groups = {"pr"})
+  public void TestRecalibrate() {
+    final boolean disableIndelQuals = false;
+    final int preserveQLessThan = QualityUtils.MIN_USABLE_Q_SCORE;
+    final double globalQScorePrior = -1.0;
+    final boolean emitOriginalQuals = false;
+
+    final RecalibrationReport report = getRecalReport();
+    //final Covariate[] requestedCovariates = report.getRequestedCovariates();
+    StandardCovariateList requestedCovariates = report.getCovariates();
+    // TODO: this covariates need to encode the read groups
+    final QuantizationInfo quantizationInfo = report.getQuantizationInfo();
+    final RecalibrationTables gatk_tables = report.getRecalibrationTables();
+
+    final int quantizationLevels = 1;
+
+    quantizationInfo.quantizeQualityScores(quantizationLevels);
+    final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
+
+    final SamReader reader = getInputBamRecords();
+    final SAMFileHeader header = reader.getFileHeader();
+    public ApplyBQSRArgumentCollection bqsrArgs = new ApplyBQSRArgumentCollection();
+
+    final BQSRReadTransformer gatk_engine = new BQSRReadTransformer(header, grpPath.toFile(), bqsrArgs);
+
+
+    //final BaseRecalibration gatk_engine = new BaseRecalibration(grpPath.toFile(),
+    //        quantizationLevels,
+    //        disableIndelQuals,
+    //        preserveQLessThan,
+    //        emitOriginalQuals,
+    //        globalQScorePrior,
+    //        null, false);
+
+    // use default parameters
+    try {
+      engine.init(requestedCovariates, gatk_tables,
+              quantizedQuals, null,
+              disableIndelQuals,
+              preserveQLessThan,
+              globalQScorePrior,
+              emitOriginalQuals);
+    }
+    catch (AccelerationException e) {
+      logger.error("exception caught in init(): "+ e.getMessage());
+      return;
+    }
+
+    // NOTE: staticQuantizedMapping is not tested
+
+    final int numReadGroups = gatk_tables.getReadGroupTable().getDimensions()[0];
+
+    final SamReader reader = getInputBamRecords();
+    //RecalibrationEngine recalibrationEngine = new RecalibrationEngine(requestedCovariates, numReadGroups, RAC.RECAL_TABLE_UPDATE_LOG, false);
+
+    int numRecords = 0;
+    for (SAMRecord record : reader) {
+      final GATKRead read = new SAMRecordToGATKReadAdapter(record);
+
+      //final GATKSAMRecord read = new GATKSAMRecord(record);
+
+      // run recalibrate and then compare the base qualities
+      gatk_engine.apply(read);
+
+      try {
+        final byte[][] quals = engine.recalibrate(read);
+        for (final EventType errorModel : EventType.values()) { // recalibrate all three quality strings
+          if (disableIndelQuals && errorModel != EventType.BASE_SUBSTITUTION) {
+            continue;
+          }
+          Assert.assertEquals(quals[errorModel.ordinal()], read.getBaseQualities(errorModel));
+        }
+      }
+      catch (AccelerationException e) {
+        logger.error("exception caught in init(): "+ e.getMessage());
+        return;
+      }
+      numRecords++;
+    }
+  }
+
   //  original code part
   /*
   @Test(enabled = true, groups = {"bqsr"})
