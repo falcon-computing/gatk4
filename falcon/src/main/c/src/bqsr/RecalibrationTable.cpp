@@ -70,6 +70,10 @@ RecalibrationTable::RecalibrationTable(
   if (staticQuantizedMapping) {
     staticQuantizedMapping_ = (int8_t*)malloc(staticQuantizedMappingSize);
     memcpy(staticQuantizedMapping_, staticQuantizedMapping, staticQuantizedMappingSize);
+    DLOG(INFO) << "within native staticQuantizedMapping is not NULL, size is " << staticQuantizedMappingSize;
+    for(int i = 0; i < staticQuantizedMappingSize; i++){
+        DLOG(INFO) << i <<" : "<< unsigned(staticQuantizedMapping[i]);
+    }
   }
 
   for (int i = 0; i < numCovariates; i++) {
@@ -334,9 +338,10 @@ int RecalibrationTable::recalibrate(int readLength,
         recal_quals[k][j] = recalibratedQualityScore;
       }
       //offset: 62, recalibratedQualDouble: 33.000000, recalibratedQualityScore: 33
-      DLOG(INFO) << "offset: "<< j << ", recalibratedQualDouble: "<<recalibratedQualDouble<<", recalibratedQual: "<<unsigned(recalibratedQual)<<", recalibratedQualityScore: "<<unsigned(recalibratedQualityScore)<<"\n";
+      //DLOG(INFO) << "offset: "<< j << ", recalibratedQualDouble: "<<recalibratedQualDouble<<", recalibratedQual: "<<unsigned(recalibratedQual)<<", recalibratedQualityScore: "<<unsigned(recalibratedQualityScore)<<"\n";
     }
-    DLOG(INFO) << (staticQuantizedMapping_ == NULL) ;
+
+    //DLOG(INFO) << (staticQuantizedMapping_ == NULL) ;
     free(empirical_quals_idx);
   }
   //DLOG_EVERY_N(INFO, TIMER_SAMPLE_RATE)

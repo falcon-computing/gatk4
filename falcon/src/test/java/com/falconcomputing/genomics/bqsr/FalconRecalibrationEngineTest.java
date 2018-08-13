@@ -166,7 +166,7 @@ public class FalconRecalibrationEngineTest {
   public void TestLicense() {
     ;
   }
-  /*
+
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestBasicInterface() {
@@ -562,7 +562,7 @@ public class FalconRecalibrationEngineTest {
       numRecords++;
     }
   }
-*/
+
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestFractionalErrors() {
@@ -928,84 +928,24 @@ public class FalconRecalibrationEngineTest {
     //RecalibrationEngine recalibrationEngine = new RecalibrationEngine(requestedCovariates, numReadGroups, RAC.RECAL_TABLE_UPDATE_LOG, false);
 
     int numRecords = 0;
-    for (SAMRecord record : reader) {
-      final GATKRead originalRead = new SAMRecordToGATKReadAdapter(record);
-      final GATKRead read = bqsrArgs.useOriginalBaseQualities ? ReadUtils.resetOriginalBaseQualities(originalRead) : originalRead;
-
-      //final GATKSAMRecord read = new GATKSAMRecord(record);
-      System.out.printf("read num: %d\n", numRecords);
-      //System.out.printf("before gatk apply, readnum: %d\n", numRecords);
-      System.out.printf("before gatk apply: read %s\n", Arrays.toString(read.getBaseQualities()));
-      // run recalibrate and then compare the base qualities
-
-      GATKRead new_gatkRead = gatk_engine.apply(read);
-      System.out.printf("after  gatk apply: read %s\n", Arrays.toString(read.getBaseQualities()));
-      //System.out.printf("after  gatk apply, newR %s\n", Arrays.toString(new_gatkRead.getBaseQualities()));
-      //System.out.println(Arrays.toString(read.getBaseQualities()));
-
-      //final GATKRead toFalconread = new SAMRecordToGATKReadAdapter(record);
-      //System.out.printf("before falc apply: read %s\n", Arrays.toString(toFalconread.getBaseQualities()));
-      //try {
-      //  //final byte[][] quals = engine.recalibrate(read, header);
-      //  final byte[][] quals = engine.recalibrate(toFalconread, header);
-      //  for (final EventType errorModel : EventType.values()) { // recalibrate all three quality strings
-      //      //disableIndelQuals=true;
-      //    if (disableIndelQuals && errorModel != EventType.BASE_SUBSTITUTION) {
-      //      continue;
-      //    }
-      //    //System.out.printf("after gatk apply readnum: %d\n", numRecords);
-      //    //System.out.println(Arrays.toString(quals[errorModel.ordinal()]));
-      //    //System.out.println(Arrays.toString(new_gatkRead.getBaseQualities()));
-      //    //System.out.println(Arrays.toString(read.getBaseQualities()));
-      //    //Assert.assertEquals(quals[errorModel.ordinal()], read.getBaseQualities(errorModel));
-      //    //Assert.assertEquals(quals[errorModel.ordinal()], read.getBaseQualities());
-      //    System.out.printf("after  falc apply: read %s\n", Arrays.toString(quals[errorModel.ordinal()]));
-      //  }
-      //}
-      //catch (AccelerationException e) {
-      //  logger.error("exception caught in init(): "+ e.getMessage());
-      //  return;
-      //}
-      numRecords++;
-    }
-
-    numRecords = 0;
     final SamReader reader1 = getInputBamRecords();
     for (SAMRecord record : reader1) {
       final GATKRead originalRead1 = new SAMRecordToGATKReadAdapter(record);
       final GATKRead toFalconread = bqsrArgs.useOriginalBaseQualities ? ReadUtils.resetOriginalBaseQualities(originalRead1) : originalRead1;
 
-      //final GATKSAMRecord read = new GATKSAMRecord(record);
-      System.out.printf("read num: %d\n", numRecords);
-      //System.out.printf("before gatk apply, readnum: %d\n", numRecords);
-      //System.out.printf("before gatk apply: read %s\n", Arrays.toString(read.getBaseQualities()));
-      //// run recalibrate and then compare the base qualities
-
-      //GATKRead new_gatkRead = gatk_engine.apply(toFalconread);
-      //System.out.printf("after  gatk apply: read %s\n", Arrays.toString(read.getBaseQualities()));
-      //System.out.printf("after  gatk apply, newR %s\n", Arrays.toString(new_gatkRead.getBaseQualities()));
-      //System.out.println(Arrays.toString(read.getBaseQualities()));
-
-      //final GATKRead toFalconread = new SAMRecordToGATKReadAdapter(record);
-      System.out.printf("before falc apply, readnum: %d\n", numRecords);
-      System.out.printf("before falc apply: read %s\n", Arrays.toString(toFalconread.getBaseQualities()));
+      //System.out.printf("read num: %d\n", numRecords);
+      //System.out.printf("before falc apply, readnum: %d\n", numRecords);
+      //System.out.printf("before falc apply: read %s\n", Arrays.toString(toFalconread.getBaseQualities()));
       try {
-        //final byte[][] quals = engine.recalibrate(read, header);
         final byte[][] quals = engine.recalibrate(toFalconread, header);
-        GATKRead new_gatkRead = gatk_engine.apply(toFalconread);
+        //GATKRead new_gatkRead = gatk_engine.apply(toFalconread); // new_gatkRead is the same as toFalconread as toFalconread is returned
+        gatk_engine.apply(toFalconread);
         for (final EventType errorModel : EventType.values()) { // recalibrate all three quality strings
-            //disableIndelQuals=true;
           if (disableIndelQuals && errorModel != EventType.BASE_SUBSTITUTION) {
             continue;
           }
-          //System.out.printf("after gatk apply readnum: %d\n", numRecords);
-          //System.out.println(Arrays.toString(quals[errorModel.ordinal()]));
-          //System.out.println(Arrays.toString(new_gatkRead.getBaseQualities()));
-          //System.out.println(Arrays.toString(read.getBaseQualities()));
-          //Assert.assertEquals(quals[errorModel.ordinal()], read.getBaseQualities(errorModel));
-          //Assert.assertEquals(quals[errorModel.ordinal()], read.getBaseQualities());
-          System.out.printf("after  falc apply: read qual[] %s\n", Arrays.toString(quals[errorModel.ordinal()]));
-          System.out.printf("after  gatk apply: read Base() %s\n", Arrays.toString(toFalconread.getBaseQualities()));
+          //System.out.printf("after  falc apply: read qual[] %s\n", Arrays.toString(quals[errorModel.ordinal()]));
+          //System.out.printf("after  gatk apply: read Base() %s\n", Arrays.toString(toFalconread.getBaseQualities()));
           Assert.assertEquals(quals[errorModel.ordinal()], toFalconread.getBaseQualities());
         }
       }
@@ -1386,6 +1326,7 @@ public class FalconRecalibrationEngineTest {
     return covariates;
   }
   */
+
   private final StandardCovariateList getCovariates() {
       //TODO: second argument needs to be changed
     return new StandardCovariateList(RAC, Collections.singletonList("readGroup"));
