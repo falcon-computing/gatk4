@@ -969,6 +969,9 @@ public class FalconRecalibrationEngineTest {
     final double globalQScorePrior = -1.0;
     final boolean emitOriginalQuals = false;
     final ApplyBQSRArgumentCollection bqsrArgs = new ApplyBQSRArgumentCollection();
+    bqsrArgs.useOriginalBaseQualities = true;
+    System.out.printf("bqsrArgs.useOriginalBaseQualities is : ");
+    System.out.println(bqsrArgs.useOriginalBaseQualities);
 
     final RecalibrationReport report = getRecalReport();
     //final Covariate[] requestedCovariates = report.getRequestedCovariates();
@@ -1029,10 +1032,7 @@ public class FalconRecalibrationEngineTest {
     final SamReader reader1 = getInputBamRecords();
     for (SAMRecord record : reader1) {
       final GATKRead originalRead1 = new SAMRecordToGATKReadAdapter(record);
-      bqsrArgs.useOriginalBaseQualities = true;
       final GATKRead toFalconread = bqsrArgs.useOriginalBaseQualities ? ReadUtils.resetOriginalBaseQualities(originalRead1) : originalRead1;
-      System.out.printf("bqsrArgs.useOriginalBaseQualities is : ");
-      System.out.println(bqsrArgs.useOriginalBaseQualities);
       //System.out.printf("read num: %d\n", numRecords);
       //System.out.printf("before falc apply, readnum: %d\n", numRecords);
       //System.out.printf("before falc apply: read %s\n", Arrays.toString(toFalconread.getBaseQualities()));
