@@ -958,6 +958,109 @@ public class FalconRecalibrationEngineTest {
     }
   }
 
+  @Test(enabled = true, groups = {"pr"})
+  public void TestRecalibrateWithSQQ() {
+    final int hey;
+    //final boolean disableIndelQuals = false;
+    final boolean disableIndelQuals = true;
+    final int preserveQLessThan = QualityUtils.MIN_USABLE_Q_SCORE;
+    final double globalQScorePrior = -1.0;
+    final boolean emitOriginalQuals = false;
+    final ApplyBQSRArgumentCollection bqsrArgs = new ApplyBQSRArgumentCollection();
+
+    final RecalibrationReport report = getRecalReport();
+    //final Covariate[] requestedCovariates = report.getRequestedCovariates();
+    StandardCovariateList requestedCovariates = report.getCovariates();
+    // TODO: this covariates need to encode the read groups
+    final QuantizationInfo quantizationInfo = report.getQuantizationInfo();
+    final RecalibrationTables gatk_tables = report.getRecalibrationTables();
+
+    bqsrArgs.staticQuantizationQuals.add(10);
+    bqsrArgs.staticQuantizationQuals.add(20);
+    bqsrArgs.staticQuantizationQuals.add(30);
+
+    byte[] staticQuantizedMapping;
+    if(bqsrArgs.staticQuantizationQuals != null && !bqsrArgs.staticQuantizationQuals.isEmpty()) {
+      staticQuantizedMapping = BQSRReadTransformer.constructStaticQuantizedMapping(args.staticQuantizationQuals, args.roundDown);
+    }
+    //final int quantizationLevels = 1;
+
+    //quantizationInfo.quantizeQualityScores(quantizationLevels);
+    if (bqsrArgs.quantizationLevels == 0) { // quantizationLevels == 0 means no quantization, preserve the quality scores
+      quantizationInfo.noQuantization();
+    } else if (bqsrArgs.quantizationLevels > 0 && bqsrArgs.quantizationLevels != quantizationInfo.getQuantizationLevels()) { // any other positive value means, we want a different quantization than the one pre-calculated in the recalibration report. Negative values mean the user did not provide a quantization argument, and just wants to use what's in the report.
+      quantizationInfo.quantizeQualityScores(bqsrArgs.quantizationLevels);
+    }
+
+
+
+    final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
+    System.out.printf("ingatk quantizedQuals size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
+
+    final SamReader reader = getInputBamRecords();
+    final SAMFileHeader header = reader.getFileHeader();
+
+    final BQSRReadTransformer gatk_engine = new BQSRReadTransformer(header, grpPath.toFile(), bqsrArgs);
+
+
+    //final BaseRecalibration gatk_engine = new BaseRecalibration(grpPath.toFile(),
+    //        quantizationLevels,
+    //        disableIndelQuals,
+    //        preserveQLessThan,
+    //        emitOriginalQuals,
+    //        globalQScorePrior,
+    //        null, false);
+
+    // use default parameters
+    try {
+      engine.init(requestedCovariates, gatk_tables,
+              quantizedQuals, staticQuantizedMapping,
+              disableIndelQuals,
+              preserveQLessThan,
+              globalQScorePrior,
+              emitOriginalQuals);
+    }
+    catch (AccelerationException e) {
+      logger.error("exception caught in init(): "+ e.getMessage());
+      return;
+    }
+
+    // NOTE: staticQuantizedMapping is not tested
+
+    final int numReadGroups = gatk_tables.getReadGroupTable().getDimensions()[0];
+
+    //RecalibrationEngine recalibrationEngine = new RecalibrationEngine(requestedCovariates, numReadGroups, RAC.RECAL_TABLE_UPDATE_LOG, false);
+
+    int numRecords = 0;
+    final SamReader reader1 = getInputBamRecords();
+    for (SAMRecord record : reader1) {
+      final GATKRead originalRead1 = new SAMRecordToGATKReadAdapter(record);
+      final GATKRead toFalconread = bqsrArgs.useOriginalBaseQualities ? ReadUtils.resetOriginalBaseQualities(originalRead1) : originalRead1;
+
+      //System.out.printf("read num: %d\n", numRecords);
+      //System.out.printf("before falc apply, readnum: %d\n", numRecords);
+      //System.out.printf("before falc apply: read %s\n", Arrays.toString(toFalconread.getBaseQualities()));
+      try {
+        final byte[][] quals = engine.recalibrate(toFalconread, header);
+        //GATKRead new_gatkRead = gatk_engine.apply(toFalconread); // new_gatkRead is the same as toFalconread as toFalconread is returned
+        gatk_engine.apply(toFalconread);
+        for (final EventType errorModel : EventType.values()) { // recalibrate all three quality strings
+          if (disableIndelQuals && errorModel != EventType.BASE_SUBSTITUTION) {
+            continue;
+          }
+          //System.out.printf("after  falc apply: read qual[] %s\n", Arrays.toString(quals[errorModel.ordinal()]));
+          //System.out.printf("after  gatk apply: read Base() %s\n", Arrays.toString(toFalconread.getBaseQualities()));
+          Assert.assertEquals(quals[errorModel.ordinal()], toFalconread.getBaseQualities());
+        }
+      }
+      catch (AccelerationException e) {
+        logger.error("exception caught in init(): "+ e.getMessage());
+        return;
+      }
+      numRecords++;
+    }
+  }
+
   //  original code part
   /*
   @Test(enabled = true, groups = {"bqsr"})
