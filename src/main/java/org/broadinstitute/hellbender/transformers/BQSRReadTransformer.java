@@ -196,7 +196,7 @@ public final class BQSRReadTransformer implements ReadTransformer {
             //System.out.printf("offset: %d, recalibratedQualDouble: %f, recalibratedQualityScore: %d\n", offset, recalibratedQualDouble, recalibratedQualityScore);
         }
         read.setBaseQualities(quals);
-        System.out.printf("staticQuantizedMapping is : %s", Arrays.toString(staticQuantizedMapping));
+        //System.out.printf("staticQuantizedMapping is : %s", Arrays.toString(staticQuantizedMapping));
         //System.out.println(staticQuantizedMapping == null);
         return read;
     }

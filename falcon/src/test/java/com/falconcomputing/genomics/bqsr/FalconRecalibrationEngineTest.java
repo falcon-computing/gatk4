@@ -889,6 +889,7 @@ public class FalconRecalibrationEngineTest {
         quantizationInfo.quantizeQualityScores(bqsrArgs.quantizationLevels);
     }
 
+
     
     final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
     System.out.printf("ingatk quantizedQuals size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
