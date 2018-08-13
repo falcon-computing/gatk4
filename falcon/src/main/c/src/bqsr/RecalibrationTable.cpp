@@ -269,8 +269,15 @@ int RecalibrationTable::recalibrate(int readLength,
     int8_t** quals,
     int8_t** recal_quals) {
 
-  for (int k = 0; k < numEvents_; k++) {
-    if (disableIndelQuals_ && k > 0) {
+    //DLOG(INFO)<< "within falc src, original quals: [";
+    //    for (int j = 0; j < readLength; j++){
+    //        DLOG(INFO)<<unsigned(quals[0][j])<<" ";
+    //    }
+    //DLOG(INFO)<<"]\n";
+    //DLOG(INFO)<<"disableIndelQuals is "<< disableIndelQuals_<<"\n";
+
+    for (int k = 0; k < numEvents_; k++) {
+        if (disableIndelQuals_ && k > 0) {
       // skip events 1 and 2, which means:
       // BASE_INSERTION and BASE_DELETION
       continue;
@@ -326,7 +333,10 @@ int RecalibrationTable::recalibrate(int readLength,
       else {
         recal_quals[k][j] = recalibratedQualityScore;
       }
+      //offset: 62, recalibratedQualDouble: 33.000000, recalibratedQualityScore: 33
+      DLOG(INFO) << "offset: "<< j << ", recalibratedQualDouble: "<<recalibratedQualDouble<<", recalibratedQual: "<<unsigned(recalibratedQual)<<", recalibratedQualityScore: "<<unsigned(recalibratedQualityScore)<<"\n";
     }
+    DLOG(INFO) << (staticQuantizedMapping_ == NULL) ;
     free(empirical_quals_idx);
   }
   //DLOG_EVERY_N(INFO, TIMER_SAMPLE_RATE)

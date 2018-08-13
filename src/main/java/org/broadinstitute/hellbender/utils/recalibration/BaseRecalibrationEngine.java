@@ -1,4 +1,6 @@
 package org.broadinstitute.hellbender.utils.recalibration;
+import org.testng.Assert;
+
 
 import org.broadinstitute.hellbender.utils.SerializableFunction;
 import htsjdk.samtools.Cigar;

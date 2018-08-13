@@ -161,11 +161,13 @@ public final class BQSRReadTransformer implements ReadTransformer {
         }
         final byte[] quals = read.getBaseQualities();
 
+        System.out.printf("within gatk src, original quals: %s\n",Arrays.toString(quals));
         final int readLength = quals.length;
         final double epsilon = globalQScorePrior > 0.0 ? globalQScorePrior : empiricalQualRG.getEstimatedQReported();
 
         final NestedIntegerArray<RecalDatum> qualityScoreTable = recalibrationTables.getQualityScoreTable();
         final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
+        System.out.printf("within gatk src, quantizedQuals size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray())); 
 
         //Note: this loop is under very heavy use in applyBQSR. Keep it slim.
         for (int offset = 0; offset < readLength; offset++) { // recalibrate all bases in the read
@@ -191,8 +193,11 @@ public final class BQSRReadTransformer implements ReadTransformer {
 
             // Bin to static quals
             quals[offset] = staticQuantizedMapping == null ? recalibratedQualityScore : staticQuantizedMapping[recalibratedQualityScore];
+            //System.out.printf("offset: %d, recalibratedQualDouble: %f, recalibratedQualityScore: %f, staticQuantizedMapping: %d\n", offset, recalibratedQualDouble, recalibratedQualityScore, (staticQuantizedMapping == null)); 
+            System.out.printf("offset: %d, recalibratedQualDouble: %f, recalibratedQualityScore: %d\n", offset, recalibratedQualDouble, recalibratedQualityScore); 
         }
         read.setBaseQualities(quals);
+        System.out.println(staticQuantizedMapping == null);
         return read;
     }
 

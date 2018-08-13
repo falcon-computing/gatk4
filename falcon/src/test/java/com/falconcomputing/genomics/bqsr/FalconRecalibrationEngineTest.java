@@ -86,6 +86,7 @@ import htsjdk.samtools.SAMReadGroupRecord;
 
 import org.broadinstitute.hellbender.transformers.BQSRReadTransformer;
 import org.broadinstitute.hellbender.tools.ApplyBQSRArgumentCollection;
+import org.broadinstitute.hellbender.utils.read.ReadUtils;
 
 
 
@@ -865,10 +866,12 @@ public class FalconRecalibrationEngineTest {
 
   @Test(enabled = true, groups = {"pr"})
   public void TestRecalibrate() {
-    final boolean disableIndelQuals = false;
+    //final boolean disableIndelQuals = false;
+    final boolean disableIndelQuals = true;
     final int preserveQLessThan = QualityUtils.MIN_USABLE_Q_SCORE;
     final double globalQScorePrior = -1.0;
     final boolean emitOriginalQuals = false;
+    final ApplyBQSRArgumentCollection bqsrArgs = new ApplyBQSRArgumentCollection();
 
     final RecalibrationReport report = getRecalReport();
     //final Covariate[] requestedCovariates = report.getRequestedCovariates();
@@ -877,14 +880,21 @@ public class FalconRecalibrationEngineTest {
     final QuantizationInfo quantizationInfo = report.getQuantizationInfo();
     final RecalibrationTables gatk_tables = report.getRecalibrationTables();
 
-    final int quantizationLevels = 1;
+    //final int quantizationLevels = 1;
 
-    quantizationInfo.quantizeQualityScores(quantizationLevels);
+    //quantizationInfo.quantizeQualityScores(quantizationLevels);
+    if (bqsrArgs.quantizationLevels == 0) { // quantizationLevels == 0 means no quantization, preserve the quality scores
+        quantizationInfo.noQuantization();
+    } else if (bqsrArgs.quantizationLevels > 0 && bqsrArgs.quantizationLevels != quantizationInfo.getQuantizationLevels()) { // any other positive value means, we want a different quantization than the one pre-calculated in the recalibration report. Negative values mean the user did not provide a quantization argument, and just wants to use what's in the report.
+        quantizationInfo.quantizeQualityScores(bqsrArgs.quantizationLevels);
+    }
+
+    
     final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
+    System.out.printf("ingatk quantizedQuals size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
 
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
-    public ApplyBQSRArgumentCollection bqsrArgs = new ApplyBQSRArgumentCollection();
 
     final BQSRReadTransformer gatk_engine = new BQSRReadTransformer(header, grpPath.toFile(), bqsrArgs);
 
@@ -915,25 +925,88 @@ public class FalconRecalibrationEngineTest {
 
     final int numReadGroups = gatk_tables.getReadGroupTable().getDimensions()[0];
 
-    final SamReader reader = getInputBamRecords();
     //RecalibrationEngine recalibrationEngine = new RecalibrationEngine(requestedCovariates, numReadGroups, RAC.RECAL_TABLE_UPDATE_LOG, false);
 
     int numRecords = 0;
     for (SAMRecord record : reader) {
-      final GATKRead read = new SAMRecordToGATKReadAdapter(record);
+      final GATKRead originalRead = new SAMRecordToGATKReadAdapter(record);
+      final GATKRead read = bqsrArgs.useOriginalBaseQualities ? ReadUtils.resetOriginalBaseQualities(originalRead) : originalRead;
 
       //final GATKSAMRecord read = new GATKSAMRecord(record);
-
+      System.out.printf("read num: %d\n", numRecords);
+      //System.out.printf("before gatk apply, readnum: %d\n", numRecords);
+      System.out.printf("before gatk apply: read %s\n", Arrays.toString(read.getBaseQualities()));
       // run recalibrate and then compare the base qualities
-      gatk_engine.apply(read);
 
+      GATKRead new_gatkRead = gatk_engine.apply(read);
+      System.out.printf("after  gatk apply: read %s\n", Arrays.toString(read.getBaseQualities()));
+      //System.out.printf("after  gatk apply, newR %s\n", Arrays.toString(new_gatkRead.getBaseQualities()));
+      //System.out.println(Arrays.toString(read.getBaseQualities()));
+
+      //final GATKRead toFalconread = new SAMRecordToGATKReadAdapter(record);
+      //System.out.printf("before falc apply: read %s\n", Arrays.toString(toFalconread.getBaseQualities()));
+      //try {
+      //  //final byte[][] quals = engine.recalibrate(read, header);
+      //  final byte[][] quals = engine.recalibrate(toFalconread, header);
+      //  for (final EventType errorModel : EventType.values()) { // recalibrate all three quality strings
+      //      //disableIndelQuals=true;
+      //    if (disableIndelQuals && errorModel != EventType.BASE_SUBSTITUTION) {
+      //      continue;
+      //    }
+      //    //System.out.printf("after gatk apply readnum: %d\n", numRecords);
+      //    //System.out.println(Arrays.toString(quals[errorModel.ordinal()]));
+      //    //System.out.println(Arrays.toString(new_gatkRead.getBaseQualities()));
+      //    //System.out.println(Arrays.toString(read.getBaseQualities()));
+      //    //Assert.assertEquals(quals[errorModel.ordinal()], read.getBaseQualities(errorModel));
+      //    //Assert.assertEquals(quals[errorModel.ordinal()], read.getBaseQualities());
+      //    System.out.printf("after  falc apply: read %s\n", Arrays.toString(quals[errorModel.ordinal()]));
+      //  }
+      //}
+      //catch (AccelerationException e) {
+      //  logger.error("exception caught in init(): "+ e.getMessage());
+      //  return;
+      //}
+      numRecords++;
+    }
+
+    numRecords = 0;
+    final SamReader reader1 = getInputBamRecords();
+    for (SAMRecord record : reader1) {
+      final GATKRead originalRead1 = new SAMRecordToGATKReadAdapter(record);
+      final GATKRead toFalconread = bqsrArgs.useOriginalBaseQualities ? ReadUtils.resetOriginalBaseQualities(originalRead1) : originalRead1;
+
+      //final GATKSAMRecord read = new GATKSAMRecord(record);
+      System.out.printf("read num: %d\n", numRecords);
+      //System.out.printf("before gatk apply, readnum: %d\n", numRecords);
+      //System.out.printf("before gatk apply: read %s\n", Arrays.toString(read.getBaseQualities()));
+      //// run recalibrate and then compare the base qualities
+
+      //GATKRead new_gatkRead = gatk_engine.apply(toFalconread);
+      //System.out.printf("after  gatk apply: read %s\n", Arrays.toString(read.getBaseQualities()));
+      //System.out.printf("after  gatk apply, newR %s\n", Arrays.toString(new_gatkRead.getBaseQualities()));
+      //System.out.println(Arrays.toString(read.getBaseQualities()));
+
+      //final GATKRead toFalconread = new SAMRecordToGATKReadAdapter(record);
+      System.out.printf("before falc apply, readnum: %d\n", numRecords);
+      System.out.printf("before falc apply: read %s\n", Arrays.toString(toFalconread.getBaseQualities()));
       try {
-        final byte[][] quals = engine.recalibrate(read, header);
+        //final byte[][] quals = engine.recalibrate(read, header);
+        final byte[][] quals = engine.recalibrate(toFalconread, header);
+        GATKRead new_gatkRead = gatk_engine.apply(toFalconread);
         for (final EventType errorModel : EventType.values()) { // recalibrate all three quality strings
+            //disableIndelQuals=true;
           if (disableIndelQuals && errorModel != EventType.BASE_SUBSTITUTION) {
             continue;
           }
-          Assert.assertEquals(quals[errorModel.ordinal()], read.getBaseQualities(errorModel));
+          //System.out.printf("after gatk apply readnum: %d\n", numRecords);
+          //System.out.println(Arrays.toString(quals[errorModel.ordinal()]));
+          //System.out.println(Arrays.toString(new_gatkRead.getBaseQualities()));
+          //System.out.println(Arrays.toString(read.getBaseQualities()));
+          //Assert.assertEquals(quals[errorModel.ordinal()], read.getBaseQualities(errorModel));
+          //Assert.assertEquals(quals[errorModel.ordinal()], read.getBaseQualities());
+          System.out.printf("after  falc apply: read qual[] %s\n", Arrays.toString(quals[errorModel.ordinal()]));
+          System.out.printf("after  gatk apply: read Base() %s\n", Arrays.toString(toFalconread.getBaseQualities()));
+          Assert.assertEquals(quals[errorModel.ordinal()], toFalconread.getBaseQualities());
         }
       }
       catch (AccelerationException e) {
