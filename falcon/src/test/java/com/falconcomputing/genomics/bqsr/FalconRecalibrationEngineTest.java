@@ -983,6 +983,10 @@ public class FalconRecalibrationEngineTest {
     if(bqsrArgs.staticQuantizationQuals != null && !bqsrArgs.staticQuantizationQuals.isEmpty()) {
       staticQuantizedMapping = BQSRReadTransformer.constructStaticQuantizedMapping(bqsrArgs.staticQuantizationQuals, bqsrArgs.roundDown);
     }
+    else
+    {
+      staticQuantizedMapping = null;
+    }
     //final int quantizationLevels = 1;
 
     //quantizationInfo.quantizeQualityScores(quantizationLevels);
