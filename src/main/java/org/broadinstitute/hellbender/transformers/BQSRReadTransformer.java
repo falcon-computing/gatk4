@@ -27,6 +27,8 @@ import static org.broadinstitute.hellbender.utils.recalibration.RecalDatum.MAX_R
 
 import com.falconcomputing.genomics.AccelerationException;
 import com.falconcomputing.genomics.bqsr.FalconRecalibrationEngine;
+import org.broadinstitute.hellbender.utils.recalibration.RecalibrationArgumentCollection;
+
 //import org.testng.Assert;
 
 
@@ -111,6 +113,7 @@ public final class BQSRReadTransformer implements ReadTransformer {
 
 
         //initialize FalconEngine
+        private final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
         engine = new FalconRecalibrationEngine(RAC, null);
         final boolean isLoaded = engine.load(null);
         System.out.printf("Peipei Debug");
