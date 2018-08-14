@@ -169,7 +169,7 @@ public final class BQSRReadTransformer implements ReadTransformer {
 
         }
         catch (AccelerationException e) {
-            logger.error("exception caught in init(): "+ e.getMessage());
+            System.out.printf("exception caught in init(): "+ e.getMessage());
             isAccelerated = false;
             System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
             System.out.println(isAccelerated);
