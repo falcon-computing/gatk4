@@ -238,7 +238,7 @@ public class BaseRecalibrator extends ReadWalker {
                 if (ret == 1) {
                     System.out.print("Peipei Debug: Falcon updated");
                 }
-            } catch (AcceptPendingException e){
+            } catch (AccelerationException e){
                 isAccelerated = false; // disable accelerator in the future
                 System.out.printf("exception caught in falconRecalEngine.update(): " + e.getMessage());
             }
