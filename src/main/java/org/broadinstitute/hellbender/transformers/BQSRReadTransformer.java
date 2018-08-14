@@ -296,8 +296,9 @@ public final class BQSRReadTransformer implements ReadTransformer {
             read.setBaseQualities(quals);
             //System.out.printf("staticQuantizedMapping is : %s", Arrays.toString(staticQuantizedMapping));
             //System.out.println(staticQuantizedMapping == null);
-            return read;
+
         }
+        return read;
     }
 
     // recalibrated quality is bound between 1 and MAX_QUAL
