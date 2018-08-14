@@ -148,53 +148,52 @@ public final class BQSRReadTransformer implements ReadTransformer {
 
         //initialize FalconEngine
 
-
-        final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
-        engine = new FalconRecalibrationEngine(RAC, null);
-        final boolean isLoaded = engine.load(null);
-        System.out.printf("Peipei Debug, FalconRecalibrationEngine isLoaded: ");
-        System.out.println(isLoaded);
-        //Assert.assertTrue(isLoaded);
-        if(isLoaded){
-            if (args.quantizationLevels == 0) { // quantizationLevels == 0 means no quantization, preserve the quality scores
-                quantizationInfo.noQuantization();
-            } else if (args.quantizationLevels > 0 && args.quantizationLevels != quantizationInfo.getQuantizationLevels()) { // any other positive value means, we want a different quantization than the one pre-calculated in the recalibration report. Negative values mean the user did not provide a quantization argument, and just wants to use what's in the report.
-                quantizationInfo.quantizeQualityScores(args.quantizationLevels);
+        if(isAccelerated) {
+            final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
+            engine = new FalconRecalibrationEngine(RAC, null);
+            final boolean isLoaded = engine.load(null);
+            System.out.printf("Peipei Debug, FalconRecalibrationEngine isLoaded: ");
+            System.out.println(isLoaded);
+            //Assert.assertTrue(isLoaded);
+            if (isLoaded) {
+                if (args.quantizationLevels == 0) { // quantizationLevels == 0 means no quantization, preserve the quality scores
+                    quantizationInfo.noQuantization();
+                } else if (args.quantizationLevels > 0 && args.quantizationLevels != quantizationInfo.getQuantizationLevels()) { // any other positive value means, we want a different quantization than the one pre-calculated in the recalibration report. Negative values mean the user did not provide a quantization argument, and just wants to use what's in the report.
+                    quantizationInfo.quantizeQualityScores(args.quantizationLevels);
+                }
             }
-        }
 
-        System.out.printf("Peipei Debug, QualityUtils.MAX_SAM_QUAL_SCORE is %d \n", QualityUtils.MAX_SAM_QUAL_SCORE);
-        final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
-        System.out.printf("Peipei Debug, infalc quantizedQuals after  noQuantization size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
-        byte[] staticQuantizedMapping;
-        if(args.staticQuantizationQuals != null && !args.staticQuantizationQuals.isEmpty()) {
-            staticQuantizedMapping = BQSRReadTransformer.constructStaticQuantizedMapping(args.staticQuantizationQuals, args.roundDown);
-        }
-        else{
-            staticQuantizedMapping = null;
-        }
+            System.out.printf("Peipei Debug, QualityUtils.MAX_SAM_QUAL_SCORE is %d \n", QualityUtils.MAX_SAM_QUAL_SCORE);
+            final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
+            System.out.printf("Peipei Debug, infalc quantizedQuals after  noQuantization size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
+            byte[] staticQuantizedMapping;
+            if (args.staticQuantizationQuals != null && !args.staticQuantizationQuals.isEmpty()) {
+                staticQuantizedMapping = BQSRReadTransformer.constructStaticQuantizedMapping(args.staticQuantizationQuals, args.roundDown);
+            } else {
+                staticQuantizedMapping = null;
+            }
 
-        try {
-            engine.init(requestedCovariates, gatk_tables,
-                    quantizedQuals, staticQuantizedMapping,
-                    disableIndelQuals,
-                    preserveQLessThan,
-                    globalQScorePrior,
-                    emitOriginalQuals);
+            try {
+                engine.init(requestedCovariates, gatk_tables,
+                        quantizedQuals, staticQuantizedMapping,
+                        disableIndelQuals,
+                        preserveQLessThan,
+                        globalQScorePrior,
+                        emitOriginalQuals);
 
-            isAccelerated = true;
-            System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
-            System.out.println(isAccelerated);
+                isAccelerated = true;
+                System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
+                System.out.println(isAccelerated);
 
 
-        }
-        catch (AccelerationException e) {
-            System.out.printf("exception caught in init(): "+ e.getMessage());
-            isAccelerated = false;
-            System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
-            System.out.println(isAccelerated);
-            return;
+            } catch (AccelerationException e) {
+                System.out.printf("exception caught in init(): " + e.getMessage());
+                isAccelerated = false;
+                System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
+                System.out.println(isAccelerated);
+                return;
 
+            }
         }
 
     }
