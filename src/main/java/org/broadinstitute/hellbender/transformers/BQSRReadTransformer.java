@@ -112,13 +112,6 @@ public final class BQSRReadTransformer implements ReadTransformer {
         keyCache = new CovariateKeyCache();//one cache per transformer
 
 
-        //initialize FalconEngine
-        final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
-        engine = new FalconRecalibrationEngine(RAC, null);
-        final boolean isLoaded = engine.load(null);
-        System.out.printf("Peipei Debug ");
-        System.out.println(isLoaded);
-        //Assert.assertTrue(isLoaded);
 
     }
 
@@ -131,6 +124,59 @@ public final class BQSRReadTransformer implements ReadTransformer {
      */
     public BQSRReadTransformer(final SAMFileHeader header, final RecalibrationReport recalInfo, final ApplyBQSRArgumentCollection args) {
         this(header, recalInfo.getRecalibrationTables(), recalInfo.getQuantizationInfo(), recalInfo.getCovariates(), args);
+
+
+        // Peipei added: for FalconEngine part
+        final boolean disableIndelQuals = true;
+        final int preserveQLessThan = QualityUtils.MIN_USABLE_Q_SCORE;
+        final double globalQScorePrior = args.globalQScorePrior;
+        final boolean emitOriginalQuals = args.emitOriginalQuals;
+
+        StandardCovariateList requestedCovariates = recalInfo.getCovariates();
+        final RecalibrationTables gatk_tables = recalInfo.getRecalibrationTables();
+        final QuantizationInfo quantizationInfo = recalInfo.getQuantizationInfo();
+
+        //initialize FalconEngine
+        final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
+        engine = new FalconRecalibrationEngine(RAC, null);
+        final boolean isLoaded = engine.load(null);
+        System.out.printf("Peipei Debug, FalconRecalibrationEngine isLoaded: ");
+        System.out.println(isLoaded);
+        //Assert.assertTrue(isLoaded);
+        if(isLoaded){
+            if (args.quantizationLevels == 0) { // quantizationLevels == 0 means no quantization, preserve the quality scores
+                quantizationInfo.noQuantization();
+            } else if (args.quantizationLevels > 0 && args.quantizationLevels != quantizationInfo.getQuantizationLevels()) { // any other positive value means, we want a different quantization than the one pre-calculated in the recalibration report. Negative values mean the user did not provide a quantization argument, and just wants to use what's in the report.
+                quantizationInfo.quantizeQualityScores(args.quantizationLevels);
+            }
+        }
+        final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
+        System.out.printf("Peipei Debug, ingatk quantizedQuals size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
+
+
+        try {
+            engine.init(requestedCovariates, gatk_tables,
+                    quantizedQuals, null,
+                    disableIndelQuals,
+                    preserveQLessThan,
+                    globalQScorePrior,
+                    emitOriginalQuals);
+
+            isAccelerated = true;
+            System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
+            System.out.println(isAccelerated);
+
+
+        }
+        catch (AccelerationException e) {
+            logger.error("exception caught in init(): "+ e.getMessage());
+            isAccelerated = false;
+            System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
+            System.out.println(isAccelerated);
+            return;
+
+        }
+
     }
 
     /**
