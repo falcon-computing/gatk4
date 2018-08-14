@@ -86,6 +86,9 @@ public class BaseRecalibrationEngine implements Serializable {
      */
     private boolean finalized = false;
 
+
+
+
     public BaseRecalibrationEngine( final RecalibrationArgumentCollection recalArgs, final SAMFileHeader readsHeader ) {
         this.recalArgs = recalArgs;
         this.readsHeader = readsHeader;
@@ -328,8 +331,8 @@ public class BaseRecalibrationEngine implements Serializable {
         }
         return read;
     }
-
-    private boolean[] calculateSkipArray( final GATKRead read, final Iterable<? extends Locatable> knownSites ) {
+    public boolean[] calculateSkipArray( final GATKRead read, final Iterable<? extends Locatable> knownSites ) {
+    //private boolean[] calculateSkipArray( final GATKRead read, final Iterable<? extends Locatable> knownSites ) {
         final int readLength = read.getLength();
         final boolean[] skip = new boolean[readLength];
         final boolean[] knownSitesArray = calculateKnownSites(read, knownSites);

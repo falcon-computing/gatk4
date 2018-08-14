@@ -1,5 +1,9 @@
 package org.broadinstitute.hellbender.tools.walkers.bqsr;
 
+
+import com.falconcomputing.genomics.AccelerationException;
+import com.falconcomputing.genomics.bqsr.FalconRecalibrationEngine;
+
 import htsjdk.tribble.Feature;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,17 +17,20 @@ import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.engine.filters.ReadFilterLibrary;
 import org.broadinstitute.hellbender.engine.filters.WellformedReadFilter;
 import org.broadinstitute.hellbender.exceptions.UserException;
+import org.broadinstitute.hellbender.transformers.ReadTransformer;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.recalibration.BaseRecalibrationEngine;
 import org.broadinstitute.hellbender.utils.recalibration.QuantizationInfo;
 import org.broadinstitute.hellbender.utils.recalibration.RecalUtils;
 import org.broadinstitute.hellbender.utils.recalibration.RecalibrationArgumentCollection;
+import org.broadinstitute.hellbender.utils.recalibration.covariates.StandardCovariateList;
 import picard.cmdline.programgroups.ReadDataManipulationProgramGroup;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.channels.AcceptPendingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -131,6 +138,14 @@ public class BaseRecalibrator extends ReadWalker {
     }
 
     /**
+     * Falcon: interface for accelerated updateDataForRead
+     */
+    private FalconRecalibrationEngine falconRecalEngine;
+    private boolean isAccelerated = false;
+
+
+
+    /**
      * Parse the -cov arguments and create a list of covariates to be used here
      * Based on the covariates' estimates for initial capacity allocate the data hashmap
      */
@@ -140,11 +155,35 @@ public class BaseRecalibrator extends ReadWalker {
             recalArgs.DEFAULT_PLATFORM = recalArgs.FORCE_PLATFORM;
         }
 
-        Utils.warnOnNonIlluminaReadGroups(getHeaderForReads(), logger);
-
-        recalibrationEngine = new BaseRecalibrationEngine(recalArgs, getHeaderForReads());
+        // part 1: GATK init
+        final SAMFileHeader header = getHeaderForReads();
+        Utils.warnOnNonIlluminaReadGroups(header, logger);
+        recalibrationEngine = new BaseRecalibrationEngine(recalArgs, header);
         recalibrationEngine.logCovariatesUsed();
         referenceDataSource = ReferenceDataSource.of(referenceArguments.getReferencePath());
+        //Utils.warnOnNonIlluminaReadGroups(getHeaderForReads(), logger);
+        //recalibrationEngine = new BaseRecalibrationEngine(recalArgs, getHeaderForReads());
+
+        // part 2: Falcon init
+        falconRecalEngine = new FalconRecalibrationEngine(recalArgs, null);
+        final boolean isLoaded = engine.load(null);
+        if(isLoaded){
+            final StandardCovariateList covariates = new StandardCovariateList(recalArgs, header);
+            final int numReadGroups = header.getReadGroups().size();
+            try {
+                falconRecalEngine.init(covariates, numReadGroups, header);
+                isAccelerated = true;
+                System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: true\n");
+            } catch (AcceptPendingException e){
+                System.out.println("exception caught in init(): " + e.getMessage());
+                isAccelerated = false;
+                System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
+                System.out.println(isAccelerated);
+                return;
+            }
+
+        }
+
     }
 
     @Override
@@ -183,7 +222,32 @@ public class BaseRecalibrator extends ReadWalker {
      */
     @Override
     public void apply( GATKRead read, ReferenceContext ref, FeatureContext featureContext ) {
-        recalibrationEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites));
+
+        // Falcon
+        //if (isAccelerated){
+        //    try {
+        //        final boolean[] skip = recalibrationEngine.calculateSkipArray(read, featureContext.getValues(knownSites));
+        //        final ReadTransformer transform = recalibrationEngine.makeReadTransform();
+        //        final GATKRead readTransform = transform.apply(read);
+
+        //        if( readTransform.isEmpty() ) {
+        //            return; // the whole read was inside the adaptor so skip it
+        //        }
+
+        //        RecalUtils.parsePlatformForRead(readTransform, readsHeader, recalArgs);
+        //        final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, getHeaderForReads(), skip);
+        //        //if (ret == 1) {
+
+        //        //}
+        //    } catch (AcceptPendingException e){
+        //        isAccelerated = false; // disable accelerator in the future
+        //        System.out.printf("exception caught in falconRecalEngine.update(): " + e.getMessage());
+        //    }
+        //}
+        //if (!isAccelerated) {
+            // Original
+            recalibrationEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites));
+        //}
     }
 
     @Override
@@ -200,6 +264,8 @@ public class BaseRecalibrator extends ReadWalker {
         //logger.info("BaseRecalibrator was able to recalibrate " + result + " reads");
         return recalibrationEngine.getNumReadsProcessed();
     }
+
+
 
     /**
      * go through the quality score table and use the # observations and the empirical quality score
