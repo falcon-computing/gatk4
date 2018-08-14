@@ -114,8 +114,8 @@ public final class BQSRReadTransformer implements ReadTransformer {
         empiricalQualCovsArgs = new RecalDatum[totalCovariateCount - specialCovariateCount];
         keyCache = new CovariateKeyCache();//one cache per transformer
 
-        final List<Byte> quantizedQuals = this.quantizationInfo.getQuantizedQuals();
-        System.out.printf("Peipei Debug, ingatk quantizedQuals after  noQuantization size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
+        final List<Byte> quantizedQualsAfter = this.quantizationInfo.getQuantizedQuals();
+        System.out.printf("Peipei Debug, ingatk quantizedQuals after  noQuantization size is %d, array is %s\n", quantizedQualsAfter.size(), Arrays.toString(quantizedQualsAfter.toArray()));
 
 
     }
