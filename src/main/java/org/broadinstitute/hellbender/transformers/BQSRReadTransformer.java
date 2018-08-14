@@ -27,6 +27,8 @@ import static org.broadinstitute.hellbender.utils.recalibration.RecalDatum.MAX_R
 
 import com.falconcomputing.genomics.AccelerationException;
 import com.falconcomputing.genomics.bqsr.FalconRecalibrationEngine;
+//import org.testng.Assert;
+
 
 public final class BQSRReadTransformer implements ReadTransformer {
     private static final long serialVersionUID = 1L;
@@ -52,6 +54,10 @@ public final class BQSRReadTransformer implements ReadTransformer {
 
     private byte[] staticQuantizedMapping;
     private final CovariateKeyCache keyCache;
+
+    //Falcon Engine part
+    private FalconRecalibrationEngine engine;
+    private boolean isAccelerated = false;
 
     /**
      * Constructor using a GATK Report file
@@ -102,6 +108,15 @@ public final class BQSRReadTransformer implements ReadTransformer {
         //Note: We pre-create the varargs arrays that will be used in the calls. Otherwise we're spending a lot of time allocating those int[] objects
         empiricalQualCovsArgs = new RecalDatum[totalCovariateCount - specialCovariateCount];
         keyCache = new CovariateKeyCache();//one cache per transformer
+
+
+        //initialize FalconEngine
+        engine = new FalconRecalibrationEngine(RAC, null);
+        final boolean isLoaded = engine.load(null);
+        System.out.printf("Peipei Debug");
+        System.out.println(isLoaded);
+        //Assert.assertTrue(isLoaded);
+
     }
 
     /**
