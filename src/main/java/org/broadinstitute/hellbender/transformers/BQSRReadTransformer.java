@@ -113,10 +113,10 @@ public final class BQSRReadTransformer implements ReadTransformer {
 
 
         //initialize FalconEngine
-        private final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
+        final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
         engine = new FalconRecalibrationEngine(RAC, null);
         final boolean isLoaded = engine.load(null);
-        System.out.printf("Peipei Debug");
+        System.out.printf("Peipei Debug ");
         System.out.println(isLoaded);
         //Assert.assertTrue(isLoaded);
 
