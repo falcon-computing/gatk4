@@ -123,6 +123,12 @@ public final class RecalibrationArgumentCollection implements Serializable {
     public Boolean useOriginalBaseQualities = false;
 
     /**
+     * * switch on or off use-accelerator
+     */
+    @Argument(fullName="use-accelerator", doc = "Use the base quality scores from the OQ tag", optional = true)
+    public Boolean useFalconAccelerator = true;
+
+    /**
      * If reads are missing some or all base quality scores, this value will be used for all base quality scores.
      * By default this is set to -1 to disable default base quality assignment.
      */

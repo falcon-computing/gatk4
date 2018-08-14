@@ -163,24 +163,31 @@ public class BaseRecalibrator extends ReadWalker {
         //Utils.warnOnNonIlluminaReadGroups(getHeaderForReads(), logger);
         //recalibrationEngine = new BaseRecalibrationEngine(recalArgs, getHeaderForReads());
 
-        // part 2: Falcon init
-        falconRecalEngine = new FalconRecalibrationEngine(recalArgs, null);
-        final boolean isLoaded = falconRecalEngine.load(null);
-        if(isLoaded){
-            final StandardCovariateList covariates = new StandardCovariateList(recalArgs, header);
-            final int numReadGroups = header.getReadGroups().size();
-            try {
-                falconRecalEngine.init(covariates, numReadGroups, header);
-                isAccelerated = true;
-                System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: true\n");
-            } catch (AccelerationException e){
-                System.out.println("exception caught in init(): " + e.getMessage());
-                isAccelerated = false;
-                System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
-                System.out.println(isAccelerated);
-                return;
-            }
+        isAccelerated = recalArgs.useFalconAccelerator;
+        System.out.printf("Peipei Debug: useFalconAccelerator is %s\n", recalArgs.useFalconAccelerator);
 
+
+        if(recalArgs.useFalconAccelerator) {
+
+            // part 2: Falcon init
+            falconRecalEngine = new FalconRecalibrationEngine(recalArgs, null);
+            final boolean isLoaded = falconRecalEngine.load(null);
+            if (isLoaded) {
+                final StandardCovariateList covariates = new StandardCovariateList(recalArgs, header);
+                final int numReadGroups = header.getReadGroups().size();
+                try {
+                    falconRecalEngine.init(covariates, numReadGroups, header);
+                    isAccelerated = true;
+                    System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: true\n");
+                } catch (AccelerationException e) {
+                    System.out.println("exception caught in init(): " + e.getMessage());
+                    isAccelerated = false;
+                    System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
+                    System.out.println(isAccelerated);
+                    return;
+                }
+
+            }
         }
 
     }
