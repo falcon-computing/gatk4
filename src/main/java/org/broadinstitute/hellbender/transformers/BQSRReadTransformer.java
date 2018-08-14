@@ -130,25 +130,25 @@ public final class BQSRReadTransformer implements ReadTransformer {
     public BQSRReadTransformer(final SAMFileHeader header, final RecalibrationReport recalInfo, final ApplyBQSRArgumentCollection args) {
         this(header, recalInfo.getRecalibrationTables(), recalInfo.getQuantizationInfo(), recalInfo.getCovariates(), args);
 
-
-        // Peipei added: for FalconEngine part
-        this.isAccelerated = args.useFalconAccelerator;
-        System.out.printf("Peipei Debug: useFalconAccelerator is %s\n", args.useFalconAccelerator);
-        final boolean disableIndelQuals = true;
-        final int preserveQLessThan = QualityUtils.MIN_USABLE_Q_SCORE;
-        final double globalQScorePrior = args.globalQScorePrior;
-        final boolean emitOriginalQuals = args.emitOriginalQuals;
-
-        StandardCovariateList requestedCovariates = recalInfo.getCovariates();
-        final RecalibrationTables gatk_tables = recalInfo.getRecalibrationTables();
-        final QuantizationInfo quantizationInfo = recalInfo.getQuantizationInfo();
-
-        final List<Byte> quantizedQualsBefore = quantizationInfo.getQuantizedQuals();
-        System.out.printf("Peipei Debug, infalc quantizedQuals before noQuantization size is %d, array is %s\n", quantizedQualsBefore.size(), Arrays.toString(quantizedQualsBefore.toArray()));
-
-        //initialize FalconEngine
-
         if(isAccelerated) {
+            // Peipei added: for FalconEngine part
+            this.isAccelerated = args.useFalconAccelerator;
+            System.out.printf("Peipei Debug: useFalconAccelerator is %s\n", args.useFalconAccelerator);
+            final boolean disableIndelQuals = true;
+            final int preserveQLessThan = QualityUtils.MIN_USABLE_Q_SCORE;
+            final double globalQScorePrior = args.globalQScorePrior;
+            final boolean emitOriginalQuals = args.emitOriginalQuals;
+
+            StandardCovariateList requestedCovariates = recalInfo.getCovariates();
+            final RecalibrationTables gatk_tables = recalInfo.getRecalibrationTables();
+            final QuantizationInfo quantizationInfo = recalInfo.getQuantizationInfo();
+
+            final List<Byte> quantizedQualsBefore = quantizationInfo.getQuantizedQuals();
+            System.out.printf("Peipei Debug, infalc quantizedQuals before noQuantization size is %d, array is %s\n", quantizedQualsBefore.size(), Arrays.toString(quantizedQualsBefore.toArray()));
+
+            //initialize FalconEngine
+
+
             final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
             engine = new FalconRecalibrationEngine(RAC, null);
             final boolean isLoaded = engine.load(null);
