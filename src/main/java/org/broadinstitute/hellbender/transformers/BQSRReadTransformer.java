@@ -220,7 +220,6 @@ public final class BQSRReadTransformer implements ReadTransformer {
             }
         }
 
-        final ReadCovariates readCovariates = RecalUtils.computeCovariates(read, header, covariates, false, keyCache);
 
         //clear indel qualities
         read.clearAttribute(ReadUtils.BQSR_BASE_INSERTION_QUALITIES);
@@ -230,8 +229,8 @@ public final class BQSRReadTransformer implements ReadTransformer {
             try{
                 final byte[][] quals = engine.recalibrate(read, header);
                 read.setBaseQualities(quals[EventType.BASE_SUBSTITUTION.ordinal()]);
-                System.out.println("Peipei Debug: Falcon Genomics Acceleration Working !!");
-                System.out.printf("Peipei Debug: qual is %s\n", Arrays.toString(quals[EventType.BASE_SUBSTITUTION.ordinal()]));
+                //System.out.println("Peipei Debug: Falcon Genomics Acceleration Working !!");
+                System.out.printf("Peipei Debug:%s\n", Arrays.toString(quals[EventType.BASE_SUBSTITUTION.ordinal()]));
                 return read;
 
             }
@@ -245,6 +244,7 @@ public final class BQSRReadTransformer implements ReadTransformer {
         }
 
         if (!isAccelerated) {
+            final ReadCovariates readCovariates = RecalUtils.computeCovariates(read, header, covariates, false, keyCache);
 
             // get the keyset for this base using the error model
             final int[][] fullReadKeySet = readCovariates.getKeySet(EventType.BASE_SUBSTITUTION);
