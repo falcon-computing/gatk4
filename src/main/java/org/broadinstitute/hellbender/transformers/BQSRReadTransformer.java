@@ -236,7 +236,7 @@ public final class BQSRReadTransformer implements ReadTransformer {
                 final byte[][] quals = engine.recalibrate(read, header);
                 read.setBaseQualities(quals[EventType.BASE_SUBSTITUTION.ordinal()]);
                 //System.out.println("Peipei Debug: Falcon Genomics Acceleration Working !!");
-                System.out.printf("Peipei Debug:%s\n", Arrays.toString(quals[EventType.BASE_SUBSTITUTION.ordinal()]));
+                //System.out.printf("Peipei Debug:%s\n", Arrays.toString(quals[EventType.BASE_SUBSTITUTION.ordinal()]));
                 return read;
 
             }
