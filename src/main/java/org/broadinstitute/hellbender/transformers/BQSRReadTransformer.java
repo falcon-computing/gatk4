@@ -141,6 +141,9 @@ public final class BQSRReadTransformer implements ReadTransformer {
         final RecalibrationTables gatk_tables = recalInfo.getRecalibrationTables();
         final QuantizationInfo quantizationInfo = recalInfo.getQuantizationInfo();
 
+        final List<Byte> quantizedQualsBefore = quantizationInfo.getQuantizedQuals();
+        System.out.printf("Peipei Debug, infalc quantizedQuals before noQuantization size is %d, array is %s\n", quantizedQualsBefore.size(), Arrays.toString(quantizedQualsBefore.toArray()));
+
         //initialize FalconEngine
         final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
         engine = new FalconRecalibrationEngine(RAC, null);
@@ -158,7 +161,7 @@ public final class BQSRReadTransformer implements ReadTransformer {
 
         System.out.printf("Peipei Debug, QualityUtils.MAX_SAM_QUAL_SCORE is %d \n", QualityUtils.MAX_SAM_QUAL_SCORE);
         final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
-        System.out.printf("Peipei Debug, infalc quantizedQuals size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
+        System.out.printf("Peipei Debug, infalc quantizedQuals after  noQuantization size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
 
 
         try {
