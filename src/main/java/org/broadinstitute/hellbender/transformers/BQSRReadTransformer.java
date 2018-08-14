@@ -133,6 +133,7 @@ public final class BQSRReadTransformer implements ReadTransformer {
 
         // Peipei added: for FalconEngine part
         this.isAccelerated = args.useFalconAccelerator;
+        System.out.printf("Peipei Debug: useFalconAccelerator is %s\n", args.useFalconAccelerator);
         final boolean disableIndelQuals = true;
         final int preserveQLessThan = QualityUtils.MIN_USABLE_Q_SCORE;
         final double globalQScorePrior = args.globalQScorePrior;
