@@ -226,57 +226,78 @@ public final class BQSRReadTransformer implements ReadTransformer {
         read.clearAttribute(ReadUtils.BQSR_BASE_INSERTION_QUALITIES);
         read.clearAttribute(ReadUtils.BQSR_BASE_DELETION_QUALITIES);
 
-        // get the keyset for this base using the error model
-        final int[][] fullReadKeySet = readCovariates.getKeySet(EventType.BASE_SUBSTITUTION);
+        if (isAccelerated){
+            try{
+                final byte[][] quals = engine.recalibrate(read, header);
+                read.setBaseQualities(quals[EventType.BASE_SUBSTITUTION.ordinal()]);
+                System.out.println("Peipei Debug: Falcon Genomics Acceleration Working !!");
+                System.out.printf("Peipei Debug: qual is %s\n", Arrays.toString(quals[EventType.BASE_SUBSTITUTION.ordinal()]));
+                return read;
 
-        // the rg key is constant over the whole read, the global deltaQ is too
-        final int rgKey = fullReadKeySet[0][0];
+            }
 
-        final RecalDatum empiricalQualRG = recalibrationTables.getReadGroupTable().get2Keys(rgKey, BASE_SUBSTITUTION_INDEX);
+            catch (AccelerationException e){
+                isAccelerated = false; // disable accelerator in the future
+                System.out.println("Falcon Genomics Acceleration Library failed because: "+e.getMessage());
+                System.out.println("Switching back to original implementation");
+                // NOTE: some other exceptions may not cause this switch
+            }
+        }
 
-        if (empiricalQualRG == null) {
+        if (!isAccelerated) {
+
+            // get the keyset for this base using the error model
+            final int[][] fullReadKeySet = readCovariates.getKeySet(EventType.BASE_SUBSTITUTION);
+
+            // the rg key is constant over the whole read, the global deltaQ is too
+            final int rgKey = fullReadKeySet[0][0];
+
+            final RecalDatum empiricalQualRG = recalibrationTables.getReadGroupTable().get2Keys(rgKey, BASE_SUBSTITUTION_INDEX);
+
+            if (empiricalQualRG == null) {
+                return read;
+            }
+            final byte[] quals = read.getBaseQualities();
+
+            //System.out.printf("within gatk src, original quals: %s\n",Arrays.toString(quals));
+            final int readLength = quals.length;
+            final double epsilon = globalQScorePrior > 0.0 ? globalQScorePrior : empiricalQualRG.getEstimatedQReported();
+
+            final NestedIntegerArray<RecalDatum> qualityScoreTable = recalibrationTables.getQualityScoreTable();
+            final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
+            //System.out.printf("within gatk src, quantizedQuals size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
+
+            //Note: this loop is under very heavy use in applyBQSR. Keep it slim.
+            for (int offset = 0; offset < readLength; offset++) { // recalibrate all bases in the read
+
+                // only recalibrate usable qualities (the original quality will come from the instrument -- reported quality)
+                if (quals[offset] < preserveQLessThan) {
+                    continue;
+                }
+                Arrays.fill(empiricalQualCovsArgs, null);  //clear the array
+                final int[] keySet = fullReadKeySet[offset];
+
+
+                final RecalDatum empiricalQualQS = qualityScoreTable.get3Keys(keySet[0], keySet[1], BASE_SUBSTITUTION_INDEX);
+
+                for (int i = specialCovariateCount; i < totalCovariateCount; i++) {
+                    if (keySet[i] >= 0) {
+                        empiricalQualCovsArgs[i - specialCovariateCount] = recalibrationTables.getTable(i).get4Keys(keySet[0], keySet[1], keySet[i], BASE_SUBSTITUTION_INDEX);
+                    }
+                }
+                final double recalibratedQualDouble = hierarchicalBayesianQualityEstimate(epsilon, empiricalQualRG, empiricalQualQS, empiricalQualCovsArgs);
+
+                final byte recalibratedQualityScore = quantizedQuals.get(getRecalibratedQual(recalibratedQualDouble));
+
+                // Bin to static quals
+                quals[offset] = staticQuantizedMapping == null ? recalibratedQualityScore : staticQuantizedMapping[recalibratedQualityScore];
+                //System.out.printf("offset: %d, recalibratedQualDouble: %f, recalibratedQualityScore: %d\n", offset, recalibratedQualDouble, recalibratedQualityScore);
+            }
+            read.setBaseQualities(quals);
+            //System.out.printf("staticQuantizedMapping is : %s", Arrays.toString(staticQuantizedMapping));
+            //System.out.println(staticQuantizedMapping == null);
             return read;
         }
-        final byte[] quals = read.getBaseQualities();
-
-        //System.out.printf("within gatk src, original quals: %s\n",Arrays.toString(quals));
-        final int readLength = quals.length;
-        final double epsilon = globalQScorePrior > 0.0 ? globalQScorePrior : empiricalQualRG.getEstimatedQReported();
-
-        final NestedIntegerArray<RecalDatum> qualityScoreTable = recalibrationTables.getQualityScoreTable();
-        final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
-        //System.out.printf("within gatk src, quantizedQuals size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
-
-        //Note: this loop is under very heavy use in applyBQSR. Keep it slim.
-        for (int offset = 0; offset < readLength; offset++) { // recalibrate all bases in the read
-
-            // only recalibrate usable qualities (the original quality will come from the instrument -- reported quality)
-            if (quals[offset] < preserveQLessThan) {
-                continue;
-            }
-            Arrays.fill(empiricalQualCovsArgs, null);  //clear the array
-            final int[] keySet = fullReadKeySet[offset];
-
-
-            final RecalDatum empiricalQualQS = qualityScoreTable.get3Keys(keySet[0], keySet[1], BASE_SUBSTITUTION_INDEX);
-
-            for (int i = specialCovariateCount; i < totalCovariateCount; i++) {
-                if (keySet[i] >= 0) {
-                    empiricalQualCovsArgs[i - specialCovariateCount] = recalibrationTables.getTable(i).get4Keys(keySet[0], keySet[1], keySet[i], BASE_SUBSTITUTION_INDEX);
-                }
-            }
-            final double recalibratedQualDouble = hierarchicalBayesianQualityEstimate(epsilon, empiricalQualRG, empiricalQualQS, empiricalQualCovsArgs);
-
-            final byte recalibratedQualityScore = quantizedQuals.get(getRecalibratedQual(recalibratedQualDouble));
-
-            // Bin to static quals
-            quals[offset] = staticQuantizedMapping == null ? recalibratedQualityScore : staticQuantizedMapping[recalibratedQualityScore];
-            //System.out.printf("offset: %d, recalibratedQualDouble: %f, recalibratedQualityScore: %d\n", offset, recalibratedQualDouble, recalibratedQualityScore);
-        }
-        read.setBaseQualities(quals);
-        //System.out.printf("staticQuantizedMapping is : %s", Arrays.toString(staticQuantizedMapping));
-        //System.out.println(staticQuantizedMapping == null);
-        return read;
     }
 
     // recalibrated quality is bound between 1 and MAX_QUAL
