@@ -87,6 +87,9 @@ public final class BQSRReadTransformer implements ReadTransformer {
         this.covariates = covariates;
         this.quantizationInfo = quantizationInfo;
 
+        final List<Byte> quantizedQuals = this.quantizationInfo.getQuantizedQuals();
+        System.out.printf("Peipei Debug, ingatk quantizedQuals before noQuantization size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
+
         if (args.quantizationLevels == 0) { // quantizationLevels == 0 means no quantization, preserve the quality scores
             quantizationInfo.noQuantization();
         } else if (args.quantizationLevels > 0 && args.quantizationLevels != quantizationInfo.getQuantizationLevels()) { // any other positive value means, we want a different quantization than the one pre-calculated in the recalibration report. Negative values mean the user did not provide a quantization argument, and just wants to use what's in the report.
@@ -111,6 +114,8 @@ public final class BQSRReadTransformer implements ReadTransformer {
         empiricalQualCovsArgs = new RecalDatum[totalCovariateCount - specialCovariateCount];
         keyCache = new CovariateKeyCache();//one cache per transformer
 
+        final List<Byte> quantizedQuals = this.quantizationInfo.getQuantizedQuals();
+        System.out.printf("Peipei Debug, ingatk quantizedQuals after  noQuantization size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
 
 
     }
@@ -150,8 +155,10 @@ public final class BQSRReadTransformer implements ReadTransformer {
                 quantizationInfo.quantizeQualityScores(args.quantizationLevels);
             }
         }
+
+        System.out.printf("Peipei Debug, QualityUtils.MAX_SAM_QUAL_SCORE is %d \n", QualityUtils.MAX_SAM_QUAL_SCORE);
         final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
-        System.out.printf("Peipei Debug, ingatk quantizedQuals size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
+        System.out.printf("Peipei Debug, infalc quantizedQuals size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
 
 
         try {
