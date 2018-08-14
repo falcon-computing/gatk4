@@ -24,6 +24,10 @@ import static org.broadinstitute.hellbender.utils.MathUtils.fastRound;
 import static org.broadinstitute.hellbender.utils.QualityUtils.boundQual;
 import static org.broadinstitute.hellbender.utils.recalibration.RecalDatum.MAX_RECALIBRATED_Q_SCORE;
 
+
+import com.falconcomputing.genomics.AccelerationException;
+import com.falconcomputing.genomics.bqsr.FalconRecalibrationEngine;
+
 public final class BQSRReadTransformer implements ReadTransformer {
     private static final long serialVersionUID = 1L;
 
