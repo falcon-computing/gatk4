@@ -779,6 +779,10 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     }
   }
 
+  public StandardCovariateList getCovariates(){
+    return covariates;
+  }
+
   protected class RecalDatumTable {
     final public long[]   numOccurance;
     final public double[] numMismatches;
