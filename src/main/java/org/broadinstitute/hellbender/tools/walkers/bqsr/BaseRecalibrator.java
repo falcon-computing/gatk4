@@ -3,6 +3,7 @@ package org.broadinstitute.hellbender.tools.walkers.bqsr;
 
 import com.falconcomputing.genomics.AccelerationException;
 import com.falconcomputing.genomics.bqsr.FalconRecalibrationEngine;
+import htsjdk.samtools.SAMFileHeader;
 
 import htsjdk.tribble.Feature;
 import org.apache.logging.log4j.LogManager;
@@ -166,7 +167,7 @@ public class BaseRecalibrator extends ReadWalker {
 
         // part 2: Falcon init
         falconRecalEngine = new FalconRecalibrationEngine(recalArgs, null);
-        final boolean isLoaded = engine.load(null);
+        final boolean isLoaded = falconRecalEngine.load(null);
         if(isLoaded){
             final StandardCovariateList covariates = new StandardCovariateList(recalArgs, header);
             final int numReadGroups = header.getReadGroups().size();
