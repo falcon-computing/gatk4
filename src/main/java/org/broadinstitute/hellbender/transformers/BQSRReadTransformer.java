@@ -162,11 +162,17 @@ public final class BQSRReadTransformer implements ReadTransformer {
         System.out.printf("Peipei Debug, QualityUtils.MAX_SAM_QUAL_SCORE is %d \n", QualityUtils.MAX_SAM_QUAL_SCORE);
         final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
         System.out.printf("Peipei Debug, infalc quantizedQuals after  noQuantization size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
-
+        byte[] staticQuantizedMapping;
+        if(args.staticQuantizationQuals != null && !args.staticQuantizationQuals.isEmpty()) {
+            staticQuantizedMapping = BQSRReadTransformer.constructStaticQuantizedMapping(args.staticQuantizationQuals, args.roundDown);
+        }
+        else{
+            staticQuantizedMapping = null;
+        }
 
         try {
             engine.init(requestedCovariates, gatk_tables,
-                    quantizedQuals, null,
+                    quantizedQuals, staticQuantizedMapping,
                     disableIndelQuals,
                     preserveQLessThan,
                     globalQScorePrior,
