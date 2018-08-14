@@ -236,7 +236,7 @@ public class BaseRecalibrator extends ReadWalker {
                 RecalUtils.parsePlatformForRead(readTransform, getHeaderForReads(), recalArgs);
                 final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, getHeaderForReads(), skip);
                 if (ret == 1) {
-                    System.out.print("Peipei Debug: Falcon updated");
+                    //System.out.print("Peipei Debug: Falcon updated\n");
                 }
             } catch (AccelerationException e){
                 isAccelerated = false; // disable accelerator in the future
