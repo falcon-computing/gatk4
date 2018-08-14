@@ -29,4 +29,7 @@ public class ApplyBQSRArgumentCollection extends ApplyBQSRUniqueArgumentCollecti
      */
     @Argument(fullName="use-original-qualities", shortName = "OQ", doc = "Use the base quality scores from the OQ tag", optional = true)
     public Boolean useOriginalBaseQualities = false;
+
+    @Argument(fullName="use-accelerator", doc = "Use the base quality scores from the OQ tag", optional = true)
+    public Boolean useFalconAccelerator = true;
 }

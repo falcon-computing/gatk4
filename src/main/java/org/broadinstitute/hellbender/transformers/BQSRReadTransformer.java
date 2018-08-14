@@ -132,6 +132,7 @@ public final class BQSRReadTransformer implements ReadTransformer {
 
 
         // Peipei added: for FalconEngine part
+        this.isAccelerated = args.useFalconAccelerator;
         final boolean disableIndelQuals = true;
         final int preserveQLessThan = QualityUtils.MIN_USABLE_Q_SCORE;
         final double globalQScorePrior = args.globalQScorePrior;
@@ -145,6 +146,8 @@ public final class BQSRReadTransformer implements ReadTransformer {
         System.out.printf("Peipei Debug, infalc quantizedQuals before noQuantization size is %d, array is %s\n", quantizedQualsBefore.size(), Arrays.toString(quantizedQualsBefore.toArray()));
 
         //initialize FalconEngine
+
+
         final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
         engine = new FalconRecalibrationEngine(RAC, null);
         final boolean isLoaded = engine.load(null);
