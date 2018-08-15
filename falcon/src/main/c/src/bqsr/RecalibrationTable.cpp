@@ -18,7 +18,7 @@ RecalibrationTable::RecalibrationTable(
                 numCovariates_(numCovariates) {
 
   //
-  numReadsProcessed = 0;
+  //numReadsProcessed = 0;
 
   int qualDimension = dims[1];
   // skip the first RG table
@@ -59,7 +59,7 @@ RecalibrationTable::RecalibrationTable(
     bool    emitOriginalQuals):
         RecalibrationTable(numReadGroups, numEvents, numCovariates, dims)
 {
-  numReadsProcessed = 0;
+  //numReadsProcessed = 0;
   disableIndelQuals_ = disableIndelQuals;
   preserveQLessThan_ = preserveQLessThan;
   globalQScorePrior_ = globalQScorePrior;
