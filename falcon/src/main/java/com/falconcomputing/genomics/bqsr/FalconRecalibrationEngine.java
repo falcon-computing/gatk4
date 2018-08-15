@@ -731,7 +731,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
         platformType, refOffset,
         skips);
 
-    numReadsProcessed++;
+    //numReadsProcessed++;
 
   }
 
