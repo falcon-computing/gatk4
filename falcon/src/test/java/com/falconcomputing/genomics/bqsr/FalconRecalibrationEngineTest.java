@@ -608,7 +608,9 @@ public class FalconRecalibrationEngineTest {
       //final int[] isDeletion = helper.falconCalculateIsIndel(read, EventType.BASE_DELETION);
       //final int nErrors = helper.falconNumEvents(isSNP, isInsertion, isDeletion);
 
-      final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
+      //final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
+      final boolean enableBAQ = false;
+      final byte[] baqArray = (nErrors == 0 || !enableBAQ) ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
 
       //logger.info("isSNP = " + Arrays.toString(isSNP));
       //logger.info("isInsertion = " + Arrays.toString(isInsertion));

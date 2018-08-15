@@ -286,9 +286,9 @@ public class BaseRecalibrationEngine implements Serializable {
                     /**
                      * TODO: print info
                      */
-                    if(numReadsProcessed < 10){
-                        System.out.printf("read %d, offset: %d, keys: %d %d %d %d, qual, isError, eventIndex: %d %.4f %d\n", numReadsProcessed, offset ,key0, key1, keys[2], keys[3], qual, isError, eventIndex);
-                    }
+                    //if(numReadsProcessed < 10){
+                    //    System.out.printf("read %d, offset: %d, keys: %d %d %d %d, qual, isError, eventIndex: %d %.4f %d\n", numReadsProcessed, offset ,key0, key1, keys[2], keys[3], qual, isError, eventIndex);
+                    //}
                 }
             }
         }
