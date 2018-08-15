@@ -283,6 +283,12 @@ public class BaseRecalibrationEngine implements Serializable {
                             RecalUtils.incrementDatumOrPutIfNecessary4keys(recalTables.getTable(i), qual, isError, key0, key1, keyi, eventIndex);
                         }
                     }
+                    /**
+                     * TODO: print info
+                     */
+                    if(numReadsProcessed < 10){
+                        System.out.printf("read %d, offset: %d, keys: %d %d %d %d, qual, isError, eventIndex: %d %.4f %d\n", numReadsProcessed, offset ,key0, key1, keys[2], keys[3], qual, isError, eventIndex);
+                    }
                 }
             }
         }

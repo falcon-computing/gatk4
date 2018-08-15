@@ -290,23 +290,30 @@ public class BaseRecalibrator extends ReadWalker {
             //return recalibrationEngine.getFinalRecalibrationTables();
         }
 
+        /**
+         * TODO: part for print debug info
+         */
+
         final NestedIntegerArray<RecalDatum> byQualTable = resTable.getQualityScoreTable();
         for ( final NestedIntegerArray.Leaf<RecalDatum> leaf : byQualTable.getAllLeaves() ) {
             final int rgKey = leaf.keys[0];
             final int eventIndex = leaf.keys[2];
             final RecalDatum qualDatum = leaf.value;
             // create a copy of qualDatum, and initialize byReadGroup table with it
-            System.out.printf("%d: in %s Table, rgKey: %d, eventIndex: %d , qualDatum: %s\n", counter, tableName, rgKey, eventIndex, qualDatum.toString());
+            System.out.printf("%d: in %s Table, rgqKey: %d, eventIndex: %d , qualDatum: %s\n", counter, tableName, rgKey, eventIndex, qualDatum.toString());
             counter+=1;
         }
 
         for(int i = 0; i < 4; i++){
             List<RecalDatum> our_table_contents = resTable.getTable(i).getAllValues();
-            System.out.printf("table %d, size %d", i, our_table_contents.size());
+            System.out.printf("table %d, size %d\n", i, our_table_contents.size());
             for (int k = 0; k < our_table_contents.size(); k++){
                 System.out.println(String.format("%d, %s", k, our_table_contents.get(k).toString()));
             }
         }
+        /**
+         * return the table
+         */
         return resTable;
     }
 

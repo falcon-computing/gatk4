@@ -647,6 +647,10 @@ JNIEXPORT jobjectArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconReca
     jboolean isSecondOfPair,
     jint platformType)
 {
+  //{
+
+    //PLACE_TIMER;
+  //}
   timer.start(0);
   int readLength = env->GetArrayLength(jbases);
   int8_t* bases = (int8_t*)env->GetByteArrayElements(jbases, 0);

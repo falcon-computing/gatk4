@@ -758,8 +758,9 @@ public class FalconRecalibrationEngineTest {
       int[] isInsertion = new int[isSNP.length];
       int[] isDeletion = new int[isSNP.length];
       final int nErrors = BaseRecalibrationEngine.calculateIsSNPOrIndel(read, helper.getRefDataSource(), isSNP, isInsertion, isDeletion);
-      final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
-
+      //final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
+      final boolean enableBAQ = false;
+      final byte[] baqArray = (nErrors == 0 || !enableBAQ) ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
 
       if (baqArray != null) { // some reads just can't be BAQ'ed
         //final boolean[] skip = calculateSkipArray(read, metaDataTracker); // skip known sites of variation as well as low quality and non-regular bases

@@ -17,6 +17,9 @@ RecalibrationTable::RecalibrationTable(
                 numEvents_(numEvents),
                 numCovariates_(numCovariates) {
 
+  //
+  numReadsProcessed = 0;
+
   int qualDimension = dims[1];
   // skip the first RG table
   for (int i = 0; i < numCovariates; i++) {
@@ -56,7 +59,7 @@ RecalibrationTable::RecalibrationTable(
     bool    emitOriginalQuals):
         RecalibrationTable(numReadGroups, numEvents, numCovariates, dims)
 {
-
+  numReadsProcessed = 0;
   disableIndelQuals_ = disableIndelQuals;
   preserveQLessThan_ = preserveQLessThan;
   globalQScorePrior_ = globalQScorePrior;
@@ -208,6 +211,9 @@ void RecalibrationTable::update(int readLength,
       }
     }
   }
+  //numReadsProcessed++;
+
+
 }
 
 // const number in bayesian calculations below

@@ -86,6 +86,9 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   private BAQ baq; // BAQ the reads on the fly to generate the alignment uncertainty vector
   private final ReferenceSequenceFile referenceReader; // fasta reference reader for use with BAQ calculation
 
+  private long numReadsProcessed = 0L;
+
+
   public FalconRecalibrationEngine(final RecalibrationArgumentCollection RAC, final ReferenceSequenceFile referenceReader) {
     this.LOW_QUAL_TAIL = RAC.LOW_QUAL_TAIL;
     this.MISMATCHES_CONTEXT_SIZE = RAC.MISMATCHES_CONTEXT_SIZE;
@@ -727,6 +730,9 @@ public class FalconRecalibrationEngine implements NativeLibrary {
         readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
         platformType, refOffset,
         skips);
+
+    numReadsProcessed++;
+
   }
 
   public byte[][] recalibrate(final GATKRead read, final SAMFileHeader header)

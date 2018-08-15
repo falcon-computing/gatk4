@@ -629,8 +629,12 @@ int BAQ::calculateErrors(
   //    std::cerr << std::endl;
 
   int8_t* baqArray = (int8_t*)malloc(readLength);
+  // Peipei Debug:
+  // TODO: please pass flag in for recalArgs.enableBAQ
+  bool enableBAQ = false;
+
   bool isBAQAvailable = true;
-  if (nErrors == 0) { // use flatBAQArray
+  if (!isBAQAvailable || nErrors == 0) { // use flatBAQArray
     const int8_t NO_BAQ_UNCERTAINTY = (int8_t)'@';
     for (int i = 0; i < readLength; i++) {
       baqArray[i] = NO_BAQ_UNCERTAINTY;
