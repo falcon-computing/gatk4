@@ -634,7 +634,7 @@ int BAQ::calculateErrors(
   bool enableBAQ = false;
 
   bool isBAQAvailable = true;
-  if (!isBAQAvailable || nErrors == 0) { // use flatBAQArray
+  if (!enableBAQ || nErrors == 0) { // use flatBAQArray
     const int8_t NO_BAQ_UNCERTAINTY = (int8_t)'@';
     for (int i = 0; i < readLength; i++) {
       baqArray[i] = NO_BAQ_UNCERTAINTY;
