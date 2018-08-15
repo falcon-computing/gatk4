@@ -20,6 +20,7 @@ import org.broadinstitute.hellbender.engine.filters.WellformedReadFilter;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.transformers.ReadTransformer;
 import org.broadinstitute.hellbender.utils.Utils;
+import org.broadinstitute.hellbender.utils.collections.NestedIntegerArray;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.recalibration.*;
 import org.broadinstitute.hellbender.utils.recalibration.covariates.StandardCovariateList;
@@ -275,10 +276,38 @@ public class BaseRecalibrator extends ReadWalker {
     choose from falconRecalEngine or recalibrationEngine
     */
     private RecalibrationTables getRecalibrationTable() {
-        if (isAccelerated)
-            return falconRecalEngine.getFinalRecalibrationTables();
-        else
-            return recalibrationEngine.getFinalRecalibrationTables();
+        int counter = 0;
+        RecalibrationTables resTable;
+        String tableName;
+        if (isAccelerated) {
+            resTable = falconRecalEngine.getFinalRecalibrationTables();
+            tableName = "falc";
+            //return falconRecalEngine.getFinalRecalibrationTables();
+        }
+        else {
+            resTable = recalibrationEngine.getFinalRecalibrationTables();
+            tableName = "gatk";
+            //return recalibrationEngine.getFinalRecalibrationTables();
+        }
+
+        final NestedIntegerArray<RecalDatum> byQualTable = resTable.getQualityScoreTable();
+        for ( final NestedIntegerArray.Leaf<RecalDatum> leaf : byQualTable.getAllLeaves() ) {
+            final int rgKey = leaf.keys[0];
+            final int eventIndex = leaf.keys[2];
+            final RecalDatum qualDatum = leaf.value;
+            // create a copy of qualDatum, and initialize byReadGroup table with it
+            System.out.printf("%d: in %s Table, rgKey: %d, eventIndex: %d , qualDatum: %s\n", counter, tableName, rgKey, eventIndex, qualDatum.toString());
+            counter+=1;
+        }
+
+        for(int i = 0; i < 4; i++){
+            List<RecalDatum> our_table_contents = resTable.getTable(i).getAllValues();
+            System.out.printf("table %d, size %d", i, our_table_contents.size());
+            for (int k = 0; k < our_table_contents.size(); k++){
+                System.out.println(String.format("%d, %s", k, our_table_contents.get(k).toString()));
+            }
+        }
+        return resTable;
     }
 
     private StandardCovariateList getCovariates(){

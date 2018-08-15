@@ -123,7 +123,7 @@ public final class RecalibrationArgumentCollection implements Serializable {
     public Boolean useOriginalBaseQualities = false;
 
     /**
-     * * switch on or off use-accelerator
+     * * Peipei Added: switch on or off use-accelerator
      */
     @Argument(fullName="use-accelerator", doc = "Use the base quality scores from the OQ tag", optional = true)
     public Boolean useFalconAccelerator = true;
