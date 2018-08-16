@@ -233,7 +233,6 @@ public class BaseRecalibrator extends ReadWalker {
         // Falcon
         if (isAccelerated){
             try {
-                final boolean[] skip = recalibrationEngine.calculateSkipArray(read, featureContext.getValues(knownSites));
                 final ReadTransformer transform = recalibrationEngine.makeReadTransform();
                 final GATKRead readTransform = transform.apply(read);
 
@@ -242,6 +241,8 @@ public class BaseRecalibrator extends ReadWalker {
                 }
 
                 RecalUtils.parsePlatformForRead(readTransform, getHeaderForReads(), recalArgs);
+                final boolean[] skip = recalibrationEngine.calculateSkipArray(read, featureContext.getValues(knownSites));
+
                 final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, getHeaderForReads(), skip);
                 if (ret == 1) {
                     //System.out.print("Peipei Debug: Falcon updated\n");
