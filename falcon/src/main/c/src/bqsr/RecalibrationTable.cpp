@@ -216,13 +216,15 @@ void RecalibrationTable::update(int readLength,
         DatumTables_[i][idx].numMismatches += isErrors[k][j];
 
       }
-      if (numReadsProcessed < 10){
-         for(int i = 0; i < 4; i ++){
-            dims[i] = keys[j*numCovariates_*numEvents_ + i*numEvents_ + 0];
-         }
 
-         DLOG(INFO) << "read "<< numReadsProcessed << ", offset: "<<j<<", keys: "<< dims[0] << " " << dims[1] << " "<< dims[2]<<" "<< dims[3]<<" "<< " isError "<<isErrors[k][j];
-      }
+      // TODO: Peipei debug to print key0, key1, key2, key3 and isError, (qual = keys)
+      //if (numReadsProcessed < 10){
+      //   for(int i = 0; i < 4; i ++){
+      //      dims[i] = keys[j*numCovariates_*numEvents_ + i*numEvents_ + 0];
+      //   }
+
+      //   DLOG(INFO) << "read "<< numReadsProcessed << ", offset: "<<j<<", keys: "<< dims[0] << " " << dims[1] << " "<< dims[2]<<" "<< dims[3]<<" "<< " isError "<<isErrors[k][j];
+      //}
     }
 
   }
