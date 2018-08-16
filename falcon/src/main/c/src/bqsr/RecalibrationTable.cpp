@@ -196,7 +196,7 @@ void RecalibrationTable::update(int readLength,
    * DatumTables: numCovariates x [[Cov] x Qual x RG x Events]
    * DatumTablesDim: numCovariates x [Events, RG, Qual, [Cov]]
    */
-  int savedIdx[3] = {0};
+  int saveIdx[3] = {0};
     for (int j = 0; j < readLength; j++) {
       if (skips[j]) continue;
       int newEvents=1;
