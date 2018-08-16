@@ -70,7 +70,7 @@ class RecalibrationTable {
 
   private:
     // Peipei : add numReadsProcessed;
-    // long long numReadsProcessed;
+    long long numReadsProcessed;
     // helper function for update() and recalibrate()
     inline int keysToIndex(int* keys,
         int cov_idx, int rd_idx, int event_idx);

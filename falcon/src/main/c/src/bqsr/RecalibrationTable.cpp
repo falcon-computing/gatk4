@@ -18,7 +18,7 @@ RecalibrationTable::RecalibrationTable(
                 numCovariates_(numCovariates) {
 
   //
-  //numReadsProcessed = 0;
+  numReadsProcessed = 0;
 
   int qualDimension = dims[1];
   // skip the first RG table
@@ -59,7 +59,7 @@ RecalibrationTable::RecalibrationTable(
     bool    emitOriginalQuals):
         RecalibrationTable(numReadGroups, numEvents, numCovariates, dims)
 {
-  //numReadsProcessed = 0;
+  numReadsProcessed = 0;
   disableIndelQuals_ = disableIndelQuals;
   preserveQLessThan_ = preserveQLessThan;
   globalQScorePrior_ = globalQScorePrior;
@@ -196,22 +196,29 @@ void RecalibrationTable::update(int readLength,
    * DatumTables: numCovariates x [[Cov] x Qual x RG x Events]
    * DatumTablesDim: numCovariates x [Events, RG, Qual, [Cov]]
    */
-  for (int i = 1; i < numCovariates_; i++) {
+  int savedIdx [3] = {0};
     for (int j = 0; j < readLength; j++) {
       if (skips[j]) continue;
       int newEvents=1;
        for (int k = 0; k < newEvents; k++) {
+         for (int i = 1; i < numCovariates_; i++) {
+
       //for (int k = 0; k < numEvents_; k++) {
         //int* key = &keys[readLength*numCovariates_*k + numCovariates_*j];
         int idx = keysToIndex(keys, i, j, k);
+        saveIdx[i-1]=idx;
         if (idx < 0) continue;
 
         DatumTables_[i][idx].numOccurance += 1;
         DatumTables_[i][idx].numMismatches += isErrors[k][j];
+
       }
+     DLOG(INFO) << "read "<< numReadsProcessed << ", offset: "<<j<<", keys: "<< savedIdx[0] << " " << savedIdx[1] << " "<< savedIdx[2]<<" "<< " isError "<<isErrors[k][j];
     }
+
   }
-  //numReadsProcessed++;
+
+  numReadsProcessed++;
 
 
 }
