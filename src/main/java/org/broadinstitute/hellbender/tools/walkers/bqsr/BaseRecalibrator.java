@@ -243,7 +243,7 @@ public class BaseRecalibrator extends ReadWalker {
 
                 RecalUtils.parsePlatformForRead(readTransform, getHeaderForReads(), recalArgs);
                 final boolean[] skip = recalibrationEngine.calculateSkipArray(readTransform, featureContext.getValues(knownSites));
-                System.out.println(Arrays.toString(skip));
+                //System.out.println(Arrays.toString(skip));
 
                 final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, getHeaderForReads(), skip);
                 if (ret == 1) {

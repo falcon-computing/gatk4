@@ -147,7 +147,7 @@ public class BaseRecalibrationEngine implements Serializable {
             final ReadCovariates covariates = RecalUtils.computeCovariates(read, readsHeader, this.covariates, true, keyCache);
             final boolean[] skip = calculateSkipArray(read, knownSites); // skip known sites of variation as well as low quality and non-regular bases
 
-            System.out.println(Arrays.toString(skip));
+            //System.out.println(Arrays.toString(skip));
             final double[] snpErrors = calculateFractionalErrorArray(isSNP, baqArray);
             final double[] insertionErrors = calculateFractionalErrorArray(isInsertion, baqArray);
             final double[] deletionErrors = calculateFractionalErrorArray(isDeletion, baqArray);
