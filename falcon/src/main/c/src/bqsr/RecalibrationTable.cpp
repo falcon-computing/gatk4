@@ -197,11 +197,14 @@ void RecalibrationTable::update(int readLength,
    * DatumTablesDim: numCovariates x [Events, RG, Qual, [Cov]]
    */
   int savedIdx[3] = {0};
+  int dims[4] = {0};
+    //for (int i = 1; i < numCovariates_; i++) {
+
     for (int j = 0; j < readLength; j++) {
       if (skips[j]) continue;
       int newEvents=1;
        for (int k = 0; k < newEvents; k++) {
-         for (int i = 1; i < numCovariates_; i++) {
+       for (int i = 1; i < numCovariates_; i++) {
 
       //for (int k = 0; k < numEvents_; k++) {
         //int* key = &keys[readLength*numCovariates_*k + numCovariates_*j];
@@ -213,9 +216,13 @@ void RecalibrationTable::update(int readLength,
         DatumTables_[i][idx].numMismatches += isErrors[k][j];
 
       }
-     if (numReadsProcessed < 10){
-     DLOG(INFO) << "read "<< numReadsProcessed << ", offset: "<<j<<", keys: "<< savedIdx[0] << " " << savedIdx[1] << " "<< savedIdx[2]<<" "<< " isError "<<isErrors[k][j];
-    }
+      if (numReadsProcessed < 10){
+         for(int i = 0; i < 4; i ++){
+            dims[i] = keys[j*numCovariates_*numEvents_ + i*numEvents_ + 0];
+         }
+
+         DLOG(INFO) << "read "<< numReadsProcessed << ", offset: "<<j<<", keys: "<< dims[0] << " " << dims[1] << " "<< dims[2]<<" "<< dims[3]<<" "<< " isError "<<isErrors[k][j];
+      }
     }
 
   }
