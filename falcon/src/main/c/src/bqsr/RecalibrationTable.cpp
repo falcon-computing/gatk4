@@ -213,7 +213,9 @@ void RecalibrationTable::update(int readLength,
         DatumTables_[i][idx].numMismatches += isErrors[k][j];
 
       }
+     if (numReadsProcessed < 10){
      DLOG(INFO) << "read "<< numReadsProcessed << ", offset: "<<j<<", keys: "<< savedIdx[0] << " " << savedIdx[1] << " "<< savedIdx[2]<<" "<< " isError "<<isErrors[k][j];
+    }
     }
 
   }
