@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.channels.AcceptPendingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -242,6 +243,7 @@ public class BaseRecalibrator extends ReadWalker {
 
                 RecalUtils.parsePlatformForRead(readTransform, getHeaderForReads(), recalArgs);
                 final boolean[] skip = recalibrationEngine.calculateSkipArray(read, featureContext.getValues(knownSites));
+                System.out.println(Arrays.toString(skip));
 
                 final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, getHeaderForReads(), skip);
                 if (ret == 1) {
