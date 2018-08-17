@@ -303,11 +303,7 @@ public class FalconRecalibrationEngineTest {
 
     final CovariateKeyCache keyCache= new CovariateKeyCache();
     for (SAMRecord record : reader) {
-      //final GATKSAMRecord read = new GATKSAMRecord(record);
       final GATKRead read = new SAMRecordToGATKReadAdapter(record);
-      //RecalUtils.parsePlatformForRead(read, header, RAC);
-      //new SAMReadGroupRecord("@RG\tID:SEQ01\tLB:L1\tPL:illumina\tSM:SEQ01");
-      //read.setReadGroup(rg.getId());
       final ReadCovariates cov = RecalUtils.computeCovariates(read, header, covariates, true, keyCache);
       try {
         final int[][][] falcon_keys = engine.computeCycleCovariates(read, header);
@@ -334,7 +330,6 @@ public class FalconRecalibrationEngineTest {
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestContextCovariates() {
-    //final Covariate[] covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
     final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
@@ -351,20 +346,15 @@ public class FalconRecalibrationEngineTest {
 
     final CovariateKeyCache keyCache= new CovariateKeyCache();
     for (SAMRecord record : reader) {
-      //final GATKSAMRecord read = new GATKSAMRecord(record);
       final GATKRead read = new SAMRecordToGATKReadAdapter(record);
       final ReadCovariates cov = RecalUtils.computeCovariates(read, header, covariates, true, keyCache);
-      //final ReadCovariates cov = RecalUtils.computeCovariates(read, covariates);
 
       final int[][][] falcon_keys = engine.computeContextCovariates(read);
 
       final int contextCovIdx = 2;
       for (EventType event : EventType.values()) {
-        //System.out.println(Arrays.toString(falcon_keys[event.ordinal()]));
         final int[][] gatk_keys = cov.getKeySet(event);
-        //for (int i = 0; i < read.getReadBases().length; i++) {
         for (int i = 0; i < read.getBases().length; i++) {
-          //System.out.println(Arrays.toString(gatk_keys[i]));
           Assert.assertEquals(
               falcon_keys[event.ordinal()][i][contextCovIdx],
               gatk_keys[i][contextCovIdx]);
@@ -375,7 +365,6 @@ public class FalconRecalibrationEngineTest {
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestCovariates() {
-    //final Covariate[] covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
     final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
@@ -389,17 +378,13 @@ public class FalconRecalibrationEngineTest {
       return;
     }
 
-    //int numCovariates = covariates.length;
     int numCovariates = covariates.size();
 
     final CovariateKeyCache keyCache= new CovariateKeyCache();
     for (SAMRecord record : reader) {
-      //final GATKSAMRecord read = new GATKSAMRecord(record);
       final GATKRead read = new SAMRecordToGATKReadAdapter(record);
-      //final ReadCovariates cov = RecalUtils.computeCovariates(read, covariates);
       final ReadCovariates cov = RecalUtils.computeCovariates(read, header, covariates, true, keyCache);
       final int[] falcon_keys = engine.computeCovariates(read, header);
-      //int readLength = read.getReadBases().length;
       int readLength = read.getBases().length;
 
       int idx = 0;
@@ -416,9 +401,7 @@ public class FalconRecalibrationEngineTest {
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestReadGroupCovariate() {
-    //final Covariate[] covariates = getCovariates();
-    // create a separate covariate class to compare
-    //final Covariate[] gatk_covariates = getCovariates();
+
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
 
@@ -426,7 +409,6 @@ public class FalconRecalibrationEngineTest {
     final StandardCovariateList gatk_covariates = new StandardCovariateList(RAC, header);
 
     final int numReadGroups = header.getReadGroups().size();
-    //final int numCovariates = covariates.length;
     final int numCovariates = covariates.size();
 
     try {
@@ -440,11 +422,8 @@ public class FalconRecalibrationEngineTest {
     int numRecords = 0;
     final CovariateKeyCache keyCache= new CovariateKeyCache();
     for (SAMRecord record : reader) {
-      //final GATKSAMRecord read = new GATKSAMRecord(record);
       final GATKRead read = new SAMRecordToGATKReadAdapter(record);
-      //final ReadCovariates cov = RecalUtils.computeCovariates(read, gatk_covariates);
       final ReadCovariates cov = RecalUtils.computeCovariates(read, header, gatk_covariates, true, keyCache);
-      //final int[] falcon_keys = engine.computeCovariates(read);
       final int[] falcon_keys = engine.computeCovariates(read, header);
     }
     engine.updateReadGroupCovariates();
@@ -463,16 +442,13 @@ public class FalconRecalibrationEngineTest {
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestBAQCalculation() {
-    //final Covariate[] covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
     final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
     final int numReadGroups = header.getReadGroups().size();
-    //final int numCovariates = covariates.length;
     final int numCovariates = covariates.size();
 
     try {
-      //engine.init(covariates, numReadGroups);
       engine.init(covariates, numReadGroups, header);
     }
     catch (AccelerationException e) {
@@ -507,13 +483,10 @@ public class FalconRecalibrationEngineTest {
       }
       else {
         Assert.assertEquals(falcon_baqArray.length, gatk_baqArray.length);
-        //System.out.println(Arrays.toString(falcon_baqArray));
-        //System.out.println(Arrays.toString(gatk_baqArray));
         for (int i = 0; i < gatk_baqArray.length; i++) {
           Assert.assertEquals(falcon_baqArray[i], gatk_baqArray[i]);
         }
       }
-      //System.out.println(String.format("finish read %d", numRecords));
       numRecords++;
     }
   }
@@ -521,7 +494,6 @@ public class FalconRecalibrationEngineTest {
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestFractionalErrors() {
-    //final Covariate[] covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
     final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
@@ -529,7 +501,6 @@ public class FalconRecalibrationEngineTest {
     final int numCovariates = covariates.size();
 
     try {
-      //engine.init(covariates, numReadGroups);
       engine.init(covariates, numReadGroups, header);
     }
     catch (AccelerationException e) {
@@ -542,13 +513,9 @@ public class FalconRecalibrationEngineTest {
     int numRecords = 0;
     for (SAMRecord record : reader) {
       //if (numRecords > 1) break;
-      //final GATKSAMRecord org_read = new GATKSAMRecord(record);
-      //final GATKSAMRecord read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
-      final GATKRead org_read = new SAMRecordToGATKReadAdapter(record);
+         final GATKRead org_read = new SAMRecordToGATKReadAdapter(record);
       final GATKRead read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
-      //final ReferenceContext ref = helper.getRefContext(org_read);
 
-      //int readLength = read.getReadBases().length;
       int readLength = read.getLength();
       int[] isSNP = new int[read.getLength()];
       int[] isInsertion = new int[isSNP.length];
@@ -558,21 +525,12 @@ public class FalconRecalibrationEngineTest {
 
       final int nErrors = BaseRecalibrationEngine.calculateIsSNPOrIndel(read, helper.getRefDataSource(), isSNP, isInsertion, isDeletion);
 
-      //final int[] isSNP = helper.falconCalculateIsSNP(read, ref, org_read);
-      //final int[] isInsertion = helper.falconCalculateIsIndel(read, EventType.BASE_INSERTION);
-      //final int[] isDeletion = helper.falconCalculateIsIndel(read, EventType.BASE_DELETION);
-      //final int nErrors = helper.falconNumEvents(isSNP, isInsertion, isDeletion);
-
       //final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
       final boolean enableBAQ = false;
       final byte[] baqArray = (nErrors == 0 || !enableBAQ) ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
 
-      //logger.info("isSNP = " + Arrays.toString(isSNP));
-      //logger.info("isInsertion = " + Arrays.toString(isInsertion));
-      //logger.info("isDeletion = " + Arrays.toString(isDeletion));
-      //logger.info("nErrors = " + Integer.toString(nErrors));
 
-      //final double[][] errors = engine.calculateFractionalErrorArray(read, org_read, ref);
+
       final double[][] errors = engine.calculateFractionalErrorArray(read, org_read, helper.getRefDataSource());
 
 
@@ -580,17 +538,13 @@ public class FalconRecalibrationEngineTest {
         Assert.assertEquals(null, errors);
       }
       else {
-        //logger.info("baqArray = " + Arrays.toString(baqArray));
-        //logger.info(String.format("read %d has %d errors, and baqArray is not null", numRecords, nErrors));
 
         //final boolean[] skip = calculateSkipArray(read, metaDataTracker); // skip known sites of variation as well as low quality and non-regular bases
         final double[] snpErrors = helper.falconCalculateFractionalErrorArray(isSNP, baqArray);
         final double[] insertionErrors = helper.falconCalculateFractionalErrorArray(isInsertion, baqArray);
         final double[] deletionErrors = helper.falconCalculateFractionalErrorArray(isDeletion, baqArray);
 
-        //logger.info("snpErrors = " + Arrays.toString(snpErrors));
-        //logger.info("insertionErrors = " + Arrays.toString(insertionErrors));
-        //logger.info("deletionErrors = " + Arrays.toString(deletionErrors));
+
         Assert.assertNotNull(errors);
 
         for (int i = 0; i < readLength; i++) {
@@ -607,7 +561,6 @@ public class FalconRecalibrationEngineTest {
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestFinalize() {
-    //final Covariate[] covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
     final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
@@ -653,7 +606,6 @@ public class FalconRecalibrationEngineTest {
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestTableUpdateWithRealData() {
-    //final Covariate[] covariates = getCovariates();
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
     final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
@@ -674,8 +626,6 @@ public class FalconRecalibrationEngineTest {
 
     int numRecords = 0;
     for (SAMRecord record : reader) {
-      //final GATKSAMRecord org_read = new GATKSAMRecord(record);
-      //final GATKSAMRecord read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
       final GATKRead org_read = new SAMRecordToGATKReadAdapter(record);
       //final GATKRead read = ReadClipper.hardClipSoftClippedBases(ReadClipper.hardClipAdaptorSequence(org_read));
       final ReadTransformer transform = recalibrationEngine.makeReadTransform();
@@ -705,12 +655,6 @@ public class FalconRecalibrationEngineTest {
       }
       //
 
-      //final int[] isSNP = helper.falconCalculateIsSNP(read, ref, org_read);
-      //final int[] isInsertion = helper.falconCalculateIsIndel(read, EventType.BASE_INSERTION);
-      //final int[] isDeletion = helper.falconCalculateIsIndel(read, EventType.BASE_DELETION);
-      //final int nErrors = helper.falconNumEvents(isSNP, isInsertion, isDeletion);
-      //final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
-      //int readLength = read.getLength();
       int[] isSNP = new int[read.getLength()];
       int[] isInsertion = new int[isSNP.length];
       int[] isDeletion = new int[isSNP.length];
@@ -740,19 +684,13 @@ public class FalconRecalibrationEngineTest {
       }
       numRecords++;
     }
-    //System.out.println("@@@ before finalize");
-    //for (int i = 0; i < 4; i++){
-    //    System.out.println(engine.getDebugTable().getTable(i).getAllValues().size());
-    //}
+
 
     // get table results
     recalibrationEngine.finalizeData();
     RecalibrationTables gatk_table = recalibrationEngine.getFinalRecalibrationTables();
     RecalibrationTables our_table = engine.getFinalRecalibrationTables();
-    //System.out.println("@@@ after update");
-    //for (int i = 0; i < 4; i++){
-    //    System.out.println(engine.getDebugTable().getTable(i).getAllValues().size());
-    //}
+
    
     //System.out.println("test gatk score");
     int counter=0;
@@ -977,9 +915,6 @@ public class FalconRecalibrationEngineTest {
     for (SAMRecord record : reader1) {
       final GATKRead originalRead1 = new SAMRecordToGATKReadAdapter(record);
       final GATKRead toFalconread = bqsrArgs.useOriginalBaseQualities ? ReadUtils.resetOriginalBaseQualities(originalRead1) : originalRead1;
-      //System.out.printf("read num: %d\n", numRecords);
-      //System.out.printf("before falc apply, readnum: %d\n", numRecords);
-      //System.out.printf("before falc apply: read %s\n", Arrays.toString(toFalconread.getBaseQualities()));
       try {
         final byte[][] quals = engine.recalibrate(toFalconread, header);
         //GATKRead new_gatkRead = gatk_engine.apply(toFalconread); // new_gatkRead is the same as toFalconread as toFalconread is returned
