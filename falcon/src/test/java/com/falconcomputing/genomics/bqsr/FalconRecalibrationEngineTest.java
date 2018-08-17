@@ -858,8 +858,6 @@ public class FalconRecalibrationEngineTest {
     final BQSRReadTransformer gatk_engine = new BQSRReadTransformer(header, grpPath.toFile(), bqsrArgs);
 
 
-    false);
-
     // use default parameters
     try {
       engine.init(requestedCovariates, gatk_tables,
