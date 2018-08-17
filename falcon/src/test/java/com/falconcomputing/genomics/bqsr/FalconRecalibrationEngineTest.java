@@ -14,7 +14,6 @@ import htsjdk.samtools.*;
 import htsjdk.samtools.reference.ReferenceSequenceFile;
 import htsjdk.tribble.Feature;
 
-//import org.broadinstitute.gatk.engine.CommandLineGATK;
 import org.broadinstitute.hellbender.engine.filters.*;
 import org.broadinstitute.hellbender.transformers.ReadTransformer;
 import org.broadinstitute.hellbender.utils.iterators.SamReaderQueryingIterator;
@@ -22,62 +21,20 @@ import org.broadinstitute.hellbender.utils.read.SAMRecordToGATKReadAdapter;
 import org.broadinstitute.hellbender.utils.recalibration.*;
 import org.broadinstitute.hellbender.utils.recalibration.covariates.*;
 
-//import org.broadinstitute.gatk.engine.datasources.reference.*;
 import org.broadinstitute.hellbender.engine.datasources.*;
-
-//import org.broadinstitute.gatk.nativebindings.NativeLibrary;
 import org.broadinstitute.gatk.nativebindings.*;
-
-//import org.broadinstitute.gatk.tools.walkers.bqsr.*;
 import org.broadinstitute.hellbender.tools.walkers.bqsr.*;
-
-//import org.broadinstitute.gatk.utils.commandline.Advanced;
-
-//import org.broadinstitute.gatk.utils.commandline.Argument;
 import org.broadinstitute.barclay.argparser.Argument;
-
-
-//import org.broadinstitute.gatk.utils.commandline.ArgumentCollection;
 import org.broadinstitute.barclay.argparser.ArgumentCollection;
-
-
-//import org.broadinstitute.gatk.utils.contexts.ReferenceContext;
-//import org.broadinstitute.gatk.utils.contexts.ReferenceContext.*;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext.*;
-
-//import org.broadinstitute.gatk.utils.refdata.RefMetaDataTracker;
-//TODO
-
-//import org.broadinstitute.gatk.utils.MathUtils;
 import org.broadinstitute.hellbender.utils.MathUtils;
-
-//import org.broadinstitute.gatk.utils.BaseUtils;
 import org.broadinstitute.hellbender.utils.BaseUtils;
-
-//import org.broadinstitute.gatk.utils.clipping.ReadClipper;
 import org.broadinstitute.hellbender.utils.clipping.ReadClipper;
-
-//import org.broadinstitute.gatk.utils.collections.Pair;
-//TODO
 import org.apache.commons.lang3.tuple.Pair;
-
-//import org.broadinstitute.gatk.utils.collections.NestedIntegerArray;
 import org.broadinstitute.hellbender.utils.collections.NestedIntegerArray;
-
-//import org.broadinstitute.gatk.utils.help.DocumentedGATKFeature;
-//TODO
-
-//import org.broadinstitute.gatk.utils.help.HelpConstants;
 import org.broadinstitute.hellbender.utils.help.HelpConstants;
-
-//import org.broadinstitute.gatk.utils.QualityUtils;
 import org.broadinstitute.hellbender.utils.QualityUtils;
-
-//import org.broadinstitute.gatk.utils.recalibration.*;
-// already imported
-
-//import org.broadinstitute.gatk.utils.sam.*;
 
 import org.broadinstitute.hellbender.utils.read.ArtificialReadUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
