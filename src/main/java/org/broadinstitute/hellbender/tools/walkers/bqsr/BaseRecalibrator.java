@@ -294,7 +294,7 @@ public class BaseRecalibrator extends ReadWalker {
         }
 
         /**
-         * TODO: part for print debug info
+         * TODO: part for print debug info, to be deleted after performance issues are resolved
          */
 
         final NestedIntegerArray<RecalDatum> byQualTable = resTable.getQualityScoreTable();
