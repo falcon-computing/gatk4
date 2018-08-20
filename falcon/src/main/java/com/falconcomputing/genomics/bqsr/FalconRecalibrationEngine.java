@@ -50,6 +50,8 @@ import java.util.*;
 import java.lang.Exception;
 import htsjdk.samtools.SAMFileHeader;
 import org.broadinstitute.hellbender.utils.recalibration.RecalibrationArgumentCollection;
+import htsjdk.samtools.util.Locatable;
+
 
 public class FalconRecalibrationEngine implements NativeLibrary {
   private final static Logger logger = Logger.getLogger(FalconRecalibrationEngine.class);
