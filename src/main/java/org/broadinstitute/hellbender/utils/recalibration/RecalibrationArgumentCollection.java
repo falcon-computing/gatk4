@@ -125,7 +125,7 @@ public final class RecalibrationArgumentCollection implements Serializable {
     /**
      * * Peipei Added: switch on or off use-accelerator
      */
-    @Argument(fullName="use-accelerator", doc = "Use the base quality scores from the OQ tag", optional = true)
+    @Argument(fullName="use-falcon-accelerator", doc = "Use falcon accelerator or not", optional = true)
     public Boolean useFalconAccelerator = true;
 
     /**

@@ -45,10 +45,6 @@ public class BaseRecalibrationEngine implements Serializable {
      */
     private final EventType[] cachedEventTypes;
 
-    //public BaseRecalibrationEngine() {
-
-    //}
-
     /**
      * Reference window function for BQSR. For each read, returns an interval representing the span of
      * reference bases required by the BQSR algorithm for that read.
@@ -86,9 +82,6 @@ public class BaseRecalibrationEngine implements Serializable {
      */
     private boolean finalized = false;
 
-
-
-
     public BaseRecalibrationEngine( final RecalibrationArgumentCollection recalArgs, final SAMFileHeader readsHeader ) {
         this.recalArgs = recalArgs;
         this.readsHeader = readsHeader;
@@ -108,7 +101,6 @@ public class BaseRecalibrationEngine implements Serializable {
         recalTables = new RecalibrationTables(covariates, numReadGroups);
         keyCache = new CovariateKeyCache();
         cachedEventTypes = recalArgs.computeIndelBQSRTables ? EventType.values() : new EventType[]{EventType.BASE_SUBSTITUTION};
-        ////cachedEventTypes = EventType.values();
     }
 
     public void logCovariatesUsed() {
@@ -146,8 +138,6 @@ public class BaseRecalibrationEngine implements Serializable {
         if( baqArray != null ) { // some reads just can't be BAQ'ed
             final ReadCovariates covariates = RecalUtils.computeCovariates(read, readsHeader, this.covariates, true, keyCache);
             final boolean[] skip = calculateSkipArray(read, knownSites); // skip known sites of variation as well as low quality and non-regular bases
-
-            //System.out.println(Arrays.toString(skip));
             final double[] snpErrors = calculateFractionalErrorArray(isSNP, baqArray);
             final double[] insertionErrors = calculateFractionalErrorArray(isInsertion, baqArray);
             final double[] deletionErrors = calculateFractionalErrorArray(isDeletion, baqArray);
@@ -285,12 +275,6 @@ public class BaseRecalibrationEngine implements Serializable {
                             RecalUtils.incrementDatumOrPutIfNecessary4keys(recalTables.getTable(i), qual, isError, key0, key1, keyi, eventIndex);
                         }
                     }
-                    /**
-                     * TODO: print info
-                     */
-                    //if(numReadsProcessed < 10){
-                    //    System.out.printf("read %d, offset: %d, keys: %d %d %d %d, qual, isError, eventIndex: %d %.4f %d\n", numReadsProcessed, offset ,key0, key1, keys[2], keys[3], qual, isError, eventIndex);
-                    //}
                 }
             }
         }
@@ -339,8 +323,9 @@ public class BaseRecalibrationEngine implements Serializable {
         }
         return read;
     }
-    public boolean[] calculateSkipArray( final GATKRead read, final Iterable<? extends Locatable> knownSites ) {
+
     //private boolean[] calculateSkipArray( final GATKRead read, final Iterable<? extends Locatable> knownSites ) {
+    public boolean[] calculateSkipArray( final GATKRead read, final Iterable<? extends Locatable> knownSites ) {
         final int readLength = read.getLength();
         final boolean[] skip = new boolean[readLength];
         final boolean[] knownSitesArray = calculateKnownSites(read, knownSites);
@@ -391,9 +376,6 @@ public class BaseRecalibrationEngine implements Serializable {
      * @param isDel storage for deletion events (must be of length read.getBases().length and initialized to all 0's)
      * @return the total number of SNP and indel events
      */
-    //TODO, should consider to change back to private
-
-
     //protected static int calculateIsSNPOrIndel(final GATKRead read, final ReferenceDataSource ref, int[] snp, int[] isIns, int[] isDel) {
     public static int calculateIsSNPOrIndel(final GATKRead read, final ReferenceDataSource ref, int[] snp, int[] isIns, int[] isDel) {
         final byte[] refBases = ref.queryAndPrefetch(read.getContig(), read.getStart(), read.getEnd()).getBases();
