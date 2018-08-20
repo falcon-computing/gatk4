@@ -49,6 +49,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.lang.Exception;
 import htsjdk.samtools.SAMFileHeader;
+import org.broadinstitute.hellbender.utils.recalibration.RecalibrationArgumentCollection;
 
 public class FalconRecalibrationEngine implements NativeLibrary {
   private final static Logger logger = Logger.getLogger(FalconRecalibrationEngine.class);
@@ -624,7 +625,12 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   }
 
 
-  public void processRead( final GATKRead read, final ReferenceDataSource referenceDataSource, final Iterable<? extends Locatable> knownSites, boolean isAccelerated, BaseRecalibrationEngine recalibrationEngine, RecalibrationArgumentCollection recalArgs) {
+  public void processRead( final GATKRead read,
+                           final ReferenceDataSource referenceDataSource,
+                           final Iterable<? extends Locatable> knownSites,
+                           boolean isAccelerated,
+                           BaseRecalibrationEngine recalibrationEngine,
+                           final RecalibrationArgumentCollection recalArgs) {
     if (isAccelerated){
       try {
         final ReadTransformer transform = recalibrationEngine.makeReadTransform();
