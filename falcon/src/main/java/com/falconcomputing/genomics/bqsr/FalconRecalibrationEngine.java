@@ -20,6 +20,7 @@ import htsjdk.samtools.reference.ReferenceSequence;
 import org.apache.log4j.Logger;
 
 import org.broadinstitute.hellbender.engine.ReferenceDataSource;
+import org.broadinstitute.hellbender.transformers.ReadTransformer;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -620,6 +621,38 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     }
     return ret;
   }
+
+
+  public void processRead( final GATKRead originalRead, final ReferenceDataSource refDS, final Iterable<? extends Locatable> knownSites, boolean isAccelerated, BaseRecalibrationEngine recalibrationEngine) {
+    if (isAccelerated){
+      try {
+        final ReadTransformer transform = recalibrationEngine.makeReadTransform();
+        final GATKRead readTransform = transform.apply(read);
+
+        if( readTransform.isEmpty() ) {
+          return; // the whole read was inside the adaptor so skip it
+        }
+
+        RecalUtils.parsePlatformForRead(readTransform, getHeaderForReads(), recalArgs);
+        final boolean[] skip = recalibrationEngine.calculateSkipArray(readTransform, featureContext.getValues(knownSites));
+        //System.out.println(Arrays.toString(skip));
+
+        final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, getHeaderForReads(), skip);
+        if (ret == 1) {
+          //System.out.print("Peipei Debug: Falcon updated\n");
+        }
+      } catch (AccelerationException e){
+        isAccelerated = false; // disable accelerator in the future
+        System.out.printf("exception caught in falconRecalEngine.update(): " + e.getMessage());
+      }
+    }
+    if (!isAccelerated) {
+      // Original
+      recalibrationEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites));
+    }
+  }
+
+
 
   // This function is used to update recalibration tables in
   // GATK BaseRecalibrator.map()
