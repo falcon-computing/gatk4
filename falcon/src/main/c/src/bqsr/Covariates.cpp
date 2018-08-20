@@ -204,7 +204,6 @@ void Covariates::initReadGroup(const std::string readGroup) {
   readGroupIdxTable.push_back(readGroup);
 }
 
-//added by Peipei in bqsr init table
 void Covariates::addReadGroup(const std::string readGroup){
     int readGroupId;
     if (readGroupTable.count(readGroup)){

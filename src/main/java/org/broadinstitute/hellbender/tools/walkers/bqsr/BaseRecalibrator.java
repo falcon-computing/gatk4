@@ -180,12 +180,10 @@ public class BaseRecalibrator extends ReadWalker {
                 try {
                     falconRecalEngine.init(covariates, numReadGroups, header);
                     isAccelerated = true;
-                    System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: true\n");
+                    logger.info("Using FalconRecalibrationEngine");
                 } catch (AccelerationException e) {
-                    System.out.println("exception caught in init(): " + e.getMessage());
                     isAccelerated = false;
-                    System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
-                    System.out.println(isAccelerated);
+                    logger.info("Using BaseRecalibrationEngine");
                     return;
                 }
 

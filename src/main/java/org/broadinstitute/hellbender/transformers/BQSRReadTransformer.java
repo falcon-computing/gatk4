@@ -29,11 +29,15 @@ import com.falconcomputing.genomics.AccelerationException;
 import com.falconcomputing.genomics.bqsr.FalconRecalibrationEngine;
 import org.broadinstitute.hellbender.utils.recalibration.RecalibrationArgumentCollection;
 
-//import org.testng.Assert;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 public final class BQSRReadTransformer implements ReadTransformer {
     private static final long serialVersionUID = 1L;
+
+    protected static final Logger logger = LogManager.getLogger(BQSRReadTransformer.class);
+
 
     private final QuantizationInfo quantizationInfo; // histogram containing the map for qual quantization (calculated after recalibration is done)
     private final RecalibrationTables recalibrationTables;
@@ -130,10 +134,8 @@ public final class BQSRReadTransformer implements ReadTransformer {
     public BQSRReadTransformer(final SAMFileHeader header, final RecalibrationReport recalInfo, final ApplyBQSRArgumentCollection args) {
         this(header, recalInfo.getRecalibrationTables(), recalInfo.getQuantizationInfo(), recalInfo.getCovariates(), args);
         this.isAccelerated = args.useFalconAccelerator;
-        System.out.printf("Peipei Debug: useFalconAccelerator is %s\n", args.useFalconAccelerator);
 
         if(isAccelerated) {
-            // Peipei added: for FalconEngine part
 
             final boolean disableIndelQuals = true;
             final int preserveQLessThan = QualityUtils.MIN_USABLE_Q_SCORE;
@@ -145,7 +147,6 @@ public final class BQSRReadTransformer implements ReadTransformer {
             final QuantizationInfo quantizationInfo = recalInfo.getQuantizationInfo();
 
             final List<Byte> quantizedQualsBefore = quantizationInfo.getQuantizedQuals();
-            System.out.printf("Peipei Debug, infalc quantizedQuals before noQuantization size is %d, array is %s\n", quantizedQualsBefore.size(), Arrays.toString(quantizedQualsBefore.toArray()));
 
             //initialize FalconEngine
 
@@ -153,20 +154,20 @@ public final class BQSRReadTransformer implements ReadTransformer {
             final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
             engine = new FalconRecalibrationEngine(RAC, null);
             final boolean isLoaded = engine.load(null);
-            System.out.printf("Peipei Debug, FalconRecalibrationEngine isLoaded: ");
-            System.out.println(isLoaded);
             //Assert.assertTrue(isLoaded);
             if (isLoaded) {
+                logger.info("Using FalconRecalibrationEngine");
                 if (args.quantizationLevels == 0) { // quantizationLevels == 0 means no quantization, preserve the quality scores
                     quantizationInfo.noQuantization();
                 } else if (args.quantizationLevels > 0 && args.quantizationLevels != quantizationInfo.getQuantizationLevels()) { // any other positive value means, we want a different quantization than the one pre-calculated in the recalibration report. Negative values mean the user did not provide a quantization argument, and just wants to use what's in the report.
                     quantizationInfo.quantizeQualityScores(args.quantizationLevels);
                 }
             }
+            else{
+                logger.info("Using BaseRecalibrationEngine");
+            }
 
-            System.out.printf("Peipei Debug, QualityUtils.MAX_SAM_QUAL_SCORE is %d \n", QualityUtils.MAX_SAM_QUAL_SCORE);
             final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
-            System.out.printf("Peipei Debug, infalc quantizedQuals after  noQuantization size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
             byte[] staticQuantizedMapping;
             if (args.staticQuantizationQuals != null && !args.staticQuantizationQuals.isEmpty()) {
                 staticQuantizedMapping = BQSRReadTransformer.constructStaticQuantizedMapping(args.staticQuantizationQuals, args.roundDown);
@@ -181,17 +182,10 @@ public final class BQSRReadTransformer implements ReadTransformer {
                         preserveQLessThan,
                         globalQScorePrior,
                         emitOriginalQuals);
-
-                isAccelerated = true;
-                System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
-                System.out.println(isAccelerated);
-
+                        isAccelerated = true;
 
             } catch (AccelerationException e) {
-                System.out.printf("exception caught in init(): " + e.getMessage());
                 isAccelerated = false;
-                System.out.printf("Peipei Debug, FalconRecalibrationEngine isAccelerated: ");
-                System.out.println(isAccelerated);
                 return;
 
             }
@@ -239,16 +233,11 @@ public final class BQSRReadTransformer implements ReadTransformer {
             try{
                 final byte[][] quals = engine.recalibrate(read, header);
                 read.setBaseQualities(quals[EventType.BASE_SUBSTITUTION.ordinal()]);
-                //System.out.println("Peipei Debug: Falcon Genomics Acceleration Working !!");
-                //System.out.printf("Peipei Debug:%s\n", Arrays.toString(quals[EventType.BASE_SUBSTITUTION.ordinal()]));
                 return read;
-
             }
 
             catch (AccelerationException e){
                 isAccelerated = false; // disable accelerator in the future
-                System.out.println("Falcon Genomics Acceleration Library failed because: "+e.getMessage());
-                System.out.println("Switching back to original implementation");
                 // NOTE: some other exceptions may not cause this switch
             }
         }
@@ -301,11 +290,8 @@ public final class BQSRReadTransformer implements ReadTransformer {
 
                 // Bin to static quals
                 quals[offset] = staticQuantizedMapping == null ? recalibratedQualityScore : staticQuantizedMapping[recalibratedQualityScore];
-                //System.out.printf("offset: %d, recalibratedQualDouble: %f, recalibratedQualityScore: %d\n", offset, recalibratedQualDouble, recalibratedQualityScore);
             }
             read.setBaseQualities(quals);
-            //System.out.printf("staticQuantizedMapping is : %s", Arrays.toString(staticQuantizedMapping));
-            //System.out.println(staticQuantizedMapping == null);
 
         }
         return read;
