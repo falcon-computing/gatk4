@@ -644,7 +644,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
         final boolean[] skip = recalibrationEngine.calculateSkipArray(readTransform, knownSites);
         //System.out.println(Arrays.toString(skip));
 
-        final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, header, skip);
+        final int ret = update(readTransform, readTransform, referenceDataSource, header, skip);
         if (ret == 1) {
           //System.out.print("Peipei Debug: Falcon updated\n");
         }
