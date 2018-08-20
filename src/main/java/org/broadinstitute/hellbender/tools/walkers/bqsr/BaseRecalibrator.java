@@ -230,7 +230,36 @@ public class BaseRecalibrator extends ReadWalker {
     public void apply( GATKRead read, ReferenceContext ref, FeatureContext featureContext ) {
 
         // Falcon
-        falconRecalEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites), isAccelerated, recalibrationEngine);
+        falconRecalEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites), isAccelerated, recalibrationEngine, recalArgs);
+        /*
+        if (isAccelerated){
+            try {
+                final ReadTransformer transform = recalibrationEngine.makeReadTransform();
+                final GATKRead readTransform = transform.apply(read);
+
+                if( readTransform.isEmpty() ) {
+                    return; // the whole read was inside the adaptor so skip it
+                }
+
+                RecalUtils.parsePlatformForRead(readTransform, getHeaderForReads(), recalArgs);
+                final boolean[] skip = recalibrationEngine.calculateSkipArray(readTransform, featureContext.getValues(knownSites));
+                //System.out.println(Arrays.toString(skip));
+
+                final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, getHeaderForReads(), skip);
+                if (ret == 1) {
+                    //System.out.print("Peipei Debug: Falcon updated\n");
+                }
+            } catch (AccelerationException e){
+                isAccelerated = false; // disable accelerator in the future
+                System.out.printf("exception caught in falconRecalEngine.update(): " + e.getMessage());
+            }
+        }
+        if (!isAccelerated) {
+            // Original
+            recalibrationEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites));
+        }
+        */
+
     }
 
     @Override

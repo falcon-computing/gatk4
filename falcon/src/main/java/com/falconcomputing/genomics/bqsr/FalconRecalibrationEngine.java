@@ -623,7 +623,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   }
 
 
-  public void processRead( final GATKRead originalRead, final ReferenceDataSource refDS, final Iterable<? extends Locatable> knownSites, boolean isAccelerated, BaseRecalibrationEngine recalibrationEngine) {
+  public void processRead( final GATKRead read, final ReferenceDataSource referenceDataSource, final Iterable<? extends Locatable> knownSites, boolean isAccelerated, BaseRecalibrationEngine recalibrationEngine, RecalibrationArgumentCollection recalArgs) {
     if (isAccelerated){
       try {
         final ReadTransformer transform = recalibrationEngine.makeReadTransform();
@@ -633,11 +633,11 @@ public class FalconRecalibrationEngine implements NativeLibrary {
           return; // the whole read was inside the adaptor so skip it
         }
 
-        RecalUtils.parsePlatformForRead(readTransform, getHeaderForReads(), recalArgs);
-        final boolean[] skip = recalibrationEngine.calculateSkipArray(readTransform, featureContext.getValues(knownSites));
+        RecalUtils.parsePlatformForRead(readTransform, recalibrationEngine.getHeaderForReads(), recalArgs);
+        final boolean[] skip = recalibrationEngine.calculateSkipArray(readTransform, knownSites);
         //System.out.println(Arrays.toString(skip));
 
-        final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, getHeaderForReads(), skip);
+        final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, recalibrationEngine.getHeaderForReads(), skip);
         if (ret == 1) {
           //System.out.print("Peipei Debug: Falcon updated\n");
         }
@@ -648,7 +648,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     }
     if (!isAccelerated) {
       // Original
-      recalibrationEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites));
+      recalibrationEngine.processRead(read, referenceDataSource, knownSites);
     }
   }
 
