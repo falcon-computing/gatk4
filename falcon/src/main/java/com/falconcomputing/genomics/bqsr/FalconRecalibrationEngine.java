@@ -88,6 +88,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   private final ReferenceSequenceFile referenceReader; // fasta reference reader for use with BAQ calculation
 
   private long numReadsProcessed = 0L;
+  private SAMFileHeader header;
 
 
   public FalconRecalibrationEngine(final RecalibrationArgumentCollection RAC, final ReferenceSequenceFile referenceReader) {
@@ -155,7 +156,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   public void init(final StandardCovariateList _covariates,
                    //public void init(final Covariate[] _covariates,
                    final int _numReadGroups, final SAMFileHeader header) throws AccelerationException {
-
+    this.header=header;
     this.covariates = _covariates;
     this.numCovariates = covariates.size();
     this.numReadGroups = _numReadGroups;
@@ -633,11 +634,11 @@ public class FalconRecalibrationEngine implements NativeLibrary {
           return; // the whole read was inside the adaptor so skip it
         }
 
-        RecalUtils.parsePlatformForRead(readTransform, recalibrationEngine.getHeaderForReads(), recalArgs);
+        RecalUtils.parsePlatformForRead(readTransform, header, recalArgs);
         final boolean[] skip = recalibrationEngine.calculateSkipArray(readTransform, knownSites);
         //System.out.println(Arrays.toString(skip));
 
-        final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, recalibrationEngine.getHeaderForReads(), skip);
+        final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, header, skip);
         if (ret == 1) {
           //System.out.print("Peipei Debug: Falcon updated\n");
         }
