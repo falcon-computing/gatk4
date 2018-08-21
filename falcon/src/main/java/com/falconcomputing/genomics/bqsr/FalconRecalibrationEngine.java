@@ -644,15 +644,11 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
         RecalUtils.parsePlatformForRead(readTransform, header, recalArgs);
         final boolean[] skip = recalibrationEngine.calculateSkipArray(readTransform, knownSites);
-        //System.out.println(Arrays.toString(skip));
-
         final int ret = update(readTransform, readTransform, referenceDataSource, header, skip);
         if (ret == 1) {
-          //System.out.print("Peipei Debug: Falcon updated\n");
         }
       } catch (AccelerationException e){
         isAccelerated = false; // disable accelerator in the future
-        System.out.printf("exception caught in falconRecalEngine.update(): " + e.getMessage());
       }
     }
     if (!isAccelerated) {

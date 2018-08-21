@@ -166,29 +166,26 @@ public class BaseRecalibrator extends ReadWalker {
         //recalibrationEngine = new BaseRecalibrationEngine(recalArgs, getHeaderForReads());
 
         isAccelerated = recalArgs.useFalconAccelerator;
-        System.out.printf("Peipei Debug: useFalconAccelerator is %s\n", recalArgs.useFalconAccelerator);
 
 
-        if(recalArgs.useFalconAccelerator) {
-
-            // part 2: Falcon init
-            falconRecalEngine = new FalconRecalibrationEngine(recalArgs, null);
-            final boolean isLoaded = falconRecalEngine.load(null);
-            if (isLoaded) {
-                final StandardCovariateList covariates = new StandardCovariateList(recalArgs, header);
-                final int numReadGroups = header.getReadGroups().size();
-                try {
-                    falconRecalEngine.init(covariates, numReadGroups, header);
-                    isAccelerated = true;
-                    logger.info("Using FalconRecalibrationEngine");
-                } catch (AccelerationException e) {
-                    isAccelerated = false;
-                    logger.info("Using BaseRecalibrationEngine");
-                    return;
-                }
-
+        // part 2: Falcon init
+        falconRecalEngine = new FalconRecalibrationEngine(recalArgs, null);
+        final boolean isLoaded = falconRecalEngine.load(null);
+        if (isLoaded & isAccelerated) {
+            final StandardCovariateList covariates = new StandardCovariateList(recalArgs, header);
+            final int numReadGroups = header.getReadGroups().size();
+            try {
+                falconRecalEngine.init(covariates, numReadGroups, header);
+                isAccelerated = true;
+                logger.info("Using FalconRecalibrationEngine");
+            } catch (AccelerationException e) {
+                isAccelerated = false;
+                logger.info("Using BaseRecalibrationEngine");
+                return;
             }
+
         }
+
 
     }
 
