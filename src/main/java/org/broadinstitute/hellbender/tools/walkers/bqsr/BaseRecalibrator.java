@@ -185,6 +185,9 @@ public class BaseRecalibrator extends ReadWalker {
             }
 
         }
+        else{
+            logger.info("Using BaseRecalibrationEngine");
+        }
 
 
     }
@@ -229,35 +232,6 @@ public class BaseRecalibrator extends ReadWalker {
         // Falcon
         falconRecalEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites), isAccelerated, recalibrationEngine, recalArgs);
 
-        /*
-        if (isAccelerated){
-            try {
-                final ReadTransformer transform = recalibrationEngine.makeReadTransform();
-                final GATKRead readTransform = transform.apply(read);
-
-                if( readTransform.isEmpty() ) {
-                    return; // the whole read was inside the adaptor so skip it
-                }
-
-                RecalUtils.parsePlatformForRead(readTransform, getHeaderForReads(), recalArgs);
-                final boolean[] skip = recalibrationEngine.calculateSkipArray(readTransform, featureContext.getValues(knownSites));
-                //System.out.println(Arrays.toString(skip));
-
-                final int ret = falconRecalEngine.update(readTransform, readTransform, referenceDataSource, getHeaderForReads(), skip);
-                if (ret == 1) {
-                    //System.out.print("Peipei Debug: Falcon updated\n");
-                }
-            } catch (AccelerationException e){
-                isAccelerated = false; // disable accelerator in the future
-                System.out.printf("exception caught in falconRecalEngine.update(): " + e.getMessage());
-            }
-        }
-        if (!isAccelerated) {
-            // Original
-            recalibrationEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites));
-        }
-
-        */
     }
 
     @Override
@@ -285,12 +259,10 @@ public class BaseRecalibrator extends ReadWalker {
         if (isAccelerated) {
             resTable = falconRecalEngine.getFinalRecalibrationTables();
             tableName = "falc";
-            //return falconRecalEngine.getFinalRecalibrationTables();
         }
         else {
             resTable = recalibrationEngine.getFinalRecalibrationTables();
             tableName = "gatk";
-            //return recalibrationEngine.getFinalRecalibrationTables();
         }
         return resTable;
     }
@@ -308,14 +280,12 @@ public class BaseRecalibrator extends ReadWalker {
      * generate a quantization map (recalibrated_qual -> quantized_qual)
      */
     private void quantizeQualityScores() {
-        //quantizationInfo = new QuantizationInfo(recalibrationEngine.getFinalRecalibrationTables(), recalArgs.QUANTIZING_LEVELS);
         quantizationInfo = new QuantizationInfo(getRecalibrationTable(), recalArgs.QUANTIZING_LEVELS);
 
     }
 
     private void generateReport() {
         try ( PrintStream recalTableStream = new PrintStream(recalTableFile) ) {
-            //RecalUtils.outputRecalibrationReport(recalTableStream, recalArgs, quantizationInfo, recalibrationEngine.getFinalRecalibrationTables(), recalibrationEngine.getCovariates());
             RecalUtils.outputRecalibrationReport(recalTableStream, recalArgs, quantizationInfo, getRecalibrationTable(), getCovariates());
 
         }
