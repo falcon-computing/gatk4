@@ -7,7 +7,6 @@ cd ./falcon
 
 echo "building falcon_genomics..."
 if [ $# -gt 0 ]; then
-<<<<<<< HEAD
 	  cloud=$1
 	    ./gradlew clean install -Prelease -Pcloud=$cloud &>> ../build.log
 	else
@@ -20,27 +19,7 @@ if [ $# -gt 0 ]; then
 
 	  echo "building gatk..."
 	  #mvn clean package -Ddisable.queue -Dfalcon-genomics.version="$version" &>> build.log
-      ./gradlew bundle &>> build.log
+      ./gradlew bundle -Dfalcon.version="$version" &>> build.log
 	  echo "installing gatk to ~/.falcon-genome/gatk/$version"
 	  mkdir -p ~/.falcon-genome/gatk/$version
 	  cp build/libs/gatk.jar  ~/.falcon-genome/gatk/$version/
-=======
-      cloud=$1
-        ./gradlew clean install -Prelease -Pcloud=$cloud &>> ../build.log
-    else
-          ./gradlew clean install -Prelease &>> ../build.log
-      fi  
-      version=$(cat ../build.log | grep "Version:" | awk '{print $2}')
-
-      echo "falcon genomics version: $version"
-      cd -
-
-      echo "building gatk..."
-      #mvn clean package -Ddisable.queue -Dfalcon-genomics.version="$version" &>> build.log
-      ./gradlew bundle &>> build.log
-      echo "installing gatk to ~/.falcon-genome/gatk/$version"
-      mkdir -p ~/.falcon-genome/gatk/$version
-      cp build/libs/gatk.jar  ~/.falcon-genome/gatk/$version/
-
->>>>>>> dc065c4b3216b825efd78b6a7cabfa4e93384859
-
