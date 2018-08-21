@@ -128,7 +128,6 @@ public final class RecalibrationTables implements Serializable, Iterable<NestedI
      * @return a newly allocated, empty read group x quality score table
      */
     public NestedIntegerArray<RecalDatum> makeQualityScoreTable() {
-        //System.out.printf("@@@ numReadGroups, qualDimension, eventDimension is %d, %d, %d\n", numReadGroups, qualDimension, eventDimension);
         return new NestedIntegerArray<>(numReadGroups, qualDimension, eventDimension);
     }
 
