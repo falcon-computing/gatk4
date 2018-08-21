@@ -230,8 +230,9 @@ public class BaseRecalibrator extends ReadWalker {
     public void apply( GATKRead read, ReferenceContext ref, FeatureContext featureContext ) {
 
         // Falcon
-        //falconRecalEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites), isAccelerated, recalibrationEngine, recalArgs);
+        falconRecalEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites), isAccelerated, recalibrationEngine, recalArgs);
 
+        /*
         if (isAccelerated){
             try {
                 final ReadTransformer transform = recalibrationEngine.makeReadTransform();
@@ -259,7 +260,7 @@ public class BaseRecalibrator extends ReadWalker {
             recalibrationEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites));
         }
 
-
+        */
     }
 
     @Override
