@@ -12,7 +12,7 @@ import java.io.Serializable;
  * An individual piece of recalibration data. Each bin counts up the number of observations and the number
  * of reference mismatches seen for that combination of covariates.
  */
-public final class RecalDatum implements Serializable {
+public class RecalDatum implements Serializable {
     public static final byte MAX_RECALIBRATED_Q_SCORE = SAMUtils.MAX_PHRED_SCORE;
     private static final double UNINITIALIZED = -1.0;
     private static final long serialVersionUID = 1L;

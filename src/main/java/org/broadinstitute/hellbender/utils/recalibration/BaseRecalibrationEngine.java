@@ -29,7 +29,7 @@ import org.broadinstitute.hellbender.utils.recalibration.covariates.StandardCova
 import java.io.Serializable;
 import java.util.Arrays;
 
-public final class BaseRecalibrationEngine implements Serializable {
+public class BaseRecalibrationEngine implements Serializable {
     private static final long serialVersionUID = 1L;
 
     protected static final Logger logger = LogManager.getLogger(BaseRecalibrationEngine.class);
@@ -196,7 +196,7 @@ public final class BaseRecalibrationEngine implements Serializable {
         roundTableValues(tables);
     }
 
-    private static void roundTableValues(final RecalibrationTables rt) {
+    public static void roundTableValues(final RecalibrationTables rt) {
         for (int i = 0; i < rt.numTables(); i++) {
             for (final NestedIntegerArray.Leaf<RecalDatum> leaf : rt.getTable(i).getAllLeaves()) {
                 leaf.value.setNumMismatches(MathUtils.roundToNDecimalPlaces(leaf.value.getNumMismatches(), RecalUtils.NUMBER_ERRORS_DECIMAL_PLACES));
@@ -239,7 +239,7 @@ public final class BaseRecalibrationEngine implements Serializable {
      * Update the recalibration statistics using the information in recalInfo
      * @param recalInfo data structure holding information about the recalibration values for a single read
      */
-    private void updateRecalTablesForRead( final ReadRecalibrationInfo recalInfo ) {
+    public void updateRecalTablesForRead( final ReadRecalibrationInfo recalInfo ) {
         Utils.validate(!finalized, "FinalizeData() has already been called");
 
         final GATKRead read = recalInfo.getRead();
@@ -274,7 +274,7 @@ public final class BaseRecalibrationEngine implements Serializable {
         }
     }
 
-    private ReadTransformer makeReadTransform() {
+    public ReadTransformer makeReadTransform() {
         ReadTransformer f0 = BaseRecalibrationEngine::consolidateCigar;
 
         ReadTransformer f = f0.andThen(this::setDefaultBaseQualities)
@@ -316,7 +316,7 @@ public final class BaseRecalibrationEngine implements Serializable {
         return read;
     }
 
-    private boolean[] calculateSkipArray( final GATKRead read, final Iterable<? extends Locatable> knownSites ) {
+    public boolean[] calculateSkipArray( final GATKRead read, final Iterable<? extends Locatable> knownSites ) {
         final int readLength = read.getLength();
         final boolean[] skip = new boolean[readLength];
         final boolean[] knownSitesArray = calculateKnownSites(read, knownSites);
@@ -367,7 +367,7 @@ public final class BaseRecalibrationEngine implements Serializable {
      * @param isDel storage for deletion events (must be of length read.getBases().length and initialized to all 0's)
      * @return the total number of SNP and indel events
      */
-    protected static int calculateIsSNPOrIndel(final GATKRead read, final ReferenceDataSource ref, int[] snp, int[] isIns, int[] isDel) {
+    public static int calculateIsSNPOrIndel(final GATKRead read, final ReferenceDataSource ref, int[] snp, int[] isIns, int[] isDel) {
         final byte[] refBases = ref.queryAndPrefetch(read.getContig(), read.getStart(), read.getEnd()).getBases();
         int readPos = 0;
         int refPos = 0;
