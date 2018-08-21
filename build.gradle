@@ -325,6 +325,14 @@ dependencies {
     // Required for SV Discovery machine learning
     compile group: 'biz.k11i', name: 'xgboost-predictor', version: '0.3.0'
 
+    // Required for Falcon GATK
+    // /curr/peipei/.m2/repository/com/falconcomputing/genomics/falcon-genomics/4.0.6.0-134-gd6a7fcd-SNAPSHOT
+    // /curr/peipei/.m2/repository/org/broadinstitute/gatk/4.0.6.0-129-g0093533-SNAPSHOT
+    // compile 'org.broadinstitute:gatk:4.0.6.0-129-g0093533-SNAPSHOT'
+    compile 'com.falconcomputing.genomics:falcon-genomics:4.0.6.0-194-gd6a7fcd-SNAPSHOT'
+    // /curr/peipei/.m2/repository/commons-io/commons-io/   
+    //compile 'commons-io:commons-io:2.5'
+
     testCompile "org.mockito:mockito-core:2.10.0"
     testCompile "com.google.jimfs:jimfs:1.1"
 }
