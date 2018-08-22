@@ -645,7 +645,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
         RecalUtils.parsePlatformForRead(readTransform, header, recalArgs);
         final boolean[] skip = recalibrationEngine.calculateSkipArray(readTransform, knownSites);
         //final int ret = update(readTransform, readTransform, referenceDataSource, header, skip);
-        final int ret = update(readTransform, referenceDataSource, header, skip);
+        final int ret = update(readTransform, readTransform, referenceDataSource, header, skip);
         if (ret == 1) {
         }
       } catch (AccelerationException e){
@@ -667,7 +667,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   //                  final ReferenceContext ref,
   //                  final boolean[] skips) throws AccelerationException
   public int update(final GATKRead read,
-                    //final GATKRead org_read,
+                    final GATKRead org_read,
                     final ReferenceDataSource refDS,
                     final SAMFileHeader header,
                     final boolean[] skips) throws AccelerationException
