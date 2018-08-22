@@ -1,5 +1,10 @@
 package org.broadinstitute.hellbender.tools.walkers.bqsr;
 
+
+import com.falconcomputing.genomics.AccelerationException;
+import com.falconcomputing.genomics.bqsr.FalconRecalibrationEngine;
+import htsjdk.samtools.SAMFileHeader;
+
 import htsjdk.tribble.Feature;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,18 +18,20 @@ import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.engine.filters.ReadFilterLibrary;
 import org.broadinstitute.hellbender.engine.filters.WellformedReadFilter;
 import org.broadinstitute.hellbender.exceptions.UserException;
+import org.broadinstitute.hellbender.transformers.ReadTransformer;
 import org.broadinstitute.hellbender.utils.Utils;
+import org.broadinstitute.hellbender.utils.collections.NestedIntegerArray;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
-import org.broadinstitute.hellbender.utils.recalibration.BaseRecalibrationEngine;
-import org.broadinstitute.hellbender.utils.recalibration.QuantizationInfo;
-import org.broadinstitute.hellbender.utils.recalibration.RecalUtils;
-import org.broadinstitute.hellbender.utils.recalibration.RecalibrationArgumentCollection;
+import org.broadinstitute.hellbender.utils.recalibration.*;
+import org.broadinstitute.hellbender.utils.recalibration.covariates.StandardCovariateList;
 import picard.cmdline.programgroups.ReadDataManipulationProgramGroup;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.channels.AcceptPendingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -80,6 +87,7 @@ import java.util.List;
         programGroup = ReadDataManipulationProgramGroup.class
 )
 @DocumentedFeature
+
 public class BaseRecalibrator extends ReadWalker {
     public static final String USAGE_ONE_LINE_SUMMARY = "Generates recalibration table for Base Quality Score Recalibration (BQSR)";
     public static final String USAGE_SUMMARY = "First pass of the Base Quality Score Recalibration (BQSR)" +
@@ -130,6 +138,14 @@ public class BaseRecalibrator extends ReadWalker {
     }
 
     /**
+     * Falcon: interface for accelerated updateDataForRead
+     */
+    private FalconRecalibrationEngine falconRecalEngine;
+    private boolean isAccelerated = false;
+
+
+
+    /**
      * Parse the -cov arguments and create a list of covariates to be used here
      * Based on the covariates' estimates for initial capacity allocate the data hashmap
      */
@@ -139,11 +155,41 @@ public class BaseRecalibrator extends ReadWalker {
             recalArgs.DEFAULT_PLATFORM = recalArgs.FORCE_PLATFORM;
         }
 
-        Utils.warnOnNonIlluminaReadGroups(getHeaderForReads(), logger);
-
-        recalibrationEngine = new BaseRecalibrationEngine(recalArgs, getHeaderForReads());
+        // part 1: GATK init
+        final SAMFileHeader header = getHeaderForReads();
+        Utils.warnOnNonIlluminaReadGroups(header, logger);
+        recalibrationEngine = new BaseRecalibrationEngine(recalArgs, header);
         recalibrationEngine.logCovariatesUsed();
         referenceDataSource = ReferenceDataSource.of(referenceArguments.getReferencePath());
+
+        //Utils.warnOnNonIlluminaReadGroups(getHeaderForReads(), logger);
+        //recalibrationEngine = new BaseRecalibrationEngine(recalArgs, getHeaderForReads());
+
+        isAccelerated = recalArgs.useFalconAccelerator;
+
+
+        // part 2: Falcon init
+        falconRecalEngine = new FalconRecalibrationEngine(recalArgs, null);
+        final boolean isLoaded = falconRecalEngine.load(null);
+        if (isLoaded & isAccelerated) {
+            final StandardCovariateList covariates = new StandardCovariateList(recalArgs, header);
+            final int numReadGroups = header.getReadGroups().size();
+            try {
+                falconRecalEngine.init(covariates, numReadGroups, header);
+                isAccelerated = true;
+                logger.info("Using FalconRecalibrationEngine");
+            } catch (AccelerationException e) {
+                isAccelerated = false;
+                logger.info("Using BaseRecalibrationEngine");
+                return;
+            }
+
+        }
+        else{
+            logger.info("Using BaseRecalibrationEngine");
+        }
+
+
     }
 
     @Override
@@ -182,12 +228,17 @@ public class BaseRecalibrator extends ReadWalker {
      */
     @Override
     public void apply( GATKRead read, ReferenceContext ref, FeatureContext featureContext ) {
-        recalibrationEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites));
+
+        // Falcon
+        falconRecalEngine.processRead(read, referenceDataSource, featureContext.getValues(knownSites), isAccelerated, recalibrationEngine, recalArgs);
+
     }
 
     @Override
     public Object onTraversalSuccess() {
-        recalibrationEngine.finalizeData();
+        if(!isAccelerated) {
+            recalibrationEngine.finalizeData();
+        }
 
         logger.info("Calculating quantized quality scores...");
         quantizeQualityScores();
@@ -201,17 +252,48 @@ public class BaseRecalibrator extends ReadWalker {
     }
 
     /**
+    choose from falconRecalEngine or recalibrationEngine
+    */
+    private RecalibrationTables getRecalibrationTable() {
+        int counter = 0;
+        RecalibrationTables resTable;
+        String tableName;
+        if (isAccelerated) {
+            System.out.println("Debug: isAccelerated is");
+            System.out.println(isAccelerated);
+            resTable = falconRecalEngine.getFinalRecalibrationTables();
+            tableName = "falc";
+        }
+        else {
+            System.out.println("Debug: isAccelerated is");
+            System.out.println(isAccelerated);
+            resTable = recalibrationEngine.getFinalRecalibrationTables();
+            tableName = "gatk";
+        }
+        return resTable;
+    }
+
+    private StandardCovariateList getCovariates(){
+        if (isAccelerated)
+            return falconRecalEngine.getCovariates();
+        else
+            return recalibrationEngine.getCovariates();
+    }
+
+    /**
      * go through the quality score table and use the # observations and the empirical quality score
      * to build a quality score histogram for quantization. Then use the QuantizeQual algorithm to
      * generate a quantization map (recalibrated_qual -> quantized_qual)
      */
     private void quantizeQualityScores() {
-        quantizationInfo = new QuantizationInfo(recalibrationEngine.getFinalRecalibrationTables(), recalArgs.QUANTIZING_LEVELS);
+        quantizationInfo = new QuantizationInfo(getRecalibrationTable(), recalArgs.QUANTIZING_LEVELS);
+
     }
 
     private void generateReport() {
         try ( PrintStream recalTableStream = new PrintStream(recalTableFile) ) {
-            RecalUtils.outputRecalibrationReport(recalTableStream, recalArgs, quantizationInfo, recalibrationEngine.getFinalRecalibrationTables(), recalibrationEngine.getCovariates());
+            RecalUtils.outputRecalibrationReport(recalTableStream, recalArgs, quantizationInfo, getRecalibrationTable(), getCovariates());
+
         }
         catch (final IOException e) {
             throw new UserException.CouldNotCreateOutputFile(recalTableFile, e);

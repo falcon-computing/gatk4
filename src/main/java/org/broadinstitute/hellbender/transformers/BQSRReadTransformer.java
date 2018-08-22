@@ -24,8 +24,20 @@ import static org.broadinstitute.hellbender.utils.MathUtils.fastRound;
 import static org.broadinstitute.hellbender.utils.QualityUtils.boundQual;
 import static org.broadinstitute.hellbender.utils.recalibration.RecalDatum.MAX_RECALIBRATED_Q_SCORE;
 
+
+import com.falconcomputing.genomics.AccelerationException;
+import com.falconcomputing.genomics.bqsr.FalconRecalibrationEngine;
+import org.broadinstitute.hellbender.utils.recalibration.RecalibrationArgumentCollection;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+
 public final class BQSRReadTransformer implements ReadTransformer {
     private static final long serialVersionUID = 1L;
+
+    protected static final Logger logger = LogManager.getLogger(BQSRReadTransformer.class);
+
 
     private final QuantizationInfo quantizationInfo; // histogram containing the map for qual quantization (calculated after recalibration is done)
     private final RecalibrationTables recalibrationTables;
@@ -48,6 +60,10 @@ public final class BQSRReadTransformer implements ReadTransformer {
 
     private byte[] staticQuantizedMapping;
     private final CovariateKeyCache keyCache;
+
+    //Falcon Engine part
+    private FalconRecalibrationEngine engine;
+    private boolean isAccelerated = false;
 
     /**
      * Constructor using a GATK Report file
@@ -75,6 +91,9 @@ public final class BQSRReadTransformer implements ReadTransformer {
         this.covariates = covariates;
         this.quantizationInfo = quantizationInfo;
 
+        final List<Byte> quantizedQuals = this.quantizationInfo.getQuantizedQuals();
+        System.out.printf("Peipei Debug, ingatk quantizedQuals before noQuantization size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
+
         if (args.quantizationLevels == 0) { // quantizationLevels == 0 means no quantization, preserve the quality scores
             quantizationInfo.noQuantization();
         } else if (args.quantizationLevels > 0 && args.quantizationLevels != quantizationInfo.getQuantizationLevels()) { // any other positive value means, we want a different quantization than the one pre-calculated in the recalibration report. Negative values mean the user did not provide a quantization argument, and just wants to use what's in the report.
@@ -98,6 +117,11 @@ public final class BQSRReadTransformer implements ReadTransformer {
         //Note: We pre-create the varargs arrays that will be used in the calls. Otherwise we're spending a lot of time allocating those int[] objects
         empiricalQualCovsArgs = new RecalDatum[totalCovariateCount - specialCovariateCount];
         keyCache = new CovariateKeyCache();//one cache per transformer
+
+        final List<Byte> quantizedQualsAfter = this.quantizationInfo.getQuantizedQuals();
+        System.out.printf("Peipei Debug, ingatk quantizedQuals after  noQuantization size is %d, array is %s\n", quantizedQualsAfter.size(), Arrays.toString(quantizedQualsAfter.toArray()));
+
+
     }
 
     /**
@@ -109,6 +133,64 @@ public final class BQSRReadTransformer implements ReadTransformer {
      */
     public BQSRReadTransformer(final SAMFileHeader header, final RecalibrationReport recalInfo, final ApplyBQSRArgumentCollection args) {
         this(header, recalInfo.getRecalibrationTables(), recalInfo.getQuantizationInfo(), recalInfo.getCovariates(), args);
+        this.isAccelerated = args.useFalconAccelerator;
+
+        if(isAccelerated) {
+
+            final boolean disableIndelQuals = true;
+            final int preserveQLessThan = QualityUtils.MIN_USABLE_Q_SCORE;
+            final double globalQScorePrior = args.globalQScorePrior;
+            final boolean emitOriginalQuals = args.emitOriginalQuals;
+
+            StandardCovariateList requestedCovariates = recalInfo.getCovariates();
+            final RecalibrationTables gatk_tables = recalInfo.getRecalibrationTables();
+            final QuantizationInfo quantizationInfo = recalInfo.getQuantizationInfo();
+
+            final List<Byte> quantizedQualsBefore = quantizationInfo.getQuantizedQuals();
+
+            //initialize FalconEngine
+
+
+            final RecalibrationArgumentCollection RAC = new RecalibrationArgumentCollection();
+            engine = new FalconRecalibrationEngine(RAC, null);
+            final boolean isLoaded = engine.load(null);
+            //Assert.assertTrue(isLoaded);
+            if (isLoaded) {
+                logger.info("Using FalconRecalibrationEngine");
+                if (args.quantizationLevels == 0) { // quantizationLevels == 0 means no quantization, preserve the quality scores
+                    quantizationInfo.noQuantization();
+                } else if (args.quantizationLevels > 0 && args.quantizationLevels != quantizationInfo.getQuantizationLevels()) { // any other positive value means, we want a different quantization than the one pre-calculated in the recalibration report. Negative values mean the user did not provide a quantization argument, and just wants to use what's in the report.
+                    quantizationInfo.quantizeQualityScores(args.quantizationLevels);
+                }
+            }
+            else{
+                logger.info("Using BaseRecalibrationEngine");
+            }
+
+            final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
+            byte[] staticQuantizedMapping;
+            if (args.staticQuantizationQuals != null && !args.staticQuantizationQuals.isEmpty()) {
+                staticQuantizedMapping = BQSRReadTransformer.constructStaticQuantizedMapping(args.staticQuantizationQuals, args.roundDown);
+            } else {
+                staticQuantizedMapping = null;
+            }
+
+            try {
+                engine.init(requestedCovariates, gatk_tables,
+                        quantizedQuals, staticQuantizedMapping,
+                        disableIndelQuals,
+                        preserveQLessThan,
+                        globalQScorePrior,
+                        emitOriginalQuals);
+                        isAccelerated = true;
+
+            } catch (AccelerationException e) {
+                isAccelerated = false;
+                return;
+
+            }
+        }
+
     }
 
     /**
@@ -142,57 +224,76 @@ public final class BQSRReadTransformer implements ReadTransformer {
             }
         }
 
-        final ReadCovariates readCovariates = RecalUtils.computeCovariates(read, header, covariates, false, keyCache);
 
         //clear indel qualities
         read.clearAttribute(ReadUtils.BQSR_BASE_INSERTION_QUALITIES);
         read.clearAttribute(ReadUtils.BQSR_BASE_DELETION_QUALITIES);
 
-        // get the keyset for this base using the error model
-        final int[][] fullReadKeySet = readCovariates.getKeySet(EventType.BASE_SUBSTITUTION);
-
-        // the rg key is constant over the whole read, the global deltaQ is too
-        final int rgKey = fullReadKeySet[0][0];
-
-        final RecalDatum empiricalQualRG = recalibrationTables.getReadGroupTable().get2Keys(rgKey, BASE_SUBSTITUTION_INDEX);
-
-        if (empiricalQualRG == null) {
-            return read;
-        }
-        final byte[] quals = read.getBaseQualities();
-
-        final int readLength = quals.length;
-        final double epsilon = globalQScorePrior > 0.0 ? globalQScorePrior : empiricalQualRG.getEstimatedQReported();
-
-        final NestedIntegerArray<RecalDatum> qualityScoreTable = recalibrationTables.getQualityScoreTable();
-        final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
-
-        //Note: this loop is under very heavy use in applyBQSR. Keep it slim.
-        for (int offset = 0; offset < readLength; offset++) { // recalibrate all bases in the read
-
-            // only recalibrate usable qualities (the original quality will come from the instrument -- reported quality)
-            if (quals[offset] < preserveQLessThan) {
-                continue;
+        if (isAccelerated){
+            try{
+                final byte[][] quals = engine.recalibrate(read, header);
+                read.setBaseQualities(quals[EventType.BASE_SUBSTITUTION.ordinal()]);
+                return read;
             }
-            Arrays.fill(empiricalQualCovsArgs, null);  //clear the array
-            final int[] keySet = fullReadKeySet[offset];
 
+            catch (AccelerationException e){
+                isAccelerated = false; // disable accelerator in the future
+                // NOTE: some other exceptions may not cause this switch
+            }
+        }
 
-            final RecalDatum empiricalQualQS = qualityScoreTable.get3Keys(keySet[0], keySet[1], BASE_SUBSTITUTION_INDEX);
+        if (!isAccelerated) {
+            final ReadCovariates readCovariates = RecalUtils.computeCovariates(read, header, covariates, false, keyCache);
 
-            for (int i = specialCovariateCount; i < totalCovariateCount; i++) {
-                if (keySet[i] >= 0) {
-                    empiricalQualCovsArgs[i - specialCovariateCount] = recalibrationTables.getTable(i).get4Keys(keySet[0], keySet[1], keySet[i], BASE_SUBSTITUTION_INDEX);
+            // get the keyset for this base using the error model
+            final int[][] fullReadKeySet = readCovariates.getKeySet(EventType.BASE_SUBSTITUTION);
+
+            // the rg key is constant over the whole read, the global deltaQ is too
+            final int rgKey = fullReadKeySet[0][0];
+
+            final RecalDatum empiricalQualRG = recalibrationTables.getReadGroupTable().get2Keys(rgKey, BASE_SUBSTITUTION_INDEX);
+
+            if (empiricalQualRG == null) {
+                return read;
+            }
+            final byte[] quals = read.getBaseQualities();
+
+            //System.out.printf("within gatk src, original quals: %s\n",Arrays.toString(quals));
+            final int readLength = quals.length;
+            final double epsilon = globalQScorePrior > 0.0 ? globalQScorePrior : empiricalQualRG.getEstimatedQReported();
+
+            final NestedIntegerArray<RecalDatum> qualityScoreTable = recalibrationTables.getQualityScoreTable();
+            final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
+            //System.out.printf("within gatk src, quantizedQuals size is %d, array is %s\n", quantizedQuals.size(), Arrays.toString(quantizedQuals.toArray()));
+
+            //Note: this loop is under very heavy use in applyBQSR. Keep it slim.
+            for (int offset = 0; offset < readLength; offset++) { // recalibrate all bases in the read
+
+                // only recalibrate usable qualities (the original quality will come from the instrument -- reported quality)
+                if (quals[offset] < preserveQLessThan) {
+                    continue;
                 }
+                Arrays.fill(empiricalQualCovsArgs, null);  //clear the array
+                final int[] keySet = fullReadKeySet[offset];
+
+
+                final RecalDatum empiricalQualQS = qualityScoreTable.get3Keys(keySet[0], keySet[1], BASE_SUBSTITUTION_INDEX);
+
+                for (int i = specialCovariateCount; i < totalCovariateCount; i++) {
+                    if (keySet[i] >= 0) {
+                        empiricalQualCovsArgs[i - specialCovariateCount] = recalibrationTables.getTable(i).get4Keys(keySet[0], keySet[1], keySet[i], BASE_SUBSTITUTION_INDEX);
+                    }
+                }
+                final double recalibratedQualDouble = hierarchicalBayesianQualityEstimate(epsilon, empiricalQualRG, empiricalQualQS, empiricalQualCovsArgs);
+
+                final byte recalibratedQualityScore = quantizedQuals.get(getRecalibratedQual(recalibratedQualDouble));
+
+                // Bin to static quals
+                quals[offset] = staticQuantizedMapping == null ? recalibratedQualityScore : staticQuantizedMapping[recalibratedQualityScore];
             }
-            final double recalibratedQualDouble = hierarchicalBayesianQualityEstimate(epsilon, empiricalQualRG, empiricalQualQS, empiricalQualCovsArgs);
+            read.setBaseQualities(quals);
 
-            final byte recalibratedQualityScore = quantizedQuals.get(getRecalibratedQual(recalibratedQualDouble));
-
-            // Bin to static quals
-            quals[offset] = staticQuantizedMapping == null ? recalibratedQualityScore : staticQuantizedMapping[recalibratedQualityScore];
         }
-        read.setBaseQualities(quals);
         return read;
     }
 

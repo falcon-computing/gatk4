@@ -80,6 +80,7 @@ final gatkCondaYML = "gatkcondaenv.yml"
 final gatkCondaIntelYML = "gatkcondaenv.intel.yml"
 final largeResourcesFolder = "src/main/resources/large"
 final buildPrerequisitesMessage = "See https://github.com/broadinstitute/gatk#building for information on how to build GATK."
+final falconVersion = System.getProperty('falcon.version')
 
 // Returns true if any files in the target folder are git-lfs stub files.
 def checkForLFSStubFiles(targetFolder) {
@@ -324,6 +325,10 @@ dependencies {
     
     // Required for SV Discovery machine learning
     compile group: 'biz.k11i', name: 'xgboost-predictor', version: '0.3.0'
+
+    // Required for Falcon GATK
+    //compile 'com.falconcomputing.genomics:falcon-genomics:4.0.6.0-194-gd6a7fcd-SNAPSHOT'
+    compile 'com.falconcomputing.genomics:falcon-genomics:'+ falconVersion
 
     testCompile "org.mockito:mockito-core:2.10.0"
     testCompile "com.google.jimfs:jimfs:1.1"
