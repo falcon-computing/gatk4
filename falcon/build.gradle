@@ -31,8 +31,8 @@ repositories {
 dependencies {
     testCompile 'org.testng:testng:6.11'
     compile 'commons-io:commons-io:2.5'
-    //this is a stable gatk version for cyclic depedency compile 'org.broadinstitute:gatk:4.0.6.0-26-g5261e65-SNAPSHOT'
-    compile 'org.broadinstitute:gatk:4.0.6.0-26-g5261e65-SNAPSHOT'
+    //this is a stable gatk version for cyclic depedency compile 
+    compile 'org.broadinstitute:gatk:4.0.6.0-falcon-base-SNAPSHOT'
     compile 'org.apache.logging.log4j:log4j-api:2.3'
     compile 'org.apache.logging.log4j:log4j-core:2.3'
     compile 'com.github.samtools:htsjdk:2.16.0'
