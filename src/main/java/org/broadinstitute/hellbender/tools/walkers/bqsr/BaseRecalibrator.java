@@ -80,7 +80,7 @@ import java.util.List;
         programGroup = ReadDataManipulationProgramGroup.class
 )
 @DocumentedFeature
-public final class BaseRecalibrator extends ReadWalker {
+public class BaseRecalibrator extends ReadWalker {
     public static final String USAGE_ONE_LINE_SUMMARY = "Generates recalibration table for Base Quality Score Recalibration (BQSR)";
     public static final String USAGE_SUMMARY = "First pass of the Base Quality Score Recalibration (BQSR)" +
             " -- Generates recalibration table based on various user-specified covariates " +
