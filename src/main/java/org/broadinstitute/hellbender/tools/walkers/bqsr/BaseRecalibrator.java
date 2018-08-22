@@ -259,10 +259,14 @@ public class BaseRecalibrator extends ReadWalker {
         RecalibrationTables resTable;
         String tableName;
         if (isAccelerated) {
+            System.out.println("Debug: isAccelerated is");
+            System.out.println(isAccelerated);
             resTable = falconRecalEngine.getFinalRecalibrationTables();
             tableName = "falc";
         }
         else {
+            System.out.println("Debug: isAccelerated is");
+            System.out.println(isAccelerated);
             resTable = recalibrationEngine.getFinalRecalibrationTables();
             tableName = "gatk";
         }
