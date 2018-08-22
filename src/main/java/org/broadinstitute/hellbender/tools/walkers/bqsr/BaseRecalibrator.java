@@ -236,7 +236,9 @@ public class BaseRecalibrator extends ReadWalker {
 
     @Override
     public Object onTraversalSuccess() {
-        recalibrationEngine.finalizeData();
+        if(!isAccelerated) {
+            recalibrationEngine.finalizeData();
+        }
 
         logger.info("Calculating quantized quality scores...");
         quantizeQualityScores();
