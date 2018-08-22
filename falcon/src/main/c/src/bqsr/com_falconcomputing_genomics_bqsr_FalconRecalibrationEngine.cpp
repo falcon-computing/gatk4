@@ -8,6 +8,7 @@
 #include "RecalibrationTable.h"
 #include "SimpleTimer.h"
 #include <iostream>
+#include "Timer.h"
 
 int g_numReadGroups = 0;
 int g_numEvents = 0;
@@ -31,6 +32,7 @@ int lap_recalibrate_num_calls = 0;
 int total_recalibrate_num_calls = 0;
 
 SimpleTimer timer;
+DEFINE_GLOBAL_TIMER ;
 
 // init function for BaseRecalibrator
 JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_initNative__III_3IBIIII(
@@ -44,6 +46,9 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
     jint INDELS_CONTEXT_SIZE,
     jint MAXIMUM_CYCLE_VALUE,
     jint CUSHION_FOR_INDEL) {
+
+
+
 
   if (license_verify() != 0) {
     throwAccError(env, "license check failed");
@@ -497,6 +502,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
     jint       refOffset,
     jbooleanArray jskips)
 {
+  PLACE_TIMER1("updataTableNative")
   uint64_t start_ns = getNs();
 
   int readLength = env->GetArrayLength(jbases);
@@ -853,6 +859,7 @@ JNIEXPORT jdouble JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibra
 JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_finalizeNative(
     JNIEnv *env, jobject obj) {
 
+
   if (total_update_num_calls > 0) {
     uint64_t total_update_jni_time = total_update_total_time -
     total_update_covariate_time -
@@ -866,6 +873,9 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
     DLOG(INFO) << "Total time on table update: " << (double)total_update_compute_time / 1e6 << " ms";
     DLOG(INFO) << "Total time on jni communication: " << (double)total_update_jni_time / 1e6 << " ms";
   }
+
+  print_global_timers();
+
 
   // free up resource
   if (baq) delete baq;
