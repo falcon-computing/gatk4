@@ -185,8 +185,9 @@ public class BaseRecalibrator extends ReadWalker {
             }
 
         }
-        else{
+        else {
             logger.info("Using BaseRecalibrationEngine");
+            isAccelerated = false;
         }
 
 

@@ -90,11 +90,11 @@ public abstract class PairHMM implements Closeable{
             /*Begin Falcon's modification*/
             try {
                 final VectorLoglessPairHMM hmm = new VectorLoglessPairHMM(VectorLoglessPairHMM.Implementation.Falcon, args);
-                logger.info("Using Falcon's FPGA-accelerated native PairHMM implementation");
+                logger.info("Using Falcon Accelerated PairHMM implementation");
                 return hmm;
             }
             catch ( UserException.HardwareFeatureException e ) {
-                logger.info("Falcon's FPGA-accelerated native PairHMM implementation is not supported");
+                logger.info("Falcon Accelerated PairHMM implementation is not supported");
             }
             /*End Falcon's modification*/
             // This try block is temporarily commented out becuase FPGA support is experimental for the time being. Once

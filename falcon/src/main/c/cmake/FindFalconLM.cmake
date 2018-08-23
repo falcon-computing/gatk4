@@ -1,7 +1,7 @@
 ExternalProject_Add(falconlm-download
     PREFIX "falconlm"
-    URL https://s3.amazonaws.com/fcs-build-public/falcon-lic-v1.1.tar.gz
-    URL_MD5 cc5ef3f25697aefb4e9be2c900f4bbe7
+    URL https://s3.amazonaws.com/fcs-build-public/falcon-lic-v1.2.tgz
+    URL_MD5 911e5526bbbb4b2967580173b59cc0ff 
     CONFIGURE_COMMAND ""
     SOURCE_DIR "${CMAKE_BINARY_DIR}/falconlm/install"
     BUILD_COMMAND ""

@@ -78,13 +78,10 @@ public final class VectorLoglessPairHMM extends LoglessPairHMM {
             case Falcon:
                 pairHmm = new FalconPairhmm();
                 isSupported = pairHmm.load(null);
-                if (isSupported) {
-                    logger.info("Using Falcon PairHMM implementation");
-                    break;
+                if (!isSupported) {
+                    throw new UserException.HardwareFeatureException("Machien does not support Falcon Accelerated PairHMM.");
                 }
-                // naturally fallback to IntelPairHMM
-                pairHmm = null;
-            /*End Falcon's modification*/
+                break;
 
             case AVX:
                 pairHmm = new IntelPairHmm();

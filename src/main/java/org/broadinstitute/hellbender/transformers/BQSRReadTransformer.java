@@ -165,6 +165,7 @@ public final class BQSRReadTransformer implements ReadTransformer {
             }
             else{
                 logger.info("Using BaseRecalibrationEngine");
+                isAccelerated = false;
             }
 
             final List<Byte> quantizedQuals = quantizationInfo.getQuantizedQuals();
