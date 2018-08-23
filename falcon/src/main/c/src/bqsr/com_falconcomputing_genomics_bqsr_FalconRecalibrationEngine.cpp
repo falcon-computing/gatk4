@@ -45,11 +45,6 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
     jint MAXIMUM_CYCLE_VALUE,
     jint CUSHION_FOR_INDEL) {
 
-  if (license_verify() != 0) {
-    throwAccError(env, "license check failed");
-    return;
-  }
-
   // init
   int* dims = (int*) env->GetIntArrayElements(covariatesDimensions, NULL);
 
@@ -101,11 +96,6 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
     jint INDELS_CONTEXT_SIZE,
     jint MAXIMUM_CYCLE_VALUE,
     jint CUSHION_FOR_INDEL) {
-
-  if (license_verify() != 0) {
-    throwAccError(env, "license check failed");
-    return;
-  }
 
   if (!jcovariates) {
     throwAccError(env, "Falcon internal error in initNative()");

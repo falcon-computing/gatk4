@@ -17,6 +17,9 @@ public final class NativeLibraryLoader {
     private static final String USE_LIBRARY_PATH = "USE_LIBRARY_PATH";
     private static final Set<String> loadedLibraries = new HashSet<String>();
 
+    // make sure only check license first time library is loaded
+    private static boolean licenseChecked  = false; 
+
     /**
      * Tries to load the native library from the classpath, usually from a jar file. <p>
      *
@@ -29,13 +32,21 @@ public final class NativeLibraryLoader {
      */
     public static synchronized boolean load(File tempDir, String libraryName) {
         if (loadedLibraries.contains(libraryName)) {
-            return true;
+          logger.info(libraryName+" is already loaded");
+          return true;
+        }
+        else if (licenseChecked) {
+          // directly return false if license is already checked
+          // this implies that library is already loaded
+          logger.info(libraryName+" is loaded but unlicensed");
+          return false;
         }
 
         final String systemLibraryName = System.mapLibraryName(libraryName);
 
         // load from the java.library.path
-        if (System.getenv(USE_LIBRARY_PATH) != null) {
+        // disabled for now
+        if (false && System.getenv(USE_LIBRARY_PATH) != null) {
             final String javaLibraryPath = System.getProperty("java.library.path");
             try {
                 logger.warn(String.format("OVERRIDE DEFAULT: Loading %s from %s", systemLibraryName, javaLibraryPath));
@@ -69,7 +80,17 @@ public final class NativeLibraryLoader {
             return false;
         }
 
-        loadedLibraries.add(libraryName);
-        return true;
+        // check if license is valid
+        boolean verified = false;
+        if (!licenseChecked) {
+          if (license_verify()) {
+            loadedLibraries.add(libraryName);
+            verified = true;
+          }
+          licenseChecked = true;
+        }
+        return verified;
     }
+
+    private static native boolean license_verify();
 }
