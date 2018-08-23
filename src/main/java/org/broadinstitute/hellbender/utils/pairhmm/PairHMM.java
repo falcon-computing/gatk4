@@ -72,6 +72,14 @@ public abstract class PairHMM implements Closeable{
             logger.info("Using the FPGA-accelerated native PairHMM implementation");
             return hmm;
         }),
+        /*Begin Falcon's modification*/
+        FALCON_LOGLESS_CACHING(args -> {
+            // Constructor will throw a UserException if the license is not available
+            final VectorLoglessPairHMM hmm = new VectorLoglessPairHMM(VectorLoglessPairHMM.Implementation.Falcon, args);
+            logger.info("Using Falcon's FPGA-accelerated native PairHMM implementation");
+            return hmm;
+        }),
+        /*End Falcon's modification*/
         /* Uses the fastest available PairHMM implementation supported on the platform.
            Order of precedence:
             1. AVX_LOGLESS_CACHING_OMP
@@ -79,6 +87,16 @@ public abstract class PairHMM implements Closeable{
             3. LOGLESS_CACHING
          */
         FASTEST_AVAILABLE(args -> {
+            /*Begin Falcon's modification*/
+            try {
+                final VectorLoglessPairHMM hmm = new VectorLoglessPairHMM(VectorLoglessPairHMM.Implementation.Falcon, args);
+                logger.info("Using Falcon's FPGA-accelerated native PairHMM implementation");
+                return hmm;
+            }
+            catch ( UserException.HardwareFeatureException e ) {
+                logger.info("Falcon's FPGA-accelerated native PairHMM implementation is not supported");
+            }
+            /*End Falcon's modification*/
             // This try block is temporarily commented out becuase FPGA support is experimental for the time being. Once
             // FPGA support has matured/been properly tested, we can easily add it back the "fastest available" logic
             // by uncommenting this block

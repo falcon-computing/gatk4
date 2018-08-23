@@ -177,10 +177,10 @@ configurations.all {
 
 //NOTE: we ignore contracts for now
 compileJava {
-  options.compilerArgs = ['-proc:none', '-Xlint:all', '-Werror', '-Xdiags:verbose']
+  options.compilerArgs = ['-proc:none', '-Xlint:all', '-Xdiags:verbose']
 }
 compileTestJava {
-  options.compilerArgs = ['-proc:none', '-Xlint:all', '-Werror', '-Xdiags:verbose']
+  options.compilerArgs = ['-proc:none', '-Xlint:all', '-Xdiags:verbose']
 }
 
 // Dependency change for including MLLib
