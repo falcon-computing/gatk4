@@ -41,17 +41,21 @@ public final class VectorLoglessPairHMM extends LoglessPairHMM {
          * FPGA-accelerated version of PairHMM
          */
         FPGA,
+        /*Begin Falcon's modification*/
         /**
-         * Falcon accelerated version of PairHMM
+         * Falcon's accelerated version of PairHMM
          */
         Falcon
+        /*End Falcon's modification*/
     }
 
     private static final Logger logger = LogManager.getLogger(VectorLoglessPairHMM.class);
     private long threadLocalSetupTimeDiff = 0;
     private long pairHMMSetupTime = 0;
 
-    private final PairHMMNativeBinding pairHmm;
+    /*Begin Falcon's modification*/
+    private PairHMMNativeBinding pairHmm;
+    /*End Falcon's modification*/
 
     //Hold the mapping between haplotype and index in the list of Haplotypes passed to initialize
     //Use this mapping in computeLikelihoods to find the likelihood value corresponding to a given Haplotype
@@ -65,9 +69,12 @@ public final class VectorLoglessPairHMM extends LoglessPairHMM {
      * @param args              arguments to the native GKL implementation
      */
     public VectorLoglessPairHMM(Implementation implementation, PairHMMNativeArguments args) throws UserException.HardwareFeatureException {
-        final boolean isSupported;
+        /*Beigin Falcon's modification*/
+        boolean isSupported;
+        /*End Falcon's modification*/
 
         switch (implementation) {
+            /*Beigin Falcon's modification*/
             case Falcon:
                 pairHmm = new FalconPairhmm();
                 isSupported = pairHmm.load(null);
@@ -76,6 +83,8 @@ public final class VectorLoglessPairHMM extends LoglessPairHMM {
                     break;
                 }
                 // naturally fallback to IntelPairHMM
+                pairHmm = null;
+            /*End Falcon's modification*/
 
             case AVX:
                 pairHmm = new IntelPairHmm();
