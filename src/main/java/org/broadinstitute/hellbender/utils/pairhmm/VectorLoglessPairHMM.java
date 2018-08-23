@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.utils.pairhmm;
 
+import com.falconcomputing.genomics.haplotypecaller.FalconPairhmm;
 import com.intel.gkl.pairhmm.IntelPairHmm;
 import com.intel.gkl.pairhmm.IntelPairHmmOMP;
 import com.intel.gkl.pairhmm.IntelPairHmmFpga;
@@ -39,7 +40,11 @@ public final class VectorLoglessPairHMM extends LoglessPairHMM {
         /**
          * FPGA-accelerated version of PairHMM
          */
-        FPGA
+        FPGA,
+        /**
+         * Falcon accelerated version of PairHMM
+         */
+        Falcon
     }
 
     private static final Logger logger = LogManager.getLogger(VectorLoglessPairHMM.class);
@@ -63,6 +68,15 @@ public final class VectorLoglessPairHMM extends LoglessPairHMM {
         final boolean isSupported;
 
         switch (implementation) {
+            case Falcon:
+                pairHmm = new FalconPairhmm();
+                isSupported = pairHmm.load(null);
+                if (isSupported) {
+                    logger.info("Using Falcon PairHMM implementation");
+                    break;
+                }
+                // naturally fallback to IntelPairHMM
+
             case AVX:
                 pairHmm = new IntelPairHmm();
                 isSupported = pairHmm.load(null);

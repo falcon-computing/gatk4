@@ -14,10 +14,6 @@
 #define LOG_HEADER "Falcon Genomics Library"
 #include <glog/logging.h>
 
-#ifdef USELICENSE
-#include "falcon-lic/license.h"
-#endif
-
 #define TIMER_SAMPLE_RATE 1000000
 
 inline uint64_t getUs() {

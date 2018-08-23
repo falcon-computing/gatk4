@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "pairhmm/common/pairhmm_common.h"
 
 #define PROFILING
 
@@ -23,52 +22,50 @@ public:
         m_haplotypeBasesFid = getFieldId(env, haplotypeDataHolder, "haplotypeBases", "[B");
     }
 
-    void getData(JNIEnv *env, jobjectArray& readDataArray, jobjectArray& haplotypeDataArray, pairhmmInput* ret, int numRead, int numHap, bool& useFPGA){
+    void getData(JNIEnv *env, jobjectArray& readDataArray, jobjectArray& haplotypeDataArray, std::vector<read_t>& reads, std::vector<hap_t>& haps, int numRead, int numHap, bool& useFPGA){
         float cells = 0.0;
-        ret->reads.clear();
-        ret->haps.clear();
+        reads.clear();
+        haps.clear();
         // get haplotypes
         for (int i = 0; i < numHap; i++) {
             int curHapLen;
-            char* haps = getCharArray(env, haplotypeDataArray, i, m_haplotypeBasesFid, curHapLen);
-            Hap curHap;
-            for(int j = 0; j < curHapLen; j++){
-                curHap.bases.push_back(haps[j]);
-            }
-            ret->haps.push_back(curHap);
-            if(curHapLen > MAX_HAP_LEN)
-                useFPGA = false;
+            char* hapBases = getCharArray(env, haplotypeDataArray, i, m_haplotypeBasesFid, curHapLen);
+            hap_t curHap;
+            curHap.len = curHapLen;
+            curHap._b  = hapBases;
+            haps.push_back(curHap);
+            //if(curHapLen > MAX_HAP_LEN)
+            //    useFPGA = false;
         }
 
         // get reads 
         for (int r = 0; r < numRead; r++) {
             int curReadLen;
-            char* reads = getCharArray(env, readDataArray, r, m_readBasesFid, curReadLen);
+            char* readBases = getCharArray(env, readDataArray, r, m_readBasesFid, curReadLen);
             char* insGops = getCharArray(env, readDataArray, r, m_insertionGopFid, curReadLen);
             char* delGops = getCharArray(env, readDataArray, r, m_deletionGopFid, curReadLen);
             char* gapConts = getCharArray(env, readDataArray, r, m_overallGcpFid, curReadLen);
             char* readQuals = getCharArray(env, readDataArray, r, m_readQualsFid, curReadLen);
-            Read curRead;
-            for(int j = 0; j < curReadLen; j++){
-                curRead.bases.push_back(reads[j]);
-                curRead._i.push_back(insGops[j]);
-                curRead._d.push_back(delGops[j]);
-                curRead._c.push_back(gapConts[j]);
-                curRead._q.push_back(readQuals[j]);
-            }
-            ret->reads.push_back(curRead);
-            if(curReadLen > MAX_READ_LEN)
-                useFPGA = false;
+            read_t curRead;
+            curRead.len = curReadLen;
+            curRead._b  = readBases;
+            curRead._i  = insGops;
+            curRead._d  = delGops;
+            curRead._c  = gapConts;
+            curRead._q  = readQuals;
+            reads.push_back(curRead);
+            //if(curReadLen > MAX_READ_LEN)
+            //    useFPGA = false;
         }
         for(int i = 0; i < numRead; i++){
             for(int j = 0; j < numHap; j++){
-                cells = cells + ret->reads[i].bases.size() * ret->haps[j].bases.size();
+                cells = cells + reads[i].len * haps[j].len;
             }
         }
-        float FPGA_time = cells / FPGA_perf + DIE_NUM * 1e6 + DIE_NUM * sizeof(FPGAInput) / 3.0 + numRead * numHap * sizeof(float) / 3.0;
-        float AVX_time = cells / AVX_perf;
-        if(AVX_time <= FPGA_time)
-            useFPGA = false;
+        //float FPGA_time = cells / FPGA_perf + DIE_NUM * 1e6 + DIE_NUM * sizeof(FPGAInput) / 3.0 + numRead * numHap * sizeof(float) / 3.0;
+        //float AVX_time = cells / AVX_perf;
+        //if(AVX_time <= FPGA_time)
+        //    useFPGA = false;
     }
 
     double* getOutputArray(JNIEnv *env, jdoubleArray array) {
