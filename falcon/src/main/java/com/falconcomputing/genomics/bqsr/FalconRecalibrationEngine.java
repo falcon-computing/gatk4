@@ -59,7 +59,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   private String nativeLibraryName = "falcon_genomics";
   boolean useFPGA = false;
 
-  private final int numEvents = EventType.values().length;
+  private int numEvents = EventType.values().length;
   private int numCovariates;
   private int numReadGroups;
   //private Covariate[] covariates;
@@ -92,7 +92,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
   private long numReadsProcessed = 0L;
   private SAMFileHeader header;
-
+  private boolean computeIndelBQSRTables = false;
 
   public FalconRecalibrationEngine(final RecalibrationArgumentCollection RAC, final ReferenceSequenceFile referenceReader) {
     this.LOW_QUAL_TAIL = RAC.LOW_QUAL_TAIL;
@@ -102,6 +102,14 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
     //this.FORCE_READGROUP = RAC.FORCE_READGROUP;
     this.referenceReader = referenceReader;
+
+    if(!RAC.computeIndelBQSRTables){
+      numEvents = 1;
+      computeIndelBQSRTables = false;
+    }
+    else{
+      computeIndelBQSRTables = true;
+    }
 
     logger.debug("Created one instance of FalconRecalibrationEngine");
   }
@@ -164,6 +172,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     this.numCovariates = covariates.size();
     this.numReadGroups = _numReadGroups;
     this.baq = new BAQ(BAQGOP); // setup the BAQ object with the provided gap open penalty
+
+    //if()
 
     final int[] covariatesDimensions = new int[numCovariates];
 
@@ -656,8 +666,14 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       // Original
       recalibrationEngine.processRead(read, referenceDataSource, knownSites);
     }
+
+    numReadsProcessed++;
   }
 
+
+  public long getNumReadsProcessed(){
+      return numReadsProcessed;
+  }
 
 
   // This function is used to update recalibration tables in
@@ -715,10 +731,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       }
     }
 
-    // ref seqs for SNP error calculation
-    //final byte[] refBases = Arrays.copyOfRange(ref.getBases(),
-    //                    read.getAlignmentStart() - org_read.getAlignmentStart(),
-    //                    ref.getBases().length + read.getAlignmentEnd() - org_read.getAlignmentEnd());
+
     final byte[] refBases = refDS.queryAndPrefetch(read.getContig(), read.getStart(), read.getEnd()).getBases();
 
     // get inputs from read
@@ -752,23 +765,29 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     final int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
     String readGroupId;
-    //if (FORCE_READGROUP != null) {
-    //  readGroupId = FORCE_READGROUP;
-    //}
-    //final GATKSAMReadGroupRecord rg = read.getReadGroup();
-    //final String platformUnit = rg.getPlatformUnit();
-    //readGroupId = platformUnit == null ? rg.getId() : platformUnit;
+
     final String platformUnit = header.getReadGroup(read.getReadGroup()).getPlatformUnit();
     readGroupId = platformUnit == null ? header.getReadGroup(read.getReadGroup()).getId() : platformUnit;
 
 
-    // call native method to update RecalibrationTables
-    return updateTableNative(refForBAQ, refBases,
-        bases, baseQuals, baseInsertionQuals, baseDeletionQuals,
-        cigarOps, cigarLens, readBAQArray,
-        readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
-        platformType, refOffset,
-        skips);
+    if(!computeIndelBQSRTables){
+      // call native method to update RecalibrationTables
+      return updateTableSkipIndelNative(refForBAQ, refBases,
+              bases, baseQuals, baseInsertionQuals, baseDeletionQuals,
+              cigarOps, cigarLens, readBAQArray,
+              readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
+              platformType, refOffset,
+              skips);
+    }
+    else {
+      // call native method to update RecalibrationTables
+      return updateTableNative(refForBAQ, refBases,
+              bases, baseQuals, baseInsertionQuals, baseDeletionQuals,
+              cigarOps, cigarLens, readBAQArray,
+              readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
+              platformType, refOffset,
+              skips);
+    }
 
     //numReadsProcessed++;
 
@@ -1220,6 +1239,27 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       int platformType,
       int refOffset,
       boolean[] skips);
+
+  // This is the actual native impl for applications
+  private native int updateTableSkipIndelNative(
+          byte[] refForBAQ,
+          byte[] refBases,
+          byte[] bases,
+          byte[] baseQuals,
+          byte[] baseInsertionQuals,
+          byte[] baseDeletionQuals,
+          byte[] cigarOps,
+          int[]  cigarLens,
+          byte[] readBAQArray,
+          String readGroupId,
+          boolean isNegativeStrand,
+          boolean isReadPaired,
+          boolean isSecondOfPair,
+          boolean isExcludeFromBAQ,
+          int platformType,
+          int refOffset,
+          boolean[] skips);
+
 
   private native RecalDatumTable[] getTableNative();
 

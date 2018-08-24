@@ -86,6 +86,11 @@ JNIEXPORT jdoubleArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconReca
 JNIEXPORT jint JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_updateTableNative
   (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jintArray, jbyteArray, jstring, jboolean, jboolean, jboolean, jboolean, jint, jint, jbooleanArray);
 
+// updateNativeSkipIndel
+JNIEXPORT jint JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_updateTableSkipIndelNative
+  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jintArray, jbyteArray, jstring, jboolean, jboolean, jboolean, jboolean, jint, jint, jbooleanArray);
+
+
 /*
  * Class:     com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine
  * Method:    getTableNative

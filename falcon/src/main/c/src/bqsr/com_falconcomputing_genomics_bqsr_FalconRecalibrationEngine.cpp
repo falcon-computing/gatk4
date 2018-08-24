@@ -481,6 +481,168 @@ JNIEXPORT jdoubleArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconReca
 }
 
 // private native int updateTableNative
+JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_updateTableSkipIndelNative(
+    JNIEnv     *env,
+    jobject    obj,
+    jbyteArray jrefForBAQ,
+    jbyteArray jrefBases,
+    jbyteArray jbases,
+    jbyteArray jbaseQuals,
+    jbyteArray jinsertionQuals,
+    jbyteArray jdeletionQuals,
+    jbyteArray jcigarOps,
+    jintArray  jcigarLens,
+    jbyteArray jreadBAQArray,
+    jstring    jreadGroup,
+    jboolean   isNegativeStrand,
+    jboolean   isReadPaired,
+    jboolean   isSecondOfPair,
+    jboolean   isExcludeFromBAQ,
+    jint       platformType,
+    jint       refOffset,
+    jbooleanArray jskips)
+{
+  PLACE_TIMER1("updataTableNative")
+  uint64_t start_ns = getNs();
+
+  int readLength = env->GetArrayLength(jbases);
+  int numCigar = env->GetArrayLength(jcigarOps);
+  int refLength = 0;
+  int8_t* refForBAQ = NULL;
+
+  if (jrefForBAQ) { // when read is excluded from BAQ, the ref can be null
+    refLength = env->GetArrayLength(jrefForBAQ);
+    refForBAQ = (int8_t*)env->GetByteArrayElements(jrefForBAQ, 0);
+  }
+
+  // JNI array arguments, need to be released
+  int8_t* refBases  = (int8_t*)env->GetByteArrayElements(jrefBases, 0);
+
+  int8_t* bases          = (int8_t*)env->GetByteArrayElements(jbases, 0);
+  int8_t* baseQuals      = (int8_t*)env->GetByteArrayElements(jbaseQuals, 0);
+  int8_t* insertionQuals = (int8_t*)env->GetByteArrayElements(jinsertionQuals, 0);
+  int8_t* deletionQuals  = (int8_t*)env->GetByteArrayElements(jdeletionQuals, 0);
+
+  int8_t* cigarOps  = (int8_t*)env->GetByteArrayElements(jcigarOps, 0);
+  int*    cigarLens = (int*)env->GetIntArrayElements(jcigarLens, 0);
+
+  const char* readGroup = env->GetStringUTFChars(jreadGroup, NULL);
+
+  // skip array used in update()
+  uint8_t* skips = (uint8_t*)env->GetBooleanArrayElements(jskips, 0);
+
+  // NOTE: if baq.excludeReadFromBAQ, and read.getBAQTag != NULL
+  // the readBAQArray passed to calculateErrors is not null
+  int8_t* readBAQArray = NULL;
+  if (jreadBAQArray != NULL) {
+    DLOG_IF(INFO, VLOG_IS_ON(1)) << "This read is excluded from BAQ";
+    readBAQArray = (int8_t*)env->GetByteArrayElements(jreadBAQArray, 0);
+  }
+
+  // first, compute the baq and errors
+  // results for the error arrays (snp, indel, deletion)
+  uint64_t start_sec_ns = getNs();
+  double** isErrors = (double**)malloc(g_numEvents*sizeof(double*));
+  isErrors[0] = (double*)malloc(readLength*sizeof(double));
+  //isErrors[1] = (double*)malloc(readLength*sizeof(double));
+  //isErrors[2] = (double*)malloc(readLength*sizeof(double));
+
+  int result = baq->calculateErrorsSkipIndel(readLength, refLength, refOffset,
+          bases, baseQuals, refForBAQ, refBases,
+          numCigar, cigarOps, cigarLens,
+          isNegativeStrand, isExcludeFromBAQ,
+          readBAQArray,
+          isErrors[0]);
+          //isErrors[0], isErrors[1], isErrors[2]);
+
+  total_update_baq_time += getNs() - start_sec_ns;
+
+  // release arrays for baq and errors computation
+  if (readBAQArray) {
+    env->ReleaseByteArrayElements(jreadBAQArray, readBAQArray, 0);
+  }
+  if (refForBAQ) {
+    env->ReleaseByteArrayElements(jrefForBAQ, refForBAQ, 0);
+  }
+  env->ReleaseByteArrayElements(jrefBases, refBases, 0);
+  env->ReleaseByteArrayElements(jcigarOps, cigarOps, 0);
+  env->ReleaseIntArrayElements(jcigarLens, cigarLens, 0);
+
+  if (result) {
+    // this means a null BAQ array is a result,
+    // and the rest of the computation needs to be skipped
+    DLOG_IF(INFO, VLOG_IS_ON(1)) << "baqArray is null, skip update table";
+
+    // release all the JNI arrays
+    env->ReleaseByteArrayElements(jbases, bases, 0);
+    env->ReleaseByteArrayElements(jbaseQuals, baseQuals, 0);
+    env->ReleaseByteArrayElements(jinsertionQuals, insertionQuals, 0);
+    env->ReleaseByteArrayElements(jdeletionQuals, deletionQuals, 0);
+    env->ReleaseStringUTFChars(jreadGroup, readGroup);
+    env->ReleaseBooleanArrayElements(jskips, skips, 0);
+
+    // release native pointers
+    free(isErrors[0]);
+    //free(isErrors[1]);
+    //free(isErrors[2]);
+    free(isErrors);
+
+    uint64_t total_elapsed_ns = getNs() - start_ns;
+    total_update_total_time += total_elapsed_ns;
+
+    // following the application convention letting it
+    // know that we didn't update the table
+    return 0;
+  }
+
+  // second, compute the covariates
+  start_sec_ns = getNs();
+  int* keys = (int*)malloc(g_numEvents*readLength*g_numCovariates*sizeof(int));
+
+  try {
+    cov->compute(keys, readLength, std::string(readGroup),
+          bases, baseQuals, insertionQuals, deletionQuals,
+          platformType,
+          isNegativeStrand, isReadPaired, isSecondOfPair);
+  } catch (std::runtime_error &e) {
+    throwAccError(env, e.what());
+    return 0;
+  }
+
+  total_update_covariate_time += getNs() - start_sec_ns;
+
+  env->ReleaseByteArrayElements(jbases, bases, 0);
+  env->ReleaseByteArrayElements(jbaseQuals, baseQuals, 0);
+  env->ReleaseByteArrayElements(jinsertionQuals, insertionQuals, 0);
+  env->ReleaseByteArrayElements(jdeletionQuals, deletionQuals, 0);
+  env->ReleaseStringUTFChars(jreadGroup, readGroup);
+
+  start_sec_ns = getNs();
+
+  // finally, perform the update of recal tables
+  table->update(readLength, keys, skips, isErrors);
+
+  total_update_compute_time += getNs() - start_sec_ns;
+
+  // free JNI array finally
+  env->ReleaseBooleanArrayElements(jskips, skips, 0);
+
+  // free temp pointers
+  free(keys);
+  free(isErrors[0]);
+  //free(isErrors[1]);
+  //free(isErrors[2]);
+  free(isErrors);
+
+  uint64_t total_elapsed_ns = getNs() - start_ns;
+  total_update_total_time += total_elapsed_ns;
+  total_update_num_calls += 1;
+
+  return 1;
+}
+
+
+// private native int updateTableNative
 JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_updateTableNative(
     JNIEnv     *env,
     jobject    obj,

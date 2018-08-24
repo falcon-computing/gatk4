@@ -187,6 +187,7 @@ public class BaseRecalibrator extends ReadWalker {
         }
         else{
             logger.info("Using BaseRecalibrationEngine");
+            isAccelerated = false;
         }
 
 
@@ -248,7 +249,7 @@ public class BaseRecalibrator extends ReadWalker {
         logger.info("...done!");
 
         //logger.info("BaseRecalibrator was able to recalibrate " + result + " reads");
-        return recalibrationEngine.getNumReadsProcessed();
+        return falconRecalEngine.getNumReadsProcessed();
     }
 
     /**
