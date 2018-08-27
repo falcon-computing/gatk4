@@ -88,7 +88,7 @@ JNIEXPORT jint JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
 
 // updateNativeSkipIndel
 JNIEXPORT jint JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_updateTableSkipIndelNative
-  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jintArray, jbyteArray, jstring, jboolean, jboolean, jboolean, jboolean, jint, jint, jbooleanArray);
+  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jintArray, jbyteArray, jstring, jboolean, jboolean, jboolean, jboolean, jint, jint, jbooleanArray);
 
 
 /*
