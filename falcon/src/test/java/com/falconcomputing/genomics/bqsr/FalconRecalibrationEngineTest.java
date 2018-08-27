@@ -523,7 +523,7 @@ public class FalconRecalibrationEngineTest {
       final int nErrors = BaseRecalibrationEngine.calculateIsSNPOrIndel(read, helper.getRefDataSource(), isSNP, isInsertion, isDeletion);
 
       //final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
-      final boolean enableBAQ = false;
+      final boolean enableBAQ = RAC.enableBAQ;
       final byte[] baqArray = (nErrors == 0 || !enableBAQ) ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
 
 
@@ -666,7 +666,7 @@ public class FalconRecalibrationEngineTest {
       int[] isDeletion = new int[isSNP.length];
       final int nErrors = BaseRecalibrationEngine.calculateIsSNPOrIndel(read, helper.getRefDataSource(), isSNP, isInsertion, isDeletion);
       //final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
-      final boolean enableBAQ = false;
+      final boolean enableBAQ = RAC.enableBAQ;
       final byte[] baqArray = (nErrors == 0 || !enableBAQ) ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
 
       if (baqArray != null) { // some reads just can't be BAQ'ed
@@ -1045,7 +1045,34 @@ public class FalconRecalibrationEngineTest {
   public void setUp() {
     //TODO FalconRecalibrationEngine second argument
     //engine = new FalconRecalibrationEngine(RAC, helper.getRefReader());
-    RAC.computeIndelBQSRTables = true;
+    //RAC.computeIndelBQSRTables = false;
+    int testFlag=0;
+    switch (testFlag){
+        case 0:
+            RAC.computeIndelBQSRTables = false;
+            RAC.enableBAQ = false;
+            break;
+
+        case 1:
+            RAC.computeIndelBQSRTables = false;
+            RAC.enableBAQ = true;
+            break;
+
+        case 2:
+            RAC.computeIndelBQSRTables = true;
+            RAC.enableBAQ = false;
+            break;
+
+        case 3:
+            RAC.computeIndelBQSRTables = true;
+            RAC.enableBAQ = true;
+            break;
+
+
+    }
+    //RAC.computeIndelBQSRTables = false;
+    //RAC.enableBAQ = false;
+    //RAC.enableBAQ = true;
     engine = new FalconRecalibrationEngine(RAC, null);
     //engine = new FalconRecalibrationEngine(RAC, helper.getRefReader());
     final boolean isLoaded = engine.load(null);
