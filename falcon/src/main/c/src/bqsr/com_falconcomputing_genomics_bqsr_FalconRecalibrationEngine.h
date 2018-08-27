@@ -76,7 +76,7 @@ JNIEXPORT jbyteArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecali
  * Signature: ([B[B[B[B[B[I[BZZI)[D
  */
 JNIEXPORT jdoubleArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_calculateErrorsNative
-  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jintArray, jbyteArray, jboolean, jboolean, jint);
+  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jintArray, jbyteArray, jboolean, jboolean, jint, jboolean);
 
 /*
  * Class:     com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine

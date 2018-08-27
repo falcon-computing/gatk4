@@ -421,7 +421,8 @@ JNIEXPORT jdoubleArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconReca
     jbyteArray jreadBAQArray,
     jboolean   isExcludeFromBAQ,
     jboolean   isNegativeStrand,
-    jint       refOffset)
+    jint       refOffset,
+    jboolean   enableBAQ)
 {
   int readLength = env->GetArrayLength(jbases);
   int numCigar = env->GetArrayLength(jcigarOps);
@@ -455,7 +456,8 @@ JNIEXPORT jdoubleArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconReca
           numCigar, cigarOps, cigarLens,
           isNegativeStrand, isExcludeFromBAQ,
           readBAQArray,
-          errors, errors+readLength, errors+2*readLength);
+          errors, errors+readLength, errors+2*readLength,
+          enableBAQ);
     }
   else{
   result = baq->calculateErrorsSkipIndel(readLength, refLength, refOffset,
@@ -463,7 +465,8 @@ JNIEXPORT jdoubleArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconReca
           numCigar, cigarOps, cigarLens,
           isNegativeStrand, isExcludeFromBAQ,
           readBAQArray,
-          errors);
+          errors,
+          enableBAQ);
           //errors, errors+readLength, errors+2*readLength);
       
   }
