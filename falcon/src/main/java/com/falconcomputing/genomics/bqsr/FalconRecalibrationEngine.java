@@ -739,48 +739,60 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     //final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
     // put the check of baq.isExcludeFromBAQ() outside, since we need
     // to pass the read BAQ tag to native if it is available
-    final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
-    final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
 
-    // preparation for BAQ calculation
-    int refOffset = 0;
     byte[] refForBAQ = null;
+    byte[] baseInsertionQuals = null;
+    byte[] baseDeletionQuals = null;
+    int refOffset = 0;
+    byte[] readBAQArray = null;
 
-    if (!isExcludeFromBAQ) {
-      //final int offset = baq.getBandWidth() / 2;
-      //final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
-      //final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
-      //final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
-      final SimpleInterval referenceWindow = BAQ.getReferenceWindowForRead(read, baq.getBandWidth());
-      if (referenceWindow.getEnd() > refDS.getSequenceDictionary().getSequence(read.getContig()).getSequenceLength()){
-        int i;
-      //if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
-        // meaning null baqArray
-        //return 0;
-        // Note: Here should not return, since if nErrors is zero BAQArray
-        // calculation is skipped, native func knows from negative refOffset
-        //logger.info("baq array cannot be calculated because stop is out-of-bound");
-        ;
+    if(computeIndelBQSRTables || enableBAQ) {
+      final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
+      //final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
+      readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
+      // preparation for BAQ calculation
+      //int refOffset = 0;
+      //byte[] refForBAQ = null;
+
+      if (!isExcludeFromBAQ) {
+        //final int offset = baq.getBandWidth() / 2;
+        //final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
+        //final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
+        //final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
+        final SimpleInterval referenceWindow = BAQ.getReferenceWindowForRead(read, baq.getBandWidth());
+        if (referenceWindow.getEnd() > refDS.getSequenceDictionary().getSequence(read.getContig()).getSequenceLength()) {
+          int i;
+          //if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
+          // meaning null baqArray
+          //return 0;
+          // Note: Here should not return, since if nErrors is zero BAQArray
+          // calculation is skipped, native func knows from negative refOffset
+          //logger.info("baq array cannot be calculated because stop is out-of-bound");
+          ;
+        } else {
+          //refOffset = (int)(start - readStart);
+          refOffset = (int) (referenceWindow.getStart() - read.getStart());
+
+          // ref seq for baq calculation
+          //ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
+          final ReferenceSequence refSeq = refDS.queryAndPrefetch(referenceWindow.getContig(), referenceWindow.getStart(), referenceWindow.getEnd());
+          refForBAQ = refSeq.getBases();
+        }
       }
-      else {
-        //refOffset = (int)(start - readStart);
-        refOffset = (int)(referenceWindow.getStart() - read.getStart());
-
-        // ref seq for baq calculation
-        //ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
-        final ReferenceSequence refSeq = refDS.queryAndPrefetch(referenceWindow.getContig(), referenceWindow.getStart(), referenceWindow.getEnd());
-        refForBAQ = refSeq.getBases();
+      if(computeIndelBQSRTables){
+        baseInsertionQuals = ReadUtils.getBaseInsertionQualities(read);
+        baseDeletionQuals = ReadUtils.getBaseDeletionQualities(read);
       }
     }
 
+    //final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(read);
+    //final byte[] baseDeletionQuals = ReadUtils.getBaseDeletionQualities(read);
 
     final byte[] refBases = refDS.queryAndPrefetch(read.getContig(), read.getStart(), read.getEnd()).getBases();
-
     // get inputs from read
     final byte[] bases = read.getBases();
     final byte[] baseQuals = read.getBaseQualities();
-    final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(read);
-    final byte[] baseDeletionQuals = ReadUtils.getBaseDeletionQualities(read);
+
 
     final boolean isNegativeStrand = read.isReverseStrand();
     final boolean isReadPaired = read.isPaired();
