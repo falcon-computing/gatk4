@@ -660,7 +660,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
                                   cigarOps, cigarLens,
                                   readBAQArray,
                                   isExcludeFromBAQ, isNegativeStrand,
-                                  refOffset);
+                                  refOffset,
+                                  enableBAQ);
 
     if (errors == null) {
       // return null baqArray
@@ -1259,7 +1260,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       byte[] readBAQArray,
       boolean isExcludeFromBAQ,
       boolean isNegativeStrand,
-      int refOffset);
+      int refOffset,
+      boolean enableBAQ);
 
   // This is the actual native impl for applications
   private native int updateTableNative(
