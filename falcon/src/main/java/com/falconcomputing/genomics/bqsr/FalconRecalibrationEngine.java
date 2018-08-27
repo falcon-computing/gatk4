@@ -745,9 +745,10 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     byte[] baseDeletionQuals = null;
     int refOffset = 0;
     byte[] readBAQArray = null;
-
+    boolean isExcludeFromBAQ = false;
     if(computeIndelBQSRTables || enableBAQ) {
-      final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
+      //final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
+      isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
       //final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
       readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
       // preparation for BAQ calculation
