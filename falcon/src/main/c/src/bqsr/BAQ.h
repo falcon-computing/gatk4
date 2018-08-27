@@ -31,6 +31,50 @@ class BAQ {
         int numCigar,
         int refOffset);
 
+
+    int calculateErrorsSkipIndelNoBAQ(
+                int readLength,
+                //int refLength,
+                //int refOffset,
+                int8_t* bases,
+                //int8_t* quals,
+                //int8_t* refForBAQ,
+                int8_t* refBases,
+                int     numCigarElements,
+                int8_t* cigarOps,
+                int* cigarLens,
+                //bool isNegativeStrand,
+                //bool isExcludeFromBAQ,
+                //int8_t* readBAQArray,
+                double* snpErrors);
+                //bool enableBAQ);
+
+    /*
+         * Same function as BaseRecalibrator.calculateFractionalErrorArray()
+         * and also contains this->calculate(), which calculates BAQ Before
+         * calculating fractional errors.
+         */
+        int calculateErrorsSkipIndel(
+            int readLength,
+            int refLength,
+            int refOffset,
+            int8_t* bases,
+            int8_t* quals,
+            int8_t* refForBAQ,
+            int8_t* refBases,
+            int     numCigarElements,
+            int8_t* cigarOps,
+            int* cigarLens,
+            bool isNegativeStrand,
+            bool isExcludeFromBAQ,
+            int8_t* readBAQArray,
+            double* snpErrors,
+            bool enableBAQ);
+            //double* snpErrors,
+            //double* insertErrors,
+            //double* deleteErrors);
+
+
     /*
      * Same function as BaseRecalibrator.calculateFractionalErrorArray()
      * and also contains this->calculate(), which calculates BAQ Before
@@ -52,7 +96,8 @@ class BAQ {
         int8_t* readBAQArray,
         double* snpErrors,
         double* insertErrors,
-        double* deleteErrors);
+        double* deleteErrors,
+        bool enableBAQ);
 
     ~BAQ();
 
@@ -87,6 +132,16 @@ class BAQ {
     inline double calcEpsilon(int8_t ref, int8_t read, int8_t qualB) {
       return EPSILONS[ref][read][qualB];
     }
+
+    void calculateFractionalErrorArraySkipIndel(
+              double* snpErrors,
+              //double* insertErrors,
+              //double* deleteErrors,
+              int8_t* snpArray,
+              //int8_t* insertArray,
+              //int8_t* deleteArray,
+              int8_t* baqArray,
+              int readLength);
 
     void calculateFractionalErrorArray(
           double* snpErrors,

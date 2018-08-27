@@ -36,7 +36,6 @@ RecalibrationTable::RecalibrationTable(
       tableSize *= dim;
     }
     tableSizes_[i] = tableSize;
-
     // skip the RG table here since we are doing recalibration
     if (i == 0) continue;
     DatumTables_[i] = (Datum*)calloc(tableSize, sizeof(Datum));
@@ -73,10 +72,9 @@ RecalibrationTable::RecalibrationTable(
   if (staticQuantizedMapping) {
     staticQuantizedMapping_ = (int8_t*)malloc(staticQuantizedMappingSize);
     memcpy(staticQuantizedMapping_, staticQuantizedMapping, staticQuantizedMappingSize);
-    DLOG(INFO) << "within native staticQuantizedMapping is not NULL, size is " << staticQuantizedMappingSize;
-    for(int i = 0; i < staticQuantizedMappingSize; i++){
-        DLOG(INFO) << i <<" : "<< unsigned(staticQuantizedMapping[i]);
-    }
+    //for(int i = 0; i < staticQuantizedMappingSize; i++){
+    //    DLOG(INFO) << i <<" : "<< unsigned(staticQuantizedMapping[i]);
+    //}
   }
 
   for (int i = 0; i < numCovariates; i++) {
@@ -171,7 +169,6 @@ inline int RecalibrationTable::keysToIndex(int* keys,
   int idx = event_idx;
   int pitch = 1;
   int num_dims = DatumTableDimensions_[cov_idx].size()-1;
-
   for (int d = 0; d < num_dims; d++) {
     if (dims[d] < 0) return -1; // negative index means negative keys
     pitch *= DatumTableDimensions_[cov_idx][d];
@@ -196,20 +193,22 @@ void RecalibrationTable::update(int readLength,
    * DatumTables: numCovariates x [[Cov] x Qual x RG x Events]
    * DatumTablesDim: numCovariates x [Events, RG, Qual, [Cov]]
    */
-  int savedIdx[3] = {0};
-  int dims[4] = {0};
-    //for (int i = 1; i < numCovariates_; i++) {
+  //int savedIdx[3] = {0};
+  //int dims[4] = {0};
+    for (int i = 1; i < numCovariates_; i++) {
 
     for (int j = 0; j < readLength; j++) {
       if (skips[j]) continue;
-      int newEvents=1;
-       for (int k = 0; k < newEvents; k++) {
-       for (int i = 1; i < numCovariates_; i++) {
+      //int newEvents=1;
+       //for (int k = 0; k < newEvents; k++) {
+       for(int k = 0; k < numEvents_; k++){ 
+      //for (int i = 1; i < numCovariates_; i++) {
 
       //for (int k = 0; k < numEvents_; k++) {
         //int* key = &keys[readLength*numCovariates_*k + numCovariates_*j];
+        //DLOG(INFO)<<"Loop  i: "<<i<<" , j:  "<<j<<" , k: "<<k;
         int idx = keysToIndex(keys, i, j, k);
-        savedIdx[i-1]=idx;
+        //savedIdx[i-1]=idx;
         if (idx < 0) continue;
 
         DatumTables_[i][idx].numOccurance += 1;
@@ -217,14 +216,6 @@ void RecalibrationTable::update(int readLength,
 
       }
 
-      // TODO: Peipei debug to print key0, key1, key2, key3 and isError, (qual = keys)
-      //if (numReadsProcessed < 10){
-      //   for(int i = 0; i < 4; i ++){
-      //      dims[i] = keys[j*numCovariates_*numEvents_ + i*numEvents_ + 0];
-      //   }
-
-      //   DLOG(INFO) << "read "<< numReadsProcessed << ", offset: "<<j<<", keys: "<< dims[0] << " " << dims[1] << " "<< dims[2]<<" "<< dims[3]<<" "<< " isError "<<isErrors[k][j];
-      //}
     }
 
   }

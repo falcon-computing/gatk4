@@ -76,7 +76,7 @@ JNIEXPORT jbyteArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecali
  * Signature: ([B[B[B[B[B[I[BZZI)[D
  */
 JNIEXPORT jdoubleArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_calculateErrorsNative
-  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jintArray, jbyteArray, jboolean, jboolean, jint);
+  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jintArray, jbyteArray, jboolean, jboolean, jint, jboolean);
 
 /*
  * Class:     com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine
@@ -84,7 +84,17 @@ JNIEXPORT jdoubleArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconReca
  * Signature: ([B[B[B[B[B[B[B[I[BLjava/lang/String;ZZZZII[Z)I
  */
 JNIEXPORT jint JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_updateTableNative
-  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jintArray, jbyteArray, jstring, jboolean, jboolean, jboolean, jboolean, jint, jint, jbooleanArray);
+  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jintArray, jbyteArray, jstring, jboolean, jboolean, jboolean, jboolean, jint, jint, jbooleanArray, jboolean);
+
+// updateNativeSkipIndel
+JNIEXPORT jint JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_updateTableSkipIndelNative
+  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jintArray, jbyteArray, jstring, jboolean, jboolean, jboolean, jboolean, jint, jint, jbooleanArray, jboolean);
+
+
+// updateNativeSkipIndelNoBAQ
+JNIEXPORT jint JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_updateTableSkipIndelNoBAQNative
+  (JNIEnv *, jobject, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jintArray, jstring, jboolean, jboolean, jboolean, jint, jbooleanArray);
+
 
 /*
  * Class:     com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine

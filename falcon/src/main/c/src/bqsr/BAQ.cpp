@@ -435,6 +435,32 @@ int BAQ::hmm_glocal(int ref_len,
   return 0;
 }
 
+
+static inline void calcErrorBlockSkipIndel(
+    int bound, int blockStartIndex,
+    int8_t* snpArray,
+    //int8_t* insertArray,
+    //int8_t* deleteArray,
+    double* snpErrors)
+    //double* snpErrors,
+    //double* insertErrors,
+    //double* deleteErrors)
+{
+  int totalSnpErrors = 0;
+  //int totalInsertErrors = 0;
+  //int totalDeleteErrors = 0;
+  for (int i = std::max(0, blockStartIndex - 1); i <= bound; i++) {
+    totalSnpErrors    += (int)snpArray[i];
+    //totalInsertErrors += (int)insertArray[i];
+    //totalDeleteErrors += (int)deleteArray[i];
+  }
+  for (int i = std::max(0, blockStartIndex - 1); i <= bound; i++) {
+    snpErrors[i] = ((double)totalSnpErrors) / ((double)(bound - std::max(0, blockStartIndex-1) + 1));
+    //insertErrors[i] = ((double)totalInsertErrors) / ((double)(bound - std::max(0, blockStartIndex-1) + 1));
+    //deleteErrors[i] = ((double)totalDeleteErrors) / ((double)(bound - std::max(0, blockStartIndex-1) + 1));
+  }
+}
+
 static inline void calcErrorBlock(
     int bound, int blockStartIndex,
     int8_t* snpArray,
@@ -456,6 +482,63 @@ static inline void calcErrorBlock(
     snpErrors[i] = ((double)totalSnpErrors) / ((double)(bound - std::max(0, blockStartIndex-1) + 1));
     insertErrors[i] = ((double)totalInsertErrors) / ((double)(bound - std::max(0, blockStartIndex-1) + 1));
     deleteErrors[i] = ((double)totalDeleteErrors) / ((double)(bound - std::max(0, blockStartIndex-1) + 1));
+  }
+}
+
+void BAQ::calculateFractionalErrorArraySkipIndel(
+        double* snpErrors,
+        //double* insertErrors,
+        //double* deleteErrors,
+        int8_t* snpArray,
+        //int8_t* insertArray,
+        //int8_t* deleteArray,
+        int8_t* baqArray,
+        int readLength)
+{
+  const int BLOCK_START_UNSET = -1;
+  const int8_t NO_BAQ_UNCERTAINTY = (int8_t)'@';
+
+  // for some reason memset does not work
+  for (int i = 0; i < readLength; i++) {
+    snpErrors[i] = 0.;
+    //insertErrors[i] = 0.;
+    //deleteErrors[i] = 0.;
+  }
+
+  bool inBlock = false;
+  int blockStartIndex = BLOCK_START_UNSET;
+  int iii = 0;
+  for( iii = 0; iii < readLength; iii++ ) {
+    if( baqArray[iii] == NO_BAQ_UNCERTAINTY ) {
+      if (!inBlock) {
+        snpErrors[iii]    = (double)snpArray[iii];
+        //insertErrors[iii] = (double)insertArray[iii];
+        //deleteErrors[iii] = (double)deleteArray[iii];
+      }
+      else {
+        //calcErrorBlock(iii, blockStartIndex,
+        //    snpArray, insertArray, deleteArray,
+        //    snpErrors, insertErrors, deleteErrors);
+        calcErrorBlockSkipIndel(iii, blockStartIndex,
+                    snpArray,
+                    snpErrors);
+
+        inBlock = false; // reset state variables
+        blockStartIndex = BLOCK_START_UNSET; // reset state variables
+      }
+    }
+    else {
+      inBlock = true;
+      if (blockStartIndex == BLOCK_START_UNSET) blockStartIndex = iii;
+    }
+  }
+  if (inBlock) {
+    //calcErrorBlock(iii-1, blockStartIndex,
+    //    snpArray, insertArray, deleteArray,
+    //    snpErrors, insertErrors, deleteErrors);
+    calcErrorBlockSkipIndel(iii-1, blockStartIndex,
+            snpArray,
+            snpErrors);
   }
 }
 
@@ -530,6 +613,290 @@ static inline int getBaseIdx(int8_t base) {
   }
 }
 
+
+int BAQ::calculateErrorsSkipIndelNoBAQ(
+        int     readLength,
+        //int     refLength,
+        //int     refOffset,
+        int8_t* bases,
+        //int8_t* quals,
+        //int8_t* refForBAQ,
+        int8_t* refBases,
+        int     numCigarElements,
+        int8_t* cigarOps,
+        int*    cigarLens,
+        //bool    isNegativeStrand,
+        //bool    isExcludeFromBAQ,
+        //int8_t* readBAQArray,
+        double* snpErrors)
+        //bool enableBAQ) is false
+{
+  // first calculate error event arrays
+  //int nErrors = 0;
+  int readPos = 0;
+  int refPos = 0;
+
+  int8_t* isSnp = (int8_t*)calloc(readLength, sizeof(int8_t));
+
+  for (int i = 0; i < numCigarElements; i++) {
+    int index = 0;
+    switch (cigarOps[i]) {
+      case 'M':
+      case '=':
+      case 'X':
+        for (int j = 0; j < cigarLens[i]; j++) {
+          if (getBaseIdx(refBases[refPos]) != getBaseIdx(bases[readPos])) {
+            isSnp[readPos] = 1;
+            //nErrors ++;
+          }
+          readPos++;
+          refPos++;
+        }
+        break;
+      case 'D':
+        //refPos += cigarLens[i];
+        //break;
+      case 'N':
+        refPos += cigarLens[i];
+        break;
+      case 'I':
+        //readPos += cigarLens[i];
+        //break;
+      case 'S':
+        readPos += cigarLens[i];
+        break;
+      case 'H':
+      case 'P':
+        break;
+      default:
+        DLOG(ERROR) << "Unsupported cigar operator!";
+    }
+  }
+
+
+
+  int8_t* baqArray = (int8_t*)malloc(readLength);
+  // Peipei Debug:
+  // TODO: please pass flag in for recalArgs.enableBAQ
+  //bool enableBAQ = false;
+
+  //bool isBAQAvailable = true;
+  //if (!enableBAQ || nErrors == 0) { // use flatBAQArray
+    const int8_t NO_BAQ_UNCERTAINTY = (int8_t)'@';
+    for (int i = 0; i < readLength; i++) {
+      baqArray[i] = NO_BAQ_UNCERTAINTY;
+    }
+    DLOG_IF(INFO, VLOG_IS_ON(1)) << "read has no errors, use flat BAQ array";
+  //}
+
+
+  uint64_t start_ns = getNs();
+
+
+  calculateFractionalErrorArraySkipIndel(
+        snpErrors,
+        isSnp,
+        baqArray,
+        readLength);
+  fracerror_time_ns += getNs() - start_ns;
+
+
+  free(baqArray);
+  free(isSnp);
+
+
+  return 0;
+}
+
+
+int BAQ::calculateErrorsSkipIndel(
+        int     readLength,
+        int     refLength,
+        int     refOffset,
+        int8_t* bases,
+        int8_t* quals,
+        int8_t* refForBAQ,
+        int8_t* refBases,
+        int     numCigarElements,
+        int8_t* cigarOps,
+        int*    cigarLens,
+        bool    isNegativeStrand,
+        bool    isExcludeFromBAQ,
+        int8_t* readBAQArray,
+        double* snpErrors,
+        bool enableBAQ)
+        //double* snpErrors,
+        //double* insertErrors,
+        //double* deleteErrors)
+{
+  // first calculate error event arrays
+  int nErrors = 0;
+  int readPos = 0;
+  int refPos = 0;
+
+  int8_t* isSnp = (int8_t*)calloc(readLength, sizeof(int8_t));
+  //int8_t* isInd = (int8_t*)calloc(readLength, sizeof(int8_t));
+  //int8_t* isDel = (int8_t*)calloc(readLength, sizeof(int8_t));
+
+  for (int i = 0; i < numCigarElements; i++) {
+    int index = 0;
+    switch (cigarOps[i]) {
+      case 'M':
+      case '=':
+      case 'X':
+        for (int j = 0; j < cigarLens[i]; j++) {
+          if (getBaseIdx(refBases[refPos]) != getBaseIdx(bases[readPos])) {
+            isSnp[readPos] = 1;
+            nErrors ++;
+          }
+          readPos++;
+          refPos++;
+        }
+        break;
+      case 'D':
+        index = readPos;
+        if (!isNegativeStrand) {
+          index--;
+        }
+        if (index >= 0 && index < readLength){
+          //isDel[index] = 1;
+          nErrors ++;
+        }
+        refPos += cigarLens[i];
+        break;
+      case 'N':
+        refPos += cigarLens[i];
+        break;
+      case 'I':
+        if (!isNegativeStrand) {
+          if (readPos >= 1 && readPos-1 < readLength){
+            //isInd[readPos-1] = 1;
+            nErrors ++;
+          }
+        }
+        readPos += cigarLens[i];
+        if (isNegativeStrand) {
+          if (readPos>=0 && readPos < readLength){
+            //isInd[readPos] = 1;
+            nErrors ++;
+          }
+        }
+        break;
+      case 'S':
+        readPos += cigarLens[i];
+        break;
+      case 'H':
+      case 'P':
+        break;
+      default:
+        DLOG(ERROR) << "Unsupported cigar operator!";
+    }
+  }
+
+
+
+  int8_t* baqArray = (int8_t*)malloc(readLength);
+  // Peipei Debug:
+  // TODO: please pass flag in for recalArgs.enableBAQ
+  //bool enableBAQ = false;
+
+  bool isBAQAvailable = true;
+  if (!enableBAQ || nErrors == 0) { // use flatBAQArray
+    const int8_t NO_BAQ_UNCERTAINTY = (int8_t)'@';
+    for (int i = 0; i < readLength; i++) {
+      baqArray[i] = NO_BAQ_UNCERTAINTY;
+    }
+    DLOG_IF(INFO, VLOG_IS_ON(1)) << "read has no errors, use flat BAQ array";
+  }
+  else {
+    // if read is excluded from BAQ, and read has a BAQ arrays
+    // use the read baq array instead
+    if (isExcludeFromBAQ) {
+      if (readBAQArray) {
+        memcpy(baqArray, readBAQArray, sizeof(readLength));
+        DLOG_IF(INFO, VLOG_IS_ON(1)) << "read is excluded for BAQ, "
+                                     << "use readBAQArray";
+      }
+      else {
+        DLOG_IF(INFO, VLOG_IS_ON(1)) << "read is excluded for BAQ, "
+                                     << "and does not have BAQ tag";
+        isBAQAvailable = false;
+      }
+    }
+    else {
+      // need to check BAQ is calculatable
+      if (refForBAQ == NULL) {
+        DLOG_IF(INFO, VLOG_IS_ON(1)) << "This baqRead returns null";
+        isBAQAvailable = false;
+      }
+      else {
+        uint64_t start_ns = getNs();
+        int baq_ret = this->calculateBAQ(baqArray,
+                        bases, quals, refForBAQ,
+                        cigarOps, cigarLens,
+                        refLength, readLength, numCigarElements,
+                        refOffset);
+        baq_time_ns += getNs() - start_ns;
+
+        if (baq_ret != 0) {
+          DLOG_IF(INFO, VLOG_IS_ON(1)) << "This read is not BAQ-able";
+          isBAQAvailable = false;
+        }
+      }
+    }
+  }
+  if (!isBAQAvailable) {
+    free(baqArray);
+    free(isSnp);
+    //free(isInd);
+    //free(isDel);
+
+    return 1;
+  }
+  //std::cerr << "baqArray = ";
+  //std::copy(baqArray, baqArray + readLength,
+  //    std::ostream_iterator<int>(std::cerr, " "));
+  //    std::cerr << std::endl;
+
+  uint64_t start_ns = getNs();
+  // calculate fractional errors
+  //calculateFractionalErrorArray(
+  //    snpErrors, insertErrors, deleteErrors,
+  //    isSnp, isInd, isDel,
+  //   baqArray,
+  //    readLength);
+
+  calculateFractionalErrorArraySkipIndel(
+        snpErrors,
+        isSnp,
+        baqArray,
+        readLength);
+  fracerror_time_ns += getNs() - start_ns;
+
+  //std::cerr << "snpErrors = ";
+  //std::copy(snpErrors, snpErrors + readLength,
+  //    std::ostream_iterator<double>(std::cerr, " "));
+  //    std::cerr << std::endl;
+  //std::cerr << "insertErrors = ";
+  //std::copy(insertErrors, insertErrors + readLength,
+  //    std::ostream_iterator<double>(std::cerr, " "));
+  //    std::cerr << std::endl;
+  //std::cerr << "deleteErrors = ";
+  //std::copy(deleteErrors, deleteErrors + readLength,
+  //    std::ostream_iterator<double>(std::cerr, " "));
+  //    std::cerr << std::endl;
+
+  free(baqArray);
+  free(isSnp);
+  //free(isInd);
+  //free(isDel);
+
+  return 0;
+}
+
+
+
+
 int BAQ::calculateErrors(
         int     readLength,
         int     refLength,
@@ -546,7 +913,8 @@ int BAQ::calculateErrors(
         int8_t* readBAQArray,
         double* snpErrors,
         double* insertErrors,
-        double* deleteErrors)
+        double* deleteErrors,
+        bool enableBAQ)
 {
   // first calculate error event arrays
   int nErrors = 0;
@@ -631,7 +999,7 @@ int BAQ::calculateErrors(
   int8_t* baqArray = (int8_t*)malloc(readLength);
   // Peipei Debug:
   // TODO: please pass flag in for recalArgs.enableBAQ
-  bool enableBAQ = false;
+  //bool enableBAQ = false;
 
   bool isBAQAvailable = true;
   if (!enableBAQ || nErrors == 0) { // use flatBAQArray

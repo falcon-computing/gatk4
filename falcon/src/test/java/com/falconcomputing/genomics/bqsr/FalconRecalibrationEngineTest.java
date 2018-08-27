@@ -133,7 +133,14 @@ public class FalconRecalibrationEngineTest {
     final int numReadGroups = 2;
     //int numCovariates = covariates.length;
     int numCovariates = covariates.size();
-    int numEvents = EventType.values().length;
+    int numEvents;
+    if(RAC.computeIndelBQSRTables){ 
+        numEvents = EventType.values().length;
+    }
+    else{
+        numEvents = 1;
+    }
+    System.out.printf("Peipei Debug, numEvents: %s\n", numEvents);
     //int qualLength = covariates[1].maximumKeyValue()+1;
     int qualLength = covariates.get(1).maximumKeyValue()+1;
 
@@ -266,18 +273,29 @@ public class FalconRecalibrationEngineTest {
         final int[][][] falcon_keys = engine.computeCycleCovariates(read, header);
         final int contextCovIdx = 3;
 
-        for (EventType event : EventType.values()) {
-          //System.out.println(Arrays.toString(falcon_keys[event.ordinal()]));
-          final int[][] gatk_keys = cov.getKeySet(event);
-          //for (int i = 0; i < read.getReadBases().length; i++) {
-            for (int i = 0; i < read.getBases().length; i++) {
-            //System.out.println(Arrays.toString(gatk_keys[i]));
-            Assert.assertEquals(
-                  falcon_keys[event.ordinal()][i][contextCovIdx],
-                  gatk_keys[i][contextCovIdx]);
-          }
+        if(RAC.computeIndelBQSRTables){
+            for (EventType event : EventType.values()) {
+                //System.out.println(Arrays.toString(falcon_keys[event.ordinal()]));
+                final int[][] gatk_keys = cov.getKeySet(event);
+                //for (int i = 0; i < read.getReadBases().length; i++) {
+                for (int i = 0; i < read.getBases().length; i++) {
+                    //System.out.println(Arrays.toString(gatk_keys[i]));
+                    Assert.assertEquals(
+                            falcon_keys[event.ordinal()][i][contextCovIdx],
+                            gatk_keys[i][contextCovIdx]);
+                }
+                }
+            }
+            else{
+                final int[][] gatk_keys = cov.getKeySet(EventType.BASE_SUBSTITUTION);
+                for (int i = 0; i < read.getBases().length; i++) {
+                    Assert.assertEquals(
+                            falcon_keys[0][i][contextCovIdx],
+                            gatk_keys[i][contextCovIdx]);
+
+                }
+            }
         }
-      }
       catch (AccelerationException e) {
         Assert.fail("should not caught exception here: " + e.getMessage());
       }
@@ -309,13 +327,25 @@ public class FalconRecalibrationEngineTest {
       final int[][][] falcon_keys = engine.computeContextCovariates(read);
 
       final int contextCovIdx = 2;
-      for (EventType event : EventType.values()) {
-        final int[][] gatk_keys = cov.getKeySet(event);
-        for (int i = 0; i < read.getBases().length; i++) {
-          Assert.assertEquals(
-              falcon_keys[event.ordinal()][i][contextCovIdx],
-              gatk_keys[i][contextCovIdx]);
-        }
+      if(RAC.computeIndelBQSRTables){
+          for (EventType event : EventType.values()) {
+              final int[][] gatk_keys = cov.getKeySet(event);
+              for (int i = 0; i < read.getBases().length; i++) {
+                  Assert.assertEquals(
+                          falcon_keys[event.ordinal()][i][contextCovIdx],
+                          gatk_keys[i][contextCovIdx]);
+              }
+          }
+      }
+      else{
+          final int[][] gatk_keys0 = cov.getKeySet(EventType.BASE_SUBSTITUTION);
+          final int[][] gatk_keys1 = cov.getKeySet(EventType.BASE_INSERTION);
+          final int[][] gatk_keys2 = cov.getKeySet(EventType.BASE_DELETION);
+          for (int i = 0; i < read.getBases().length; i++) {
+              Assert.assertEquals(
+                      falcon_keys[0][i][contextCovIdx],
+                      gatk_keys0[i][contextCovIdx]);
+          }
       }
     }
   }
@@ -346,12 +376,22 @@ public class FalconRecalibrationEngineTest {
 
       int idx = 0;
       for (int i = 0; i < readLength; i++) {
-        for (int j = 0; j < numCovariates; j++) {
-          for (EventType event : EventType.values()) {
-            final int gatk_key = cov.getKeySet(event)[i][j];
-            Assert.assertEquals(falcon_keys[idx++], gatk_key);
+          for (int j = 0; j < numCovariates; j++) {
+              if(RAC.computeIndelBQSRTables){
+                  for (EventType event : EventType.values()) {
+                      final int gatk_key = cov.getKeySet(event)[i][j];
+                      Assert.assertEquals(falcon_keys[idx++], gatk_key);
+                  }
+              }
+              else{
+                  final int gatk_key = cov.getKeySet(EventType.BASE_SUBSTITUTION)[i][j];
+                  //if(falcon_keys[idx]!=gatk_key){
+                  //    System.out.printf("Peipei Debug i : %d, j: %d \n", i, j);
+                  //}
+                  //idx++;
+                  Assert.assertEquals(falcon_keys[idx++], gatk_key);
+              }
           }
-        }
       }
     }
   }
@@ -483,7 +523,7 @@ public class FalconRecalibrationEngineTest {
       final int nErrors = BaseRecalibrationEngine.calculateIsSNPOrIndel(read, helper.getRefDataSource(), isSNP, isInsertion, isDeletion);
 
       //final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
-      final boolean enableBAQ = false;
+      final boolean enableBAQ = RAC.enableBAQ;
       final byte[] baqArray = (nErrors == 0 || !enableBAQ) ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
 
 
@@ -503,11 +543,19 @@ public class FalconRecalibrationEngineTest {
 
 
         Assert.assertNotNull(errors);
-
-        for (int i = 0; i < readLength; i++) {
-          Assert.assertEquals(snpErrors[i], errors[0][i]);
-          Assert.assertEquals(insertionErrors[i], errors[1][i]);
-          Assert.assertEquals(deletionErrors[i], errors[2][i]);
+        if(RAC.computeIndelBQSRTables){
+            for (int i = 0; i < readLength; i++) {
+                Assert.assertEquals(snpErrors[i], errors[0][i]);
+                Assert.assertEquals(insertionErrors[i], errors[1][i]);
+                Assert.assertEquals(deletionErrors[i], errors[2][i]);
+            }
+        }
+        else{
+            for (int i = 0; i < readLength; i++) {
+                Assert.assertEquals(snpErrors[i], errors[0][i]);
+                //Assert.assertEquals(insertionErrors[i], errors[1][i]);
+                //Assert.assertEquals(deletionErrors[i], errors[2][i]);
+            }
         }
       }
 
@@ -563,6 +611,7 @@ public class FalconRecalibrationEngineTest {
 
   @Test(enabled = true, groups = {"bqsr"})
   public void TestTableUpdateWithRealData() {
+    //RAC.computeIndelBQSRTables = true;
     final SamReader reader = getInputBamRecords();
     final SAMFileHeader header = reader.getFileHeader();
     final StandardCovariateList covariates = new StandardCovariateList(RAC, header);
@@ -617,7 +666,7 @@ public class FalconRecalibrationEngineTest {
       int[] isDeletion = new int[isSNP.length];
       final int nErrors = BaseRecalibrationEngine.calculateIsSNPOrIndel(read, helper.getRefDataSource(), isSNP, isInsertion, isDeletion);
       //final byte[] baqArray = nErrors == 0 ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
-      final boolean enableBAQ = false;
+      final boolean enableBAQ = RAC.enableBAQ;
       final byte[] baqArray = (nErrors == 0 || !enableBAQ) ? helper.falconFlatBAQArray(read) : helper.falconCalculateBAQArray(read);
 
       if (baqArray != null) { // some reads just can't be BAQ'ed
@@ -669,10 +718,8 @@ public class FalconRecalibrationEngineTest {
     for (int i = 0; i < numCovariates; i++) {
       List<RecalDatum> gatk_table_contents = gatk_table.getTable(i).getAllValues();
       List<RecalDatum> our_table_contents = our_table.getTable(i).getAllValues();
-      //if(our_table_contents.size()!= gatk_table_contents.size()){
         //System.out.printf("%d: gatk: %d, ours: %d\n", i, gatk_table_contents.size(), our_table_contents.size());
-      //}
-      // starts
+      //// starts
       Assert.assertEquals(our_table_contents.size(), gatk_table_contents.size());
       //System.out.println(String.format("%d: %d == %d", i, our_table_contents.size(), gatk_table_contents.size()));
       for (int k = 0; k < gatk_table_contents.size(); k++) {
@@ -998,6 +1045,34 @@ public class FalconRecalibrationEngineTest {
   public void setUp() {
     //TODO FalconRecalibrationEngine second argument
     //engine = new FalconRecalibrationEngine(RAC, helper.getRefReader());
+    //RAC.computeIndelBQSRTables = false;
+    int testFlag=0;
+    switch (testFlag){
+        case 0:
+            RAC.computeIndelBQSRTables = false;
+            RAC.enableBAQ = false;
+            break;
+
+        case 1:
+            RAC.computeIndelBQSRTables = false;
+            RAC.enableBAQ = true;
+            break;
+
+        case 2:
+            RAC.computeIndelBQSRTables = true;
+            RAC.enableBAQ = false;
+            break;
+
+        case 3:
+            RAC.computeIndelBQSRTables = true;
+            RAC.enableBAQ = true;
+            break;
+
+
+    }
+    //RAC.computeIndelBQSRTables = false;
+    //RAC.enableBAQ = false;
+    //RAC.enableBAQ = true;
     engine = new FalconRecalibrationEngine(RAC, null);
     //engine = new FalconRecalibrationEngine(RAC, helper.getRefReader());
     final boolean isLoaded = engine.load(null);

@@ -17,6 +17,19 @@ class Covariates {
 
     void initReadGroup(const std::string readGroup);
 
+    void computeSkipIndel(int* keys,
+          const int readLength,
+          const std::string readGroup,
+          const int8_t* bases,
+          const int8_t* basesQuals,
+          //const int8_t* insertionQuals,
+          //const int8_t* deleteionQuals,
+          const int platformType,
+          const bool isNegativeStrand,
+          const bool isReadPaired,
+          const bool isSecondOfPair);
+
+
     void compute(int* keys,
       const int readLength,
       const std::string readGroup,
@@ -30,6 +43,29 @@ class Covariates {
       const bool isSecondOfPair);
 
     void addReadGroup(const std::string readGroup);
+
+    void computeReadGroupCovariatesSkipIndel(int* keys,
+          const int readLength,
+          const std::string readGroup);
+
+    void computeQualCovariatesSkipIndel(int* keys,
+      const int readLength,
+      const int8_t* basesQuals);
+      //const int8_t* insertionQuals,
+      //const int8_t* deleteionQuals);
+
+    void computeContextCovariatesSkipIndel(int* keys,
+      const int readLength,
+      const bool isNegativeStrand,
+      const int8_t* bases,
+      const int8_t* quals);
+
+    void computeCycleCovariatesSkipIndel(int* keys,
+      const int readLength,
+      const int platformType,
+      const bool isNegativeStrand,
+      const bool isReadPaired,
+      const bool isSecondOfPair);
 
     void computeReadGroupCovariates(int* keys,
       const int readLength,
@@ -57,6 +93,15 @@ class Covariates {
     const std::vector<std::string>& getRGKeys() const;
 
   private:
+    inline void setCovariateSkipIndel(
+          int* keys,
+          const int cov_idx,
+          const int base_idx,
+          const int snp);
+          //const int insertion,
+          //const int deletion);
+
+
     inline void setCovariate(
       int* keys,
       const int cov_idx,

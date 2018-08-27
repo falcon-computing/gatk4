@@ -59,7 +59,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   private String nativeLibraryName = "falcon_genomics";
   boolean useFPGA = false;
 
-  private final int numEvents = EventType.values().length;
+  private int numEvents = EventType.values().length;
   private int numCovariates;
   private int numReadGroups;
   //private Covariate[] covariates;
@@ -92,17 +92,30 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
   private long numReadsProcessed = 0L;
   private SAMFileHeader header;
-
+  //private boolean computeIndelBQSRTables = false;
+  private boolean computeIndelBQSRTables = false;
+  private boolean enableBAQ = false;
 
   public FalconRecalibrationEngine(final RecalibrationArgumentCollection RAC, final ReferenceSequenceFile referenceReader) {
     this.LOW_QUAL_TAIL = RAC.LOW_QUAL_TAIL;
     this.MISMATCHES_CONTEXT_SIZE = RAC.MISMATCHES_CONTEXT_SIZE;
     this.INDELS_CONTEXT_SIZE = RAC.INDELS_CONTEXT_SIZE;
     this.MAXIMUM_CYCLE_VALUE = RAC.MAXIMUM_CYCLE_VALUE;
+    
+    computeIndelBQSRTables = RAC.computeIndelBQSRTables;
+    enableBAQ = RAC.enableBAQ;
+    //computeIndelBQSRTables = true;
 
     //this.FORCE_READGROUP = RAC.FORCE_READGROUP;
     this.referenceReader = referenceReader;
-
+    
+    if(!computeIndelBQSRTables){
+      numEvents = 1;
+      //computeIndelBQSRTables = false;
+    }
+    //else{
+    //  computeIndelBQSRTables = true;
+    //}
     logger.debug("Created one instance of FalconRecalibrationEngine");
   }
 
@@ -165,6 +178,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     this.numReadGroups = _numReadGroups;
     this.baq = new BAQ(BAQGOP); // setup the BAQ object with the provided gap open penalty
 
+    //if()
     final int[] covariatesDimensions = new int[numCovariates];
 
     for (int i = 0; i < covariates.size(); i++) {
@@ -225,8 +239,10 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     for(int i = 0; i < _covariates.size(); i++){
       toNative[i] = _covariates.get(i);
     }
+    int numEventsPrintRead = 3;
     // call native method to initialize the RecalibrationTable
-    initNative(numEvents,
+    initNative(numEventsPrintRead,
+    //initNative(numEvents,
                //_covariates,
                toNative,
                quantizationTable,
@@ -274,12 +290,22 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     int readLength = bases.length;
     int[][][] ret = new int[numEvents][readLength][numCovariates];
     int idx = 0;
-    for (int i = 0; i < bases.length; i++) {
-      for (int j = 0; j < numCovariates; j++) {
-        for (EventType event : EventType.values()) {
-          ret[event.ordinal()][i][j] = keys[idx++];
+
+    if(computeIndelBQSRTables){
+        for (int i = 0; i < bases.length; i++) {
+            for (int j = 0; j < numCovariates; j++) {
+                for (EventType event : EventType.values()) {
+                    ret[event.ordinal()][i][j] = keys[idx++];
+                }
+            }
         }
-      }
+    }
+    else{
+        for (int i = 0; i < bases.length; i++) {
+            for (int j = 0; j < numCovariates; j++) {
+                ret[0][i][j] = keys[idx++];
+            }
+        }
     }
     return ret;
   }
@@ -315,12 +341,21 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
     int[][][] ret = new int[numEvents][readLength][numCovariates];
     int idx = 0;
-    for (int i = 0; i < readLength; i++) {
-      for (int j = 0; j < numCovariates; j++) {
-        for (EventType event : EventType.values()) {
-          ret[event.ordinal()][i][j] = keys[idx++];
+    if(computeIndelBQSRTables){
+        for (int i = 0; i < readLength; i++) {
+            for (int j = 0; j < numCovariates; j++) {
+                for (EventType event : EventType.values()) {
+                    ret[event.ordinal()][i][j] = keys[idx++];
+                }
+            }
         }
-      }
+    }
+    else{
+        for (int i = 0; i < readLength; i++) {
+            for (int j = 0; j < numCovariates; j++) {
+                ret[0][i][j] = keys[idx++];
+            }
+        }
     }
     return ret;
   }
@@ -357,25 +392,28 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
 
-   // System.out.println("@@@@@@@@@");
-   // System.out.println("!!!!!!!!!!!!!!!");
-   // System.out.println(NGSPlatform.isKnown(rg)?"true":"false");
-   // System.out.println(rg);
-   // System.out.println(ngsPlatform.getDefaultPlatform());
-   // System.out.println(platformType);
-   // System.out.println("!!!!!!!");
 
     final int[] keys = computeCycleCovariatesNative(readLength, platformType,
             isNegativeStrand, isReadPaired, isSecondOfPair);
 
     int[][][] ret = new int[numEvents][readLength][numCovariates];
     int idx = 0;
-    for (int i = 0; i < readLength; i++) {
-      for (int j = 0; j < numCovariates; j++) {
-        for (EventType event : EventType.values()) {
-          ret[event.ordinal()][i][j] = keys[idx++];
+    if(computeIndelBQSRTables){
+        for (int i = 0; i < readLength; i++) {
+            for (int j = 0; j < numCovariates; j++) {
+                for (EventType event : EventType.values()) {
+                    ret[event.ordinal()][i][j] = keys[idx++];
+                }
+            }
         }
-      }
+    }
+    else{
+        for (int i = 0; i < readLength; i++) {
+            for (int j = 0; j < numCovariates; j++) {
+                ret[0][i][j] = keys[idx++];
+            }
+        }
+
     }
     return ret;
   }
@@ -472,11 +510,6 @@ public class FalconRecalibrationEngine implements NativeLibrary {
         idx++;
       }
 
-      //System.out.println(Arrays.toString(refBases));
-      //System.out.println(Arrays.toString(bases));
-      //System.out.println(Arrays.toString(quals));
-      //System.out.println(Arrays.toString(cigarOps));
-      //System.out.println(Arrays.toString(cigarLens));
 
 
       byte[] bqTag = calculateBAQArrayNative(
@@ -609,7 +642,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
                                   cigarOps, cigarLens,
                                   readBAQArray,
                                   isExcludeFromBAQ, isNegativeStrand,
-                                  refOffset);
+                                  refOffset,
+                                  enableBAQ);
 
     if (errors == null) {
       // return null baqArray
@@ -656,8 +690,14 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       // Original
       recalibrationEngine.processRead(read, referenceDataSource, knownSites);
     }
+
+    numReadsProcessed++;
   }
 
+
+  public long getNumReadsProcessed(){
+      return numReadsProcessed;
+  }
 
 
   // This function is used to update recalibration tables in
@@ -681,51 +721,61 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     //final GATKRead togatkread = new SAMRecordToGATKReadAdapter(read);
     // put the check of baq.isExcludeFromBAQ() outside, since we need
     // to pass the read BAQ tag to native if it is available
-    final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
-    final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
 
-    // preparation for BAQ calculation
-    int refOffset = 0;
     byte[] refForBAQ = null;
+    byte[] baseInsertionQuals = null;
+    byte[] baseDeletionQuals = null;
+    int refOffset = 0;
+    byte[] readBAQArray = null;
+    boolean isExcludeFromBAQ = false;
+    if(computeIndelBQSRTables || enableBAQ) {
+      //final boolean isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
+      isExcludeFromBAQ = baq.excludeReadFromBAQ(read);
+      //final byte[] readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
+      readBAQArray = isExcludeFromBAQ ? BAQ.getBAQTag(read) : null;
+      // preparation for BAQ calculation
+      //int refOffset = 0;
+      //byte[] refForBAQ = null;
 
-    if (!isExcludeFromBAQ) {
-      //final int offset = baq.getBandWidth() / 2;
-      //final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
-      //final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
-      //final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
-      final SimpleInterval referenceWindow = BAQ.getReferenceWindowForRead(read, baq.getBandWidth());
-      if (referenceWindow.getEnd() > refDS.getSequenceDictionary().getSequence(read.getContig()).getSequenceLength()){
-        int i;
-      //if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
-        // meaning null baqArray
-        //return 0;
-        // Note: Here should not return, since if nErrors is zero BAQArray
-        // calculation is skipped, native func knows from negative refOffset
-        //logger.info("baq array cannot be calculated because stop is out-of-bound");
-        ;
+      if (!isExcludeFromBAQ) {
+        //final int offset = baq.getBandWidth() / 2;
+        //final long readStart = includeClippedBases ? read.getUnclippedStart() : read.getAlignmentStart();
+        //final long start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(togatkread), 1);
+        //final long stop = (includeClippedBases ? read.getUnclippedEnd() : read.getAlignmentEnd()) + offset + ReadUtils.getLastInsertionOffset(togatkread);
+        final SimpleInterval referenceWindow = BAQ.getReferenceWindowForRead(read, baq.getBandWidth());
+        if (referenceWindow.getEnd() > refDS.getSequenceDictionary().getSequence(read.getContig()).getSequenceLength()) {
+          int i;
+          //if (stop > referenceReader.getSequenceDictionary().getSequence(read.getReferenceName()).getSequenceLength()) {
+          // meaning null baqArray
+          //return 0;
+          // Note: Here should not return, since if nErrors is zero BAQArray
+          // calculation is skipped, native func knows from negative refOffset
+          //logger.info("baq array cannot be calculated because stop is out-of-bound");
+          ;
+        } else {
+          //refOffset = (int)(start - readStart);
+          refOffset = (int) (referenceWindow.getStart() - read.getStart());
+
+          // ref seq for baq calculation
+          //ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
+          final ReferenceSequence refSeq = refDS.queryAndPrefetch(referenceWindow.getContig(), referenceWindow.getStart(), referenceWindow.getEnd());
+          refForBAQ = refSeq.getBases();
+        }
       }
-      else {
-        //refOffset = (int)(start - readStart);
-        refOffset = (int)(referenceWindow.getStart() - read.getStart());
-
-        // ref seq for baq calculation
-        //ReferenceSequence refSeq = referenceReader.getSubsequenceAt(read.getReferenceName(), start, stop);
-        final ReferenceSequence refSeq = refDS.queryAndPrefetch(referenceWindow.getContig(), referenceWindow.getStart(), referenceWindow.getEnd());
-        refForBAQ = refSeq.getBases();
+      if(computeIndelBQSRTables){
+        baseInsertionQuals = ReadUtils.getBaseInsertionQualities(read);
+        baseDeletionQuals = ReadUtils.getBaseDeletionQualities(read);
       }
     }
 
-    // ref seqs for SNP error calculation
-    //final byte[] refBases = Arrays.copyOfRange(ref.getBases(),
-    //                    read.getAlignmentStart() - org_read.getAlignmentStart(),
-    //                    ref.getBases().length + read.getAlignmentEnd() - org_read.getAlignmentEnd());
-    final byte[] refBases = refDS.queryAndPrefetch(read.getContig(), read.getStart(), read.getEnd()).getBases();
+    //final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(read);
+    //final byte[] baseDeletionQuals = ReadUtils.getBaseDeletionQualities(read);
 
+    final byte[] refBases = refDS.queryAndPrefetch(read.getContig(), read.getStart(), read.getEnd()).getBases();
     // get inputs from read
     final byte[] bases = read.getBases();
     final byte[] baseQuals = read.getBaseQualities();
-    final byte[] baseInsertionQuals = ReadUtils.getBaseInsertionQualities(read);
-    final byte[] baseDeletionQuals = ReadUtils.getBaseDeletionQualities(read);
+
 
     final boolean isNegativeStrand = read.isReverseStrand();
     final boolean isReadPaired = read.isPaired();
@@ -752,23 +802,47 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     final int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
     String readGroupId;
-    //if (FORCE_READGROUP != null) {
-    //  readGroupId = FORCE_READGROUP;
-    //}
-    //final GATKSAMReadGroupRecord rg = read.getReadGroup();
-    //final String platformUnit = rg.getPlatformUnit();
-    //readGroupId = platformUnit == null ? rg.getId() : platformUnit;
+
     final String platformUnit = header.getReadGroup(read.getReadGroup()).getPlatformUnit();
     readGroupId = platformUnit == null ? header.getReadGroup(read.getReadGroup()).getId() : platformUnit;
 
 
-    // call native method to update RecalibrationTables
-    return updateTableNative(refForBAQ, refBases,
-        bases, baseQuals, baseInsertionQuals, baseDeletionQuals,
-        cigarOps, cigarLens, readBAQArray,
-        readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
-        platformType, refOffset,
-        skips);
+    if(!computeIndelBQSRTables){
+      // call native method to update RecalibrationTables
+      if(!enableBAQ){
+        return updateTableSkipIndelNoBAQNative(
+                //refForBAQ,
+                refBases,
+                bases, baseQuals,
+                cigarOps, cigarLens,
+                //readBAQArray,
+                readGroupId,
+                isNegativeStrand,
+                isReadPaired, isSecondOfPair,
+                //isExcludeFromBAQ,
+                platformType,
+                //refOffset,
+                skips);
+                //, enableBAQ);
+      }
+      else {
+        return updateTableSkipIndelNative(refForBAQ, refBases,
+                bases, baseQuals,
+                cigarOps, cigarLens, readBAQArray,
+                readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
+                platformType, refOffset,
+                skips, enableBAQ);
+      }
+    }
+    else {
+      // call native method to update RecalibrationTables
+      return updateTableNative(refForBAQ, refBases,
+              bases, baseQuals, baseInsertionQuals, baseDeletionQuals,
+              cigarOps, cigarLens, readBAQArray,
+              readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
+              platformType, refOffset,
+              skips, enableBAQ);
+    }
 
     //numReadsProcessed++;
 
@@ -1199,7 +1273,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       byte[] readBAQArray,
       boolean isExcludeFromBAQ,
       boolean isNegativeStrand,
-      int refOffset);
+      int refOffset,
+      boolean enableBAQ);
 
   // This is the actual native impl for applications
   private native int updateTableNative(
@@ -1219,7 +1294,48 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       boolean isExcludeFromBAQ,
       int platformType,
       int refOffset,
-      boolean[] skips);
+      boolean[] skips,
+      boolean enableBAQ);
+
+  // This is the actual native impl for applications
+  private native int updateTableSkipIndelNative(
+          byte[] refForBAQ,
+          byte[] refBases,
+          byte[] bases,
+          byte[] baseQuals,
+          //byte[] baseInsertionQuals,
+          //byte[] baseDeletionQuals,
+          byte[] cigarOps,
+          int[]  cigarLens,
+          byte[] readBAQArray,
+          String readGroupId,
+          boolean isNegativeStrand,
+          boolean isReadPaired,
+          boolean isSecondOfPair,
+          boolean isExcludeFromBAQ,
+          int platformType,
+          int refOffset,
+          boolean[] skips,
+          boolean enableBAQ);
+
+  // This is the actual native impl for applications
+  private native int updateTableSkipIndelNoBAQNative(
+          //byte[] refForBAQ,
+          byte[] refBases,
+          byte[] bases,
+          byte[] baseQuals,
+          byte[] cigarOps,
+          int[]  cigarLens,
+          //byte[] readBAQArray,
+          String readGroupId,
+          boolean isNegativeStrand,
+          boolean isReadPaired,
+          boolean isSecondOfPair,
+          //boolean isExcludeFromBAQ,
+          int platformType,
+          //int refOffset,
+          boolean[] skips);
+          //boolean enableBAQ);
 
   private native RecalDatumTable[] getTableNative();
 
