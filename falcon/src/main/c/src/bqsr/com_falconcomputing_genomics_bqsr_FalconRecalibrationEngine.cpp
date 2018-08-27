@@ -507,7 +507,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
     jintArray  jcigarLens,
     //jbyteArray jreadBAQArray,
     jstring    jreadGroup,
-    //jboolean   isNegativeStrand,
+    jboolean   isNegativeStrand,
     jboolean   isReadPaired,
     jboolean   isSecondOfPair,
     //jboolean   isExcludeFromBAQ,
