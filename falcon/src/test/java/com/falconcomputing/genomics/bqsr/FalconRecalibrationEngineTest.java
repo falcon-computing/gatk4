@@ -1045,7 +1045,7 @@ public class FalconRecalibrationEngineTest {
   public void setUp() {
     //TODO FalconRecalibrationEngine second argument
     //engine = new FalconRecalibrationEngine(RAC, helper.getRefReader());
-    RAC.computeIndelBQSRTables = true;
+    //RAC.computeIndelBQSRTables = true;
     engine = new FalconRecalibrationEngine(RAC, null);
     //engine = new FalconRecalibrationEngine(RAC, helper.getRefReader());
     final boolean isLoaded = engine.load(null);

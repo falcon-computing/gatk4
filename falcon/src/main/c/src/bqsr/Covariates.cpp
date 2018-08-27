@@ -168,7 +168,7 @@ inline void Covariates::setCovariateSkipIndel(
   //if(numEvents==3){
   //    keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 1] = insertion;
   //    keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 2] = deletion;
-  }
+  //}
 }
 
 
@@ -229,7 +229,7 @@ void Covariates::computeSkipIndel(int* keys,
 
   computeReadGroupCovariatesSkipIndel(keys, readLength, readGroup);
   computeQualCovariatesSkipIndel(keys, readLength,
-     baseQuals, insertionQuals, deletionQuals);
+     baseQuals);
   computeContextCovariatesSkipIndel(keys, readLength,
      isNegativeStrand, bases, baseQuals);
   computeCycleCovariatesSkipIndel(keys, readLength, platformType,

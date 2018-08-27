@@ -808,7 +808,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     if(!computeIndelBQSRTables){
       // call native method to update RecalibrationTables
       return updateTableSkipIndelNative(refForBAQ, refBases,
-              bases, baseQuals, baseInsertionQuals, baseDeletionQuals,
+              bases, baseQuals, 
               cigarOps, cigarLens, readBAQArray,
               readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
               platformType, refOffset,
@@ -1281,8 +1281,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
           byte[] refBases,
           byte[] bases,
           byte[] baseQuals,
-          byte[] baseInsertionQuals,
-          byte[] baseDeletionQuals,
+          //byte[] baseInsertionQuals,
+          //byte[] baseDeletionQuals,
           byte[] cigarOps,
           int[]  cigarLens,
           byte[] readBAQArray,
