@@ -815,12 +815,20 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     if(!computeIndelBQSRTables){
       // call native method to update RecalibrationTables
       if(!enableBAQ){
-        return updateTableSkipIndelNoBAQNative(refForBAQ, refBases,
+        return updateTableSkipIndelNoBAQNative(
+                //refForBAQ,
+                refBases,
                 bases, baseQuals,
-                cigarOps, cigarLens, readBAQArray,
-                readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
-                platformType, refOffset,
-                skips, enableBAQ);
+                cigarOps, cigarLens,
+                //readBAQArray,
+                readGroupId,
+                //isNegativeStrand,
+                isReadPaired, isSecondOfPair,
+                //isExcludeFromBAQ,
+                platformType,
+                //refOffset,
+                skips);
+                //, enableBAQ);
       }
       else {
         return updateTableSkipIndelNative(refForBAQ, refBases,
@@ -1317,24 +1325,22 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
   // This is the actual native impl for applications
   private native int updateTableSkipIndelNoBAQNative(
-          byte[] refForBAQ,
+          //byte[] refForBAQ,
           byte[] refBases,
           byte[] bases,
           byte[] baseQuals,
-          //byte[] baseInsertionQuals,
-          //byte[] baseDeletionQuals,
           byte[] cigarOps,
           int[]  cigarLens,
-          byte[] readBAQArray,
+          //byte[] readBAQArray,
           String readGroupId,
-          boolean isNegativeStrand,
+          //boolean isNegativeStrand,
           boolean isReadPaired,
           boolean isSecondOfPair,
-          boolean isExcludeFromBAQ,
+          //boolean isExcludeFromBAQ,
           int platformType,
-          int refOffset,
-          boolean[] skips,
-          boolean enableBAQ);
+          //int refOffset,
+          boolean[] skips);
+          //boolean enableBAQ);
 
   private native RecalDatumTable[] getTableNative();
 

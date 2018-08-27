@@ -499,37 +499,35 @@ JNIEXPORT jdoubleArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconReca
 JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibrationEngine_updateTableSkipIndelNoBAQNative(
     JNIEnv     *env,
     jobject    obj,
-    jbyteArray jrefForBAQ,
+    //jbyteArray jrefForBAQ,
     jbyteArray jrefBases,
     jbyteArray jbases,
     jbyteArray jbaseQuals,
-    //jbyteArray jinsertionQuals,
-    //jbyteArray jdeletionQuals,
     jbyteArray jcigarOps,
     jintArray  jcigarLens,
-    jbyteArray jreadBAQArray,
+    //jbyteArray jreadBAQArray,
     jstring    jreadGroup,
-    jboolean   isNegativeStrand,
+    //jboolean   isNegativeStrand,
     jboolean   isReadPaired,
     jboolean   isSecondOfPair,
-    jboolean   isExcludeFromBAQ,
+    //jboolean   isExcludeFromBAQ,
     jint       platformType,
-    jint       refOffset,
-    jbooleanArray jskips,
-    jboolean enableBAQ)
+    //jint       refOffset,
+    jbooleanArray jskips)
+    //jboolean enableBAQ)
 {
   PLACE_TIMER1("updataTableNative");
   uint64_t start_ns = getNs();
 
   int readLength = env->GetArrayLength(jbases);
   int numCigar = env->GetArrayLength(jcigarOps);
-  int refLength = 0;
+  //int refLength = 0;
   int8_t* refForBAQ = NULL;
 
-  if (jrefForBAQ) { // when read is excluded from BAQ, the ref can be null
-    refLength = env->GetArrayLength(jrefForBAQ);
-    refForBAQ = (int8_t*)env->GetByteArrayElements(jrefForBAQ, 0);
-  }
+  //if (jrefForBAQ) { // when read is excluded from BAQ, the ref can be null
+  //  refLength = env->GetArrayLength(jrefForBAQ);
+  //  refForBAQ = (int8_t*)env->GetByteArrayElements(jrefForBAQ, 0);
+  //}
 
   // JNI array arguments, need to be released
   int8_t* refBases  = (int8_t*)env->GetByteArrayElements(jrefBases, 0);
@@ -549,11 +547,11 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
 
   // NOTE: if baq.excludeReadFromBAQ, and read.getBAQTag != NULL
   // the readBAQArray passed to calculateErrors is not null
-  int8_t* readBAQArray = NULL;
-  if (jreadBAQArray != NULL) {
-    DLOG_IF(INFO, VLOG_IS_ON(1)) << "This read is excluded from BAQ";
-    readBAQArray = (int8_t*)env->GetByteArrayElements(jreadBAQArray, 0);
-  }
+  //int8_t* readBAQArray = NULL;
+  //if (jreadBAQArray != NULL) {
+  //  DLOG_IF(INFO, VLOG_IS_ON(1)) << "This read is excluded from BAQ";
+  //  readBAQArray = (int8_t*)env->GetByteArrayElements(jreadBAQArray, 0);
+  //}
 
   // first, compute the baq and errors
   // results for the error arrays (snp, indel, deletion)
@@ -580,12 +578,12 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
   total_update_baq_time += getNs() - start_sec_ns;
 
   // release arrays for baq and errors computation
-  if (readBAQArray) {
-    env->ReleaseByteArrayElements(jreadBAQArray, readBAQArray, 0);
-  }
-  if (refForBAQ) {
-    env->ReleaseByteArrayElements(jrefForBAQ, refForBAQ, 0);
-  }
+  //if (readBAQArray) {
+  //  env->ReleaseByteArrayElements(jreadBAQArray, readBAQArray, 0);
+  //}
+  //if (refForBAQ) {
+  //  env->ReleaseByteArrayElements(jrefForBAQ, refForBAQ, 0);
+  //}
   env->ReleaseByteArrayElements(jrefBases, refBases, 0);
   env->ReleaseByteArrayElements(jcigarOps, cigarOps, 0);
   env->ReleaseIntArrayElements(jcigarLens, cigarLens, 0);
