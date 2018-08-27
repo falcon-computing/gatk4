@@ -73,10 +73,10 @@ RecalibrationTable::RecalibrationTable(
   if (staticQuantizedMapping) {
     staticQuantizedMapping_ = (int8_t*)malloc(staticQuantizedMappingSize);
     memcpy(staticQuantizedMapping_, staticQuantizedMapping, staticQuantizedMappingSize);
-    DLOG(INFO) << "within native staticQuantizedMapping is not NULL, size is " << staticQuantizedMappingSize;
-    for(int i = 0; i < staticQuantizedMappingSize; i++){
-        DLOG(INFO) << i <<" : "<< unsigned(staticQuantizedMapping[i]);
-    }
+    //DLOG(INFO) << "within native staticQuantizedMapping is not NULL, size is " << staticQuantizedMappingSize;
+    //for(int i = 0; i < staticQuantizedMappingSize; i++){
+    //    DLOG(INFO) << i <<" : "<< unsigned(staticQuantizedMapping[i]);
+    //}
   }
 
   for (int i = 0; i < numCovariates; i++) {
