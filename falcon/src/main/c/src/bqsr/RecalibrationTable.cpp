@@ -196,20 +196,21 @@ void RecalibrationTable::update(int readLength,
    * DatumTables: numCovariates x [[Cov] x Qual x RG x Events]
    * DatumTablesDim: numCovariates x [Events, RG, Qual, [Cov]]
    */
-  int savedIdx[3] = {0};
-  int dims[4] = {0};
-    //for (int i = 1; i < numCovariates_; i++) {
+  //int savedIdx[3] = {0};
+  //int dims[4] = {0};
+    for (int i = 1; i < numCovariates_; i++) {
 
     for (int j = 0; j < readLength; j++) {
       if (skips[j]) continue;
-      int newEvents=1;
-       for (int k = 0; k < newEvents; k++) {
-       for (int i = 1; i < numCovariates_; i++) {
+      //int newEvents=1;
+       //for (int k = 0; k < newEvents; k++) {
+       for(int k = 0; k < numEvents_; k++){ 
+      //for (int i = 1; i < numCovariates_; i++) {
 
       //for (int k = 0; k < numEvents_; k++) {
         //int* key = &keys[readLength*numCovariates_*k + numCovariates_*j];
         int idx = keysToIndex(keys, i, j, k);
-        savedIdx[i-1]=idx;
+        //savedIdx[i-1]=idx;
         if (idx < 0) continue;
 
         DatumTables_[i][idx].numOccurance += 1;

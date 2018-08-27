@@ -92,25 +92,29 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
   private long numReadsProcessed = 0L;
   private SAMFileHeader header;
-  private boolean computeIndelBQSRTables = false;
+  //private boolean computeIndelBQSRTables = false;
+  private boolean computeIndelBQSRTables = true;
 
   public FalconRecalibrationEngine(final RecalibrationArgumentCollection RAC, final ReferenceSequenceFile referenceReader) {
     this.LOW_QUAL_TAIL = RAC.LOW_QUAL_TAIL;
     this.MISMATCHES_CONTEXT_SIZE = RAC.MISMATCHES_CONTEXT_SIZE;
     this.INDELS_CONTEXT_SIZE = RAC.INDELS_CONTEXT_SIZE;
     this.MAXIMUM_CYCLE_VALUE = RAC.MAXIMUM_CYCLE_VALUE;
+    
+    computeIndelBQSRTables = RAC.computeIndelBQSRTables;
+    //computeIndelBQSRTables = true;
 
     //this.FORCE_READGROUP = RAC.FORCE_READGROUP;
     this.referenceReader = referenceReader;
-
-    if(!RAC.computeIndelBQSRTables){
+    
+    if(!computeIndelBQSRTables){
       numEvents = 1;
-      computeIndelBQSRTables = false;
+      //computeIndelBQSRTables = false;
     }
-    else{
-      computeIndelBQSRTables = true;
-    }
-
+    //else{
+    //  computeIndelBQSRTables = true;
+    //}
+    System.out.printf("Peipei Debug numEvents in new funtion is %d\n", numEvents);
     logger.debug("Created one instance of FalconRecalibrationEngine");
   }
 
@@ -174,7 +178,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     this.baq = new BAQ(BAQGOP); // setup the BAQ object with the provided gap open penalty
 
     //if()
-
+    System.out.printf("Peipei Debug: numEvents in init : %d", numEvents);
     final int[] covariatesDimensions = new int[numCovariates];
 
     for (int i = 0; i < covariates.size(); i++) {
@@ -235,8 +239,10 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     for(int i = 0; i < _covariates.size(); i++){
       toNative[i] = _covariates.get(i);
     }
+    int numEventsPrintRead = 3;
     // call native method to initialize the RecalibrationTable
-    initNative(numEvents,
+    initNative(numEventsPrintRead,
+    //initNative(numEvents,
                //_covariates,
                toNative,
                quantizationTable,
@@ -284,12 +290,22 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     int readLength = bases.length;
     int[][][] ret = new int[numEvents][readLength][numCovariates];
     int idx = 0;
-    for (int i = 0; i < bases.length; i++) {
-      for (int j = 0; j < numCovariates; j++) {
-        for (EventType event : EventType.values()) {
-          ret[event.ordinal()][i][j] = keys[idx++];
+
+    if(computeIndelBQSRTables){
+        for (int i = 0; i < bases.length; i++) {
+            for (int j = 0; j < numCovariates; j++) {
+                for (EventType event : EventType.values()) {
+                    ret[event.ordinal()][i][j] = keys[idx++];
+                }
+            }
         }
-      }
+    }
+    else{
+        for (int i = 0; i < bases.length; i++) {
+            for (int j = 0; j < numCovariates; j++) {
+                ret[0][i][j] = keys[idx++];
+            }
+        }
     }
     return ret;
   }
@@ -325,12 +341,21 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
     int[][][] ret = new int[numEvents][readLength][numCovariates];
     int idx = 0;
-    for (int i = 0; i < readLength; i++) {
-      for (int j = 0; j < numCovariates; j++) {
-        for (EventType event : EventType.values()) {
-          ret[event.ordinal()][i][j] = keys[idx++];
+    if(computeIndelBQSRTables){
+        for (int i = 0; i < readLength; i++) {
+            for (int j = 0; j < numCovariates; j++) {
+                for (EventType event : EventType.values()) {
+                    ret[event.ordinal()][i][j] = keys[idx++];
+                }
+            }
         }
-      }
+    }
+    else{
+        for (int i = 0; i < readLength; i++) {
+            for (int j = 0; j < numCovariates; j++) {
+                ret[0][i][j] = keys[idx++];
+            }
+        }
     }
     return ret;
   }
@@ -380,12 +405,22 @@ public class FalconRecalibrationEngine implements NativeLibrary {
 
     int[][][] ret = new int[numEvents][readLength][numCovariates];
     int idx = 0;
-    for (int i = 0; i < readLength; i++) {
-      for (int j = 0; j < numCovariates; j++) {
-        for (EventType event : EventType.values()) {
-          ret[event.ordinal()][i][j] = keys[idx++];
+    if(computeIndelBQSRTables){
+        for (int i = 0; i < readLength; i++) {
+            for (int j = 0; j < numCovariates; j++) {
+                for (EventType event : EventType.values()) {
+                    ret[event.ordinal()][i][j] = keys[idx++];
+                }
+            }
         }
-      }
+    }
+    else{
+        for (int i = 0; i < readLength; i++) {
+            for (int j = 0; j < numCovariates; j++) {
+                ret[0][i][j] = keys[idx++];
+            }
+        }
+
     }
     return ret;
   }

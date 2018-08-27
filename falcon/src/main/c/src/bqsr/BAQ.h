@@ -118,8 +118,8 @@ class BAQ {
               //double* insertErrors,
               //double* deleteErrors,
               int8_t* snpArray,
-              int8_t* insertArray,
-              int8_t* deleteArray,
+              //int8_t* insertArray,
+              //int8_t* deleteArray,
               int8_t* baqArray,
               int readLength);
 

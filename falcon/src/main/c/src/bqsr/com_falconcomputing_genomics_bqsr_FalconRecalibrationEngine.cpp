@@ -448,14 +448,25 @@ JNIEXPORT jdoubleArray JNICALL Java_com_falconcomputing_genomics_bqsr_FalconReca
     DLOG_IF(INFO, VLOG_IS_ON(1)) << "This read is excluded from BAQ";
     readBAQArray = (int8_t*)env->GetByteArrayElements(jreadBAQArray, 0);
   }
-
-  int result = baq->calculateErrors(readLength, refLength, refOffset,
+  int result;
+  if(g_numEvents == 3){
+  result = baq->calculateErrors(readLength, refLength, refOffset,
           bases, quals, refForBAQ, refBases,
           numCigar, cigarOps, cigarLens,
           isNegativeStrand, isExcludeFromBAQ,
           readBAQArray,
           errors, errors+readLength, errors+2*readLength);
-
+    }
+  else{
+  result = baq->calculateErrorsSkipIndel(readLength, refLength, refOffset,
+          bases, quals, refForBAQ, refBases,
+          numCigar, cigarOps, cigarLens,
+          isNegativeStrand, isExcludeFromBAQ,
+          readBAQArray,
+          errors);
+          //errors, errors+readLength, errors+2*readLength);
+      
+  }
   // release arrays
   if (readBAQArray) {
     env->ReleaseByteArrayElements(jreadBAQArray, readBAQArray, 0);
@@ -502,7 +513,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
     jint       refOffset,
     jbooleanArray jskips)
 {
-  PLACE_TIMER1("updataTableNative")
+  PLACE_TIMER1("updataTableNative");
   uint64_t start_ns = getNs();
 
   int readLength = env->GetArrayLength(jbases);
@@ -546,15 +557,17 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
   isErrors[0] = (double*)malloc(readLength*sizeof(double));
   //isErrors[1] = (double*)malloc(readLength*sizeof(double));
   //isErrors[2] = (double*)malloc(readLength*sizeof(double));
-
-  int result = baq->calculateErrorsSkipIndel(readLength, refLength, refOffset,
+  int result;
+  {
+      PLACE_TIMER1("calculateBAQErros");
+  result = baq->calculateErrorsSkipIndel(readLength, refLength, refOffset,
           bases, baseQuals, refForBAQ, refBases,
           numCigar, cigarOps, cigarLens,
           isNegativeStrand, isExcludeFromBAQ,
           readBAQArray,
           isErrors[0]);
           //isErrors[0], isErrors[1], isErrors[2]);
-
+  }
   total_update_baq_time += getNs() - start_sec_ns;
 
   // release arrays for baq and errors computation
@@ -598,7 +611,8 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
   // second, compute the covariates
   start_sec_ns = getNs();
   int* keys = (int*)malloc(g_numEvents*readLength*g_numCovariates*sizeof(int));
-
+  {
+      PLACE_TIMER1("computeCovariates");
   try {
     cov->compute(keys, readLength, std::string(readGroup),
           bases, baseQuals, insertionQuals, deletionQuals,
@@ -607,6 +621,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
   } catch (std::runtime_error &e) {
     throwAccError(env, e.what());
     return 0;
+  }
   }
 
   total_update_covariate_time += getNs() - start_sec_ns;
@@ -618,10 +633,12 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
   env->ReleaseStringUTFChars(jreadGroup, readGroup);
 
   start_sec_ns = getNs();
-
+  {
+      PLACE_TIMER1("tableUpdate");
   // finally, perform the update of recal tables
   table->update(readLength, keys, skips, isErrors);
-
+  
+  }  
   total_update_compute_time += getNs() - start_sec_ns;
 
   // free JNI array finally
@@ -664,7 +681,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
     jint       refOffset,
     jbooleanArray jskips)
 {
-  PLACE_TIMER1("updataTableNative")
+  //PLACE_TIMER1("updataTableNative")
   uint64_t start_ns = getNs();
 
   int readLength = env->GetArrayLength(jbases);

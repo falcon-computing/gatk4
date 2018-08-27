@@ -10,7 +10,7 @@
 #include <time.h>
 
 #ifndef TIMER_VERBOSE
-#define TIMER_VERBOSE 1
+#define TIMER_VERBOSE 0
 #endif
 
 #ifndef TIMER_REPORT
@@ -20,7 +20,7 @@
 extern std::map<std::string, uint64_t> g_total_time;
 extern std::map<std::string, uint64_t> g_last_time;
 
-inline uint64_t getUs() {
+inline uint64_t getUsTimer() {
   struct timespec tr;
   clock_gettime(CLOCK_REALTIME, &tr);
   return (uint64_t)tr.tv_sec*1e6 + tr.tv_nsec/1e3;
@@ -66,11 +66,11 @@ class Timer {
     if (func.empty()) {
       throw std::runtime_error("Timer::Timer(): timer name cannot be empty");
     }
-    start_ts_ = getUs(); 
+    start_ts_ = getUsTimer(); 
   }
 
   ~Timer() {
-    uint64_t e_time = getUs()-start_ts_;
+    uint64_t e_time = getUsTimer()-start_ts_;
     if (verbose_ > 0) {
       fprintf(stderr, "[Timer]: %s takes %ld us\n", func_.c_str(), e_time);
     }

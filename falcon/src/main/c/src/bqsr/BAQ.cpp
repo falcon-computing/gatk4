@@ -536,8 +536,8 @@ void BAQ::calculateFractionalErrorArraySkipIndel(
     //calcErrorBlock(iii-1, blockStartIndex,
     //    snpArray, insertArray, deleteArray,
     //    snpErrors, insertErrors, deleteErrors);
-    calcErrorBlock(iii-1, blockStartIndex,
-            snpArray
+    calcErrorBlockSkipIndel(iii-1, blockStartIndex,
+            snpArray,
             snpErrors);
   }
 }

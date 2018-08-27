@@ -161,11 +161,14 @@ inline void Covariates::setCovariate(
     const int insertion,
     const int deletion) {
 
+  //DLOG(INFO) << "Peipei Debug: "<<  " snp: "<<snp << " insertion: "<<insertion << " deletion: "<< deletion<< " base_idx: "<<base_idx <<" numCovariates "<< numCovariates<<" numEvents "<<numEvents;
   // in this version the layout of keys is the same as table update
   // keys: readLength x [qual context, cycle] x numEvents
   keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 0] = snp;
-  keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 1] = insertion;
-  keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 2] = deletion;
+  if(numEvents==3){
+      keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 1] = insertion;
+      keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 2] = deletion;
+  }
 }
 
 
@@ -263,7 +266,7 @@ void Covariates::computeContextCovariates(int* keys,
 {
   // clip reads
   int8_t* clipped_bases = (int8_t*)malloc(readLength);
-
+ 
   int leftClipIndex = 0;
   int rightClipIndex = readLength - 1;
 
