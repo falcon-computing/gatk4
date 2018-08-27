@@ -20,6 +20,7 @@ RecalibrationTable::RecalibrationTable(
   //
   numReadsProcessed = 0;
 
+  //DLOG(INFO)<<"Peipei Debug, dims: "<<dims[0]<<" , "<<dims[1]<<" , "<<dims[2]<<" , "<<dims[3]<<" , numEvents: "<< numEvents;
   int qualDimension = dims[1];
   // skip the first RG table
   for (int i = 0; i < numCovariates; i++) {
@@ -36,7 +37,7 @@ RecalibrationTable::RecalibrationTable(
       tableSize *= dim;
     }
     tableSizes_[i] = tableSize;
-
+    DLOG(INFO)<<"Peipei Debug, i: "<<i<<" , size: "<<tableSize;
     // skip the RG table here since we are doing recalibration
     if (i == 0) continue;
     DatumTables_[i] = (Datum*)calloc(tableSize, sizeof(Datum));
@@ -171,11 +172,16 @@ inline int RecalibrationTable::keysToIndex(int* keys,
   int idx = event_idx;
   int pitch = 1;
   int num_dims = DatumTableDimensions_[cov_idx].size()-1;
-
+  //DLOG(INFO)<< "i: "<<cov_idx<<" j: "<<rd_idx<<" k: "<<event_idx<<" num_dims: "<<num_dims;
+  //int pitch_back = pitch;
+  //int idx_back = idx;
   for (int d = 0; d < num_dims; d++) {
     if (dims[d] < 0) return -1; // negative index means negative keys
     pitch *= DatumTableDimensions_[cov_idx][d];
     idx += dims[d]*pitch;
+    //DLOG(INFO)<<" d: "<<d<<" DatumTableDimensions_["<<cov_idx<<"]["<<d<<"] is "<<DatumTableDimensions_[cov_idx][d]<<  " pitch: "<<pitch_back<<" , "<<pitch <<" dims["<<d<<"]: "<<dims[d]<<" , idx:  "<< idx_back<<" , "<<idx;
+    //pitch_back = pitch;
+    //idx_back = idx;
   }
   return idx;
 }
@@ -209,6 +215,7 @@ void RecalibrationTable::update(int readLength,
 
       //for (int k = 0; k < numEvents_; k++) {
         //int* key = &keys[readLength*numCovariates_*k + numCovariates_*j];
+        //DLOG(INFO)<<"Loop  i: "<<i<<" , j:  "<<j<<" , k: "<<k;
         int idx = keysToIndex(keys, i, j, k);
         //savedIdx[i-1]=idx;
         if (idx < 0) continue;
