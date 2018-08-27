@@ -516,7 +516,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
     jbooleanArray jskips)
     //jboolean enableBAQ)
 {
-  PLACE_TIMER1("updataTableNative");
+  //PLACE_TIMER1("updataTableNative");
   uint64_t start_ns = getNs();
 
   int readLength = env->GetArrayLength(jbases);
@@ -562,7 +562,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
   //isErrors[2] = (double*)malloc(readLength*sizeof(double));
   int result;
   {
-      PLACE_TIMER1("calculateBAQErros");
+      //PLACE_TIMER1("calculateBAQErros");
   result = baq->calculateErrorsSkipIndelNoBAQ(readLength,
           //refLength, refOffset,
           bases,
@@ -621,7 +621,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
   int* keys = (int*)malloc(readLength*g_numCovariates*sizeof(int));
 
   {
-      PLACE_TIMER1("computeCovariates");
+      //PLACE_TIMER1("computeCovariates");
   try {
     cov->computeSkipIndel(keys, readLength, std::string(readGroup),
           bases, baseQuals,
@@ -644,7 +644,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
 
   start_sec_ns = getNs();
   {
-      PLACE_TIMER1("tableUpdate");
+      //PLACE_TIMER1("tableUpdate");
   // finally, perform the update of recal tables
   table->update(readLength, keys, skips, isErrors);
 
@@ -692,7 +692,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
     jbooleanArray jskips,
     jboolean enableBAQ)
 {
-  PLACE_TIMER1("updataTableNative");
+  //PLACE_TIMER1("updataTableNative");
   uint64_t start_ns = getNs();
 
   int readLength = env->GetArrayLength(jbases);
@@ -738,7 +738,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
   //isErrors[2] = (double*)malloc(readLength*sizeof(double));
   int result;
   {
-      PLACE_TIMER1("calculateBAQErros");
+      //PLACE_TIMER1("calculateBAQErros");
   result = baq->calculateErrorsSkipIndel(readLength, refLength, refOffset,
           bases, baseQuals, refForBAQ, refBases,
           numCigar, cigarOps, cigarLens,
@@ -794,7 +794,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
   int* keys = (int*)malloc(readLength*g_numCovariates*sizeof(int));
 
   {
-      PLACE_TIMER1("computeCovariates");
+      //PLACE_TIMER1("computeCovariates");
   try {
     cov->computeSkipIndel(keys, readLength, std::string(readGroup),
           bases, baseQuals,
@@ -817,7 +817,7 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
 
   start_sec_ns = getNs();
   {
-      PLACE_TIMER1("tableUpdate");
+      //PLACE_TIMER1("tableUpdate");
   // finally, perform the update of recal tables
   table->update(readLength, keys, skips, isErrors);
   
@@ -1192,7 +1192,7 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
   for (auto rg : cov->getRGKeys()) {
     jstring jreadGroup = env->NewStringUTF(rg.c_str());
     jint idx = env->CallIntMethod(readGroupCovariates, method, jreadGroup);
-    DLOG(INFO) << "Set rg: " << rg << " with idx = " << idx;
+    //DLOG(INFO) << "Set rg: " << rg << " with idx = " << idx;
   }
 }
 
@@ -1238,7 +1238,7 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibratio
     DLOG(INFO) << "Total time on jni communication: " << (double)total_update_jni_time / 1e6 << " ms";
   }
 
-  print_global_timers();
+  //print_global_timers();
 
 
   // free up resource

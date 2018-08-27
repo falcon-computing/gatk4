@@ -116,11 +116,6 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     //else{
     //  computeIndelBQSRTables = true;
     //}
-    System.out.printf("Peipei Debug numEvents in new funtion is %d\n", numEvents);
-    System.out.printf("Peipei Debug enableBAQ in new funtion is \n");
-    System.out.println(enableBAQ);
-    System.out.printf("Peipei Debug computeIndelBQSRTables in new funtion is \n");
-    System.out.println(computeIndelBQSRTables);
     logger.debug("Created one instance of FalconRecalibrationEngine");
   }
 
@@ -184,7 +179,6 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     this.baq = new BAQ(BAQGOP); // setup the BAQ object with the provided gap open penalty
 
     //if()
-    System.out.printf("Peipei Debug: numEvents in init : %d", numEvents);
     final int[] covariatesDimensions = new int[numCovariates];
 
     for (int i = 0; i < covariates.size(); i++) {
@@ -398,13 +392,6 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     int platformType = ngsPlatform.getSequencerType() == SequencerFlowClass.DISCRETE ? 0 : 1;
 
 
-   // System.out.println("@@@@@@@@@");
-   // System.out.println("!!!!!!!!!!!!!!!");
-   // System.out.println(NGSPlatform.isKnown(rg)?"true":"false");
-   // System.out.println(rg);
-   // System.out.println(ngsPlatform.getDefaultPlatform());
-   // System.out.println(platformType);
-   // System.out.println("!!!!!!!");
 
     final int[] keys = computeCycleCovariatesNative(readLength, platformType,
             isNegativeStrand, isReadPaired, isSecondOfPair);
@@ -523,11 +510,6 @@ public class FalconRecalibrationEngine implements NativeLibrary {
         idx++;
       }
 
-      //System.out.println(Arrays.toString(refBases));
-      //System.out.println(Arrays.toString(bases));
-      //System.out.println(Arrays.toString(quals));
-      //System.out.println(Arrays.toString(cigarOps));
-      //System.out.println(Arrays.toString(cigarLens));
 
 
       byte[] bqTag = calculateBAQArrayNative(
