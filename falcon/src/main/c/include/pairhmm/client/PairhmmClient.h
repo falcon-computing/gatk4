@@ -1,63 +1,64 @@
-#ifndef PAIRHMMCLIENT_H
-#define PAIRHMMCLIENT_H
+#ifndef PairHMMCLIENT_H
+#define PairHMMCLIENT_H
 
-#define LOG_HEADER "PairhmmClient"
-#include <glog/logging.h>
+#include <stdexcept>
+#include <vector>
+#include <unordered_map>
 
 #include "Common.h"
 #include "blaze/Client.h"
 #include "pairhmm/client/m2m.h"
-#include "pairhmm/common/pairhmm_common.h"
-#include "pairhmm/common/Context.h"
-#include "pairhmm/avx/avx_impl.h"
+#include "pairhmm/client/PairhmmHostInterface.h"
+#include "gkl-pairhmm/Context.h"
+#include "gkl-pairhmm/avx_impl.h"
 
 #define TOTAL_PE_NUM (SLR0_PE_NUM + SLR1_PE_NUM + SLR2_PE_NUM)
 
-struct PairhmmContext{
+
+typedef struct {
     bool g_use_double;
-    int g_max_threads;
-    bool g_use_fpga;
-    pairhmmInput* client_input;
-    FPGAInput* host_input[3];
-    std::vector<float> host_raw_output;
-    double overflow_avx_time;
-    double direct_avx_time;
-    double fpga_prepare_data_time;
-    double fpga_time;
-    double reject_time;
-    double total_time;
-    int pmm_count;
-    bool rejected;
-    int read_base_index;
-    int hap_base_index;
-    int cur_numRead;
-    int cur_numHap;
-    double* javaResults;
-};
-
-
+    int  g_max_threads; /*never used*/
+    bool g_use_fpga;    /*never used*/
+    int  pmm_count;
+    std::vector<read_t> reads;
+    std::vector<hap_t>  haps;
+    double             *likelihoods;
+} PairhmmContext;
 
 extern Context<float> g_ctxf;
 extern Context<double> g_ctxd;
 extern float m2m_table[128 * 128];
 extern std::mutex pmm_ctx_map_mutex;
-extern std::map<std::thread::id, struct PairhmmContext*> pmm_map;
+extern std::unordered_map<std::thread::id, PairhmmContext*> pmm_map;
 extern uint8_t converstionTable[255];
-
 extern std::pair<std::string, int> inputBank[3];
 
+PairhmmContext* get_pairhmm_context();
+void release_pairhmm_context();
 
-struct timespec pmm_diff_time(struct timespec start, struct timespec end);
-struct PairhmmContext* init_pairhmm_context();
-using namespace blaze;
-class PairhmmClient: public Client {
-    public:
-    PairhmmClient(): Client("PairhmmTest", DIE_NUM * 3 + 1, DIE_NUM) {
-        //ConvertChar::init();
-        //_MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
-    }
-    void compute();
+class PairHMMClient : public blaze::Client {
+
+ public:
+  PairHMMClient();
+
+  void setup(read_t* reads, int num_read, 
+             hap_t*  haps,  int num_hap);
+
+  void compute();
+
+  int getMaxInputNumItems(int idx);
+  int getMaxInputItemLength(int idx);
+  int getMaxInputDataWidth(int idx);
+
+ private:
+  // used to perform easy calculation on cpu
+  int     num_read_;
+  int     num_hap_;
+  read_t* reads_;
+  hap_t*  haps_;
 };
 
+PairHMMClient* get_pairhmm_client();
+void release_pairhmm_client();
 
 #endif

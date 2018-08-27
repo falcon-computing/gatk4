@@ -14,10 +14,6 @@
 #define LOG_HEADER "Falcon Genomics Library"
 #include <glog/logging.h>
 
-#ifdef USELICENSE
-#include "falcon-lic/license.h"
-#endif
-
 #define TIMER_SAMPLE_RATE 1000000
 
 inline uint64_t getUs() {
@@ -44,24 +40,5 @@ inline jint throwAccError(JNIEnv *env, const char* message) {
   }
 }
 
-
-inline int license_verify() {
-#ifdef USELICENSE
-  namespace fc   = falconlic;
-#ifdef DEPLOY_aws
-  fc::enable_aws();
-#endif
-#ifdef DEPLOY_hwc
-  fc::enable_hwc();
-#endif
-  fc::enable_flexlm();
-
-  namespace fclm = falconlic::flexlm;
-  fclm::add_feature(fclm::FALCON_DNA);
-  return fc::license_verify();
-#else
-  return 0;
-#endif
-}
 #endif
 
