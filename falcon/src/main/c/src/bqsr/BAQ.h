@@ -31,6 +31,24 @@ class BAQ {
         int numCigar,
         int refOffset);
 
+
+    int calculateErrorsSkipIndelNoBAQ(
+                int readLength,
+                //int refLength,
+                //int refOffset,
+                int8_t* bases,
+                //int8_t* quals,
+                //int8_t* refForBAQ,
+                int8_t* refBases,
+                int     numCigarElements,
+                int8_t* cigarOps,
+                int* cigarLens,
+                //bool isNegativeStrand,
+                //bool isExcludeFromBAQ,
+                //int8_t* readBAQArray,
+                double* snpErrors);
+                //bool enableBAQ);
+
     /*
          * Same function as BaseRecalibrator.calculateFractionalErrorArray()
          * and also contains this->calculate(), which calculates BAQ Before

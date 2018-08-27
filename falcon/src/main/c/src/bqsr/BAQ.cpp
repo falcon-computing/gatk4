@@ -447,8 +447,8 @@ static inline void calcErrorBlockSkipIndel(
     //double* deleteErrors)
 {
   int totalSnpErrors = 0;
-  int totalInsertErrors = 0;
-  int totalDeleteErrors = 0;
+  //int totalInsertErrors = 0;
+  //int totalDeleteErrors = 0;
   for (int i = std::max(0, blockStartIndex - 1); i <= bound; i++) {
     totalSnpErrors    += (int)snpArray[i];
     //totalInsertErrors += (int)insertArray[i];
@@ -612,6 +612,102 @@ static inline int getBaseIdx(int8_t base) {
       return -1;
   }
 }
+
+
+int BAQ::calculateErrorsSkipIndelNoBAQ(
+        int     readLength,
+        //int     refLength,
+        //int     refOffset,
+        int8_t* bases,
+        //int8_t* quals,
+        //int8_t* refForBAQ,
+        int8_t* refBases,
+        int     numCigarElements,
+        int8_t* cigarOps,
+        int*    cigarLens,
+        //bool    isNegativeStrand,
+        //bool    isExcludeFromBAQ,
+        //int8_t* readBAQArray,
+        double* snpErrors)
+        //bool enableBAQ) is false
+{
+  // first calculate error event arrays
+  //int nErrors = 0;
+  int readPos = 0;
+  int refPos = 0;
+
+  int8_t* isSnp = (int8_t*)calloc(readLength, sizeof(int8_t));
+
+  for (int i = 0; i < numCigarElements; i++) {
+    int index = 0;
+    switch (cigarOps[i]) {
+      case 'M':
+      case '=':
+      case 'X':
+        for (int j = 0; j < cigarLens[i]; j++) {
+          if (getBaseIdx(refBases[refPos]) != getBaseIdx(bases[readPos])) {
+            isSnp[readPos] = 1;
+            //nErrors ++;
+          }
+          readPos++;
+          refPos++;
+        }
+        break;
+      case 'D':
+        //refPos += cigarLens[i];
+        //break;
+      case 'N':
+        refPos += cigarLens[i];
+        break;
+      case 'I':
+        //readPos += cigarLens[i];
+        //break;
+      case 'S':
+        readPos += cigarLens[i];
+        break;
+      case 'H':
+      case 'P':
+        break;
+      default:
+        DLOG(ERROR) << "Unsupported cigar operator!";
+    }
+  }
+
+
+
+  int8_t* baqArray = (int8_t*)malloc(readLength);
+  // Peipei Debug:
+  // TODO: please pass flag in for recalArgs.enableBAQ
+  //bool enableBAQ = false;
+
+  //bool isBAQAvailable = true;
+  //if (!enableBAQ || nErrors == 0) { // use flatBAQArray
+    const int8_t NO_BAQ_UNCERTAINTY = (int8_t)'@';
+    for (int i = 0; i < readLength; i++) {
+      baqArray[i] = NO_BAQ_UNCERTAINTY;
+    }
+    DLOG_IF(INFO, VLOG_IS_ON(1)) << "read has no errors, use flat BAQ array";
+  //}
+
+
+  uint64_t start_ns = getNs();
+
+
+  calculateFractionalErrorArraySkipIndel(
+        snpErrors,
+        isSnp,
+        baqArray,
+        readLength);
+  fracerror_time_ns += getNs() - start_ns;
+
+
+  free(baqArray);
+  free(isSnp);
+
+
+  return 0;
+}
+
 
 int BAQ::calculateErrorsSkipIndel(
         int     readLength,
