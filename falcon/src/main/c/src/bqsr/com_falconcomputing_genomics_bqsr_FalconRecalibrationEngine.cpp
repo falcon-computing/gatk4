@@ -511,7 +511,8 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
     jboolean   isExcludeFromBAQ,
     jint       platformType,
     jint       refOffset,
-    jbooleanArray jskips)
+    jbooleanArray jskips,
+    jboolean enableBAQ)
 {
   PLACE_TIMER1("updataTableNative");
   uint64_t start_ns = getNs();
@@ -565,7 +566,8 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
           numCigar, cigarOps, cigarLens,
           isNegativeStrand, isExcludeFromBAQ,
           readBAQArray,
-          isErrors[0]);
+          isErrors[0],
+          enableBAQ);
           //isErrors[0], isErrors[1], isErrors[2]);
   }
   total_update_baq_time += getNs() - start_sec_ns;
@@ -682,7 +684,8 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
     jboolean   isExcludeFromBAQ,
     jint       platformType,
     jint       refOffset,
-    jbooleanArray jskips)
+    jbooleanArray jskips,
+    jboolean enableBAQ)
 {
   //PLACE_TIMER1("updataTableNative")
   uint64_t start_ns = getNs();
@@ -734,7 +737,8 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
           numCigar, cigarOps, cigarLens,
           isNegativeStrand, isExcludeFromBAQ,
           readBAQArray,
-          isErrors[0], isErrors[1], isErrors[2]);
+          isErrors[0], isErrors[1], isErrors[2],
+          enableBAQ);
 
   total_update_baq_time += getNs() - start_sec_ns;
 

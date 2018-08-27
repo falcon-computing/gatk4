@@ -50,7 +50,8 @@ class BAQ {
             bool isNegativeStrand,
             bool isExcludeFromBAQ,
             int8_t* readBAQArray,
-            double* snpErrors);
+            double* snpErrors,
+            bool enableBAQ);
             //double* snpErrors,
             //double* insertErrors,
             //double* deleteErrors);
@@ -77,7 +78,8 @@ class BAQ {
         int8_t* readBAQArray,
         double* snpErrors,
         double* insertErrors,
-        double* deleteErrors);
+        double* deleteErrors,
+        bool enableBAQ);
 
     ~BAQ();
 

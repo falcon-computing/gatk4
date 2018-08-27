@@ -93,7 +93,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
   private long numReadsProcessed = 0L;
   private SAMFileHeader header;
   //private boolean computeIndelBQSRTables = false;
-  private boolean computeIndelBQSRTables = true;
+  private boolean computeIndelBQSRTables = false;
+  private boolean enableBAQ = false;
 
   public FalconRecalibrationEngine(final RecalibrationArgumentCollection RAC, final ReferenceSequenceFile referenceReader) {
     this.LOW_QUAL_TAIL = RAC.LOW_QUAL_TAIL;
@@ -102,6 +103,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     this.MAXIMUM_CYCLE_VALUE = RAC.MAXIMUM_CYCLE_VALUE;
     
     computeIndelBQSRTables = RAC.computeIndelBQSRTables;
+    enableBAQ = RAC.enableBAQ;
     //computeIndelBQSRTables = true;
 
     //this.FORCE_READGROUP = RAC.FORCE_READGROUP;
@@ -115,6 +117,10 @@ public class FalconRecalibrationEngine implements NativeLibrary {
     //  computeIndelBQSRTables = true;
     //}
     System.out.printf("Peipei Debug numEvents in new funtion is %d\n", numEvents);
+    System.out.printf("Peipei Debug enableBAQ in new funtion is \n");
+    System.out.println(enableBAQ);
+    System.out.printf("Peipei Debug computeIndelBQSRTables in new funtion is \n");
+    System.out.println(computeIndelBQSRTables);
     logger.debug("Created one instance of FalconRecalibrationEngine");
   }
 
@@ -812,7 +818,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
               cigarOps, cigarLens, readBAQArray,
               readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
               platformType, refOffset,
-              skips);
+              skips, enableBAQ);
     }
     else {
       // call native method to update RecalibrationTables
@@ -821,7 +827,7 @@ public class FalconRecalibrationEngine implements NativeLibrary {
               cigarOps, cigarLens, readBAQArray,
               readGroupId, isNegativeStrand, isReadPaired, isSecondOfPair, isExcludeFromBAQ,
               platformType, refOffset,
-              skips);
+              skips, enableBAQ);
     }
 
     //numReadsProcessed++;
@@ -1273,7 +1279,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
       boolean isExcludeFromBAQ,
       int platformType,
       int refOffset,
-      boolean[] skips);
+      boolean[] skips,
+      boolean enableBAQ);
 
   // This is the actual native impl for applications
   private native int updateTableSkipIndelNative(
@@ -1293,7 +1300,8 @@ public class FalconRecalibrationEngine implements NativeLibrary {
           boolean isExcludeFromBAQ,
           int platformType,
           int refOffset,
-          boolean[] skips);
+          boolean[] skips,
+          boolean enableBAQ);
 
 
   private native RecalDatumTable[] getTableNative();

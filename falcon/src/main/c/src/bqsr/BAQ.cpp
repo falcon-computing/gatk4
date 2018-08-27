@@ -627,7 +627,8 @@ int BAQ::calculateErrorsSkipIndel(
         bool    isNegativeStrand,
         bool    isExcludeFromBAQ,
         int8_t* readBAQArray,
-        double* snpErrors)
+        double* snpErrors,
+        bool enableBAQ)
         //double* snpErrors,
         //double* insertErrors,
         //double* deleteErrors)
@@ -701,7 +702,7 @@ int BAQ::calculateErrorsSkipIndel(
   int8_t* baqArray = (int8_t*)malloc(readLength);
   // Peipei Debug:
   // TODO: please pass flag in for recalArgs.enableBAQ
-  bool enableBAQ = false;
+  //bool enableBAQ = false;
 
   bool isBAQAvailable = true;
   if (!enableBAQ || nErrors == 0) { // use flatBAQArray
@@ -816,7 +817,8 @@ int BAQ::calculateErrors(
         int8_t* readBAQArray,
         double* snpErrors,
         double* insertErrors,
-        double* deleteErrors)
+        double* deleteErrors,
+        bool enableBAQ)
 {
   // first calculate error event arrays
   int nErrors = 0;
@@ -901,7 +903,7 @@ int BAQ::calculateErrors(
   int8_t* baqArray = (int8_t*)malloc(readLength);
   // Peipei Debug:
   // TODO: please pass flag in for recalArgs.enableBAQ
-  bool enableBAQ = false;
+  //bool enableBAQ = false;
 
   bool isBAQAvailable = true;
   if (!enableBAQ || nErrors == 0) { // use flatBAQArray
