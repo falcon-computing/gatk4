@@ -499,8 +499,8 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
     jbyteArray jrefBases,
     jbyteArray jbases,
     jbyteArray jbaseQuals,
-    jbyteArray jinsertionQuals,
-    jbyteArray jdeletionQuals,
+    //jbyteArray jinsertionQuals,
+    //jbyteArray jdeletionQuals,
     jbyteArray jcigarOps,
     jintArray  jcigarLens,
     jbyteArray jreadBAQArray,
@@ -531,8 +531,8 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
 
   int8_t* bases          = (int8_t*)env->GetByteArrayElements(jbases, 0);
   int8_t* baseQuals      = (int8_t*)env->GetByteArrayElements(jbaseQuals, 0);
-  int8_t* insertionQuals = (int8_t*)env->GetByteArrayElements(jinsertionQuals, 0);
-  int8_t* deletionQuals  = (int8_t*)env->GetByteArrayElements(jdeletionQuals, 0);
+  //int8_t* insertionQuals = (int8_t*)env->GetByteArrayElements(jinsertionQuals, 0);
+  //int8_t* deletionQuals  = (int8_t*)env->GetByteArrayElements(jdeletionQuals, 0);
 
   int8_t* cigarOps  = (int8_t*)env->GetByteArrayElements(jcigarOps, 0);
   int*    cigarLens = (int*)env->GetIntArrayElements(jcigarLens, 0);
@@ -589,8 +589,8 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
     // release all the JNI arrays
     env->ReleaseByteArrayElements(jbases, bases, 0);
     env->ReleaseByteArrayElements(jbaseQuals, baseQuals, 0);
-    env->ReleaseByteArrayElements(jinsertionQuals, insertionQuals, 0);
-    env->ReleaseByteArrayElements(jdeletionQuals, deletionQuals, 0);
+    //env->ReleaseByteArrayElements(jinsertionQuals, insertionQuals, 0);
+    //env->ReleaseByteArrayElements(jdeletionQuals, deletionQuals, 0);
     env->ReleaseStringUTFChars(jreadGroup, readGroup);
     env->ReleaseBooleanArrayElements(jskips, skips, 0);
 
@@ -610,12 +610,15 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
 
   // second, compute the covariates
   start_sec_ns = getNs();
-  int* keys = (int*)malloc(g_numEvents*readLength*g_numCovariates*sizeof(int));
+  //int* keys = (int*)malloc(g_numEvents*readLength*g_numCovariates*sizeof(int));
+  int* keys = (int*)malloc(readLength*g_numCovariates*sizeof(int));
+
   {
       PLACE_TIMER1("computeCovariates");
   try {
-    cov->compute(keys, readLength, std::string(readGroup),
-          bases, baseQuals, insertionQuals, deletionQuals,
+    cov->computeSkipIndel(keys, readLength, std::string(readGroup),
+          bases, baseQuals,
+          //insertionQuals, deletionQuals,
           platformType,
           isNegativeStrand, isReadPaired, isSecondOfPair);
   } catch (std::runtime_error &e) {
@@ -628,8 +631,8 @@ JNIEXPORT int JNICALL Java_com_falconcomputing_genomics_bqsr_FalconRecalibration
 
   env->ReleaseByteArrayElements(jbases, bases, 0);
   env->ReleaseByteArrayElements(jbaseQuals, baseQuals, 0);
-  env->ReleaseByteArrayElements(jinsertionQuals, insertionQuals, 0);
-  env->ReleaseByteArrayElements(jdeletionQuals, deletionQuals, 0);
+  //env->ReleaseByteArrayElements(jinsertionQuals, insertionQuals, 0);
+  //env->ReleaseByteArrayElements(jdeletionQuals, deletionQuals, 0);
   env->ReleaseStringUTFChars(jreadGroup, readGroup);
 
   start_sec_ns = getNs();

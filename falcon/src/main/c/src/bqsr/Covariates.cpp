@@ -153,6 +153,27 @@ Covariates::Covariates(int _numEvents,
 }
 
 // helper function to set output covariates
+inline void Covariates::setCovariateSkipIndel(
+    int* keys,
+    const int cov_idx,
+    const int base_idx,
+    const int snp){
+    //const int insertion,
+    //const int deletion) {
+
+  //DLOG(INFO) << "Peipei Debug: "<<  " snp: "<<snp << " insertion: "<<insertion << " deletion: "<< deletion<< " base_idx: "<<base_idx <<" numCovariates "<< numCovariates<<" numEvents "<<numEvents;
+  // in this version the layout of keys is the same as table update
+  // keys: readLength x [qual context, cycle] x numEvents
+  keys[base_idx*numCovariates + cov_idx] = snp;
+  //if(numEvents==3){
+  //    keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 1] = insertion;
+  //    keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 2] = deletion;
+  }
+}
+
+
+
+// helper function to set output covariates
 inline void Covariates::setCovariate(
     int* keys,
     const int cov_idx,
@@ -170,7 +191,6 @@ inline void Covariates::setCovariate(
       keys[base_idx*numCovariates*numEvents + cov_idx*numEvents + 2] = deletion;
   }
 }
-
 
 void Covariates::compute(int* keys,
       const int readLength,
@@ -190,6 +210,29 @@ void Covariates::compute(int* keys,
   computeContextCovariates(keys, readLength,
      isNegativeStrand, bases, baseQuals);
   computeCycleCovariates(keys, readLength, platformType,
+     isNegativeStrand, isReadPaired, isSecondOfPair);
+}
+
+
+
+void Covariates::computeSkipIndel(int* keys,
+      const int readLength,
+      const std::string readGroup,
+      const int8_t* bases,
+      const int8_t* baseQuals,
+      //const int8_t* insertionQuals,
+      //const int8_t* deletionQuals,
+      const int platformType,
+      const bool isNegativeStrand,
+      const bool isReadPaired,
+      const bool isSecondOfPair) {
+
+  computeReadGroupCovariatesSkipIndel(keys, readLength, readGroup);
+  computeQualCovariatesSkipIndel(keys, readLength,
+     baseQuals, insertionQuals, deletionQuals);
+  computeContextCovariatesSkipIndel(keys, readLength,
+     isNegativeStrand, bases, baseQuals);
+  computeCycleCovariatesSkipIndel(keys, readLength, platformType,
      isNegativeStrand, isReadPaired, isSecondOfPair);
 }
 
@@ -222,6 +265,29 @@ void Covariates::addReadGroup(const std::string readGroup){
     }
 }
 
+void Covariates::computeReadGroupCovariatesSkipIndel(int* keys,
+    const int readLength,
+    const std::string readGroup) {
+
+  int readGroupId;
+  if (readGroupTable.count(readGroup)) {
+    readGroupId = readGroupTable[readGroup];
+  }
+  else {
+    readGroupTable[readGroup] = readGroupIdx;
+    readGroupId = readGroupIdx;
+    readGroupIdx++;
+
+    // record the idx for the string
+    readGroupIdxTable.push_back(readGroup);
+  }
+  for (int i = 0; i < readLength; i++) {
+    setCovariateSkipIndel(keys, 0, i,
+        readGroupId);
+  }
+}
+
+
 void Covariates::computeReadGroupCovariates(int* keys,
     const int readLength,
     const std::string readGroup) {
@@ -244,6 +310,20 @@ void Covariates::computeReadGroupCovariates(int* keys,
   }
 }
 
+void Covariates::computeQualCovariatesSkipIndel(int* keys,
+    const int readLength,
+    const int8_t* baseQuals) {
+    //const int8_t* insertionQuals,
+    //const int8_t* deleteionQuals) {
+
+  for (int i = 0; i < readLength; i++) {
+    setCovariateSkipIndel(keys, 1, i,
+        baseQuals[i]);
+        //insertionQuals[i],
+        //deleteionQuals[i]);
+  }
+}
+
 void Covariates::computeQualCovariates(int* keys,
     const int readLength,
     const int8_t* baseQuals,
@@ -257,6 +337,76 @@ void Covariates::computeQualCovariates(int* keys,
         deleteionQuals[i]);
   }
 }
+
+void Covariates::computeContextCovariatesSkipIndel(int* keys,
+    const int readLength,
+    const bool isNegativeStrand,
+    const int8_t* bases,
+    const int8_t* quals)
+{
+  // clip reads
+  int8_t* clipped_bases = (int8_t*)malloc(readLength);
+
+  int leftClipIndex = 0;
+  int rightClipIndex = readLength - 1;
+
+  // check how far we can clip both sides
+  while (rightClipIndex >= 0 && quals[rightClipIndex] <= LOW_QUAL_TAIL)
+    rightClipIndex --;
+
+  while (rightClipIndex < readLength && quals[leftClipIndex] <= LOW_QUAL_TAIL)
+    leftClipIndex ++;
+
+  // the read is empty, set all covariates to zero
+  if (leftClipIndex > rightClipIndex) {
+    for (int i = 0; i < readLength; i++) {
+      //setCovariate(keys, 2, i, 0, 0, 0);
+      setCovariateSkipIndel(keys, 2, i, 0);
+
+    }
+    free(clipped_bases);
+    return;
+  }
+
+  // clip the low quality reads on both ends
+  for (int i = 0; i < readLength; i++) {
+      if (i < leftClipIndex || i > rightClipIndex)
+        clipped_bases[i] = 'N';
+      else
+        clipped_bases[i] = bases[i];
+  }
+
+  // reverse read if necessary
+  if (isNegativeStrand) {
+    int8_t* temp_bases = (int8_t*)malloc(readLength);
+    memcpy(temp_bases, clipped_bases, readLength);
+
+    for (int i = 0; i < readLength; i++) {
+      clipped_bases[i] = simpleComplement(temp_bases[readLength - i - 1]);
+    }
+
+    free(temp_bases);
+  }
+
+  int* mismatchKeys = (int*)malloc(readLength*sizeof(int));
+  //int* indelKeys = (int*)malloc(readLength*sizeof(int));
+  contextWith(mismatchKeys, readLength, clipped_bases, mismatchesContextSize, mismatchesKeyMask);
+  //contextWith(indelKeys, readLength, clipped_bases, indelsContextSize, indelsKeyMask);
+
+  //Note: duplicated the loop to avoid checking recordIndelValues on each iteration
+  for (int i = 0; i < readLength; i++) {
+    int readOffset = i;
+    if (isNegativeStrand){
+      readOffset = readLength - i - 1;
+    }
+    //setCovariate(keys, 2, readOffset, mismatchKeys[i], indelKeys[i], indelKeys[i]);
+    setCovariateSkipIndel(keys, 2, readOffset, mismatchKeys[i]);
+  }
+  free(clipped_bases);
+  free(mismatchKeys);
+  //free(indelKeys);
+}
+
 
 void Covariates::computeContextCovariates(int* keys,
     const int readLength,
@@ -341,6 +491,43 @@ inline int Covariates::keyFromCycle(int cycle) {
   }
   return result;
 }
+
+void Covariates::computeCycleCovariatesSkipIndel(int* keys,
+    const int readLength,
+    const int platformType,
+    const bool isNegativeStrand,
+    const bool isReadPaired,
+    const bool isSecondOfPair)
+{
+
+  // TODO: need to do flow type platforms as well
+  if (platformType != 0) { // Currently only supports DISCRETE platform
+    LOG(WARNING) << "Only DISCRETE platforms are supported in this version.";
+    throw std::runtime_error("unsupported platform");
+  }
+
+  int readOrderFactor = isReadPaired && isSecondOfPair ? -1 : 1;
+  int increment;
+  int cycle;
+
+  if (isNegativeStrand) {
+    cycle = readLength * readOrderFactor;
+    increment = -1 * readOrderFactor;
+  } else {
+    cycle = readOrderFactor;
+    increment = readOrderFactor;
+  }
+  int MAX_CYCLE_FOR_INDELS = readLength - CUSHION_FOR_INDELS - 1;
+
+  for (int i = 0; i < readLength; i++) {
+    int substitutionKey = keyFromCycle(cycle);
+    //int indelKey = (i < CUSHION_FOR_INDELS || i > MAX_CYCLE_FOR_INDELS) ? -1 : substitutionKey;
+    //setCovariate(keys, 3, i, substitutionKey, indelKey, indelKey);
+    setCovariateSkipIndel(keys, 3, i, substitutionKey);
+    cycle += increment;
+  }
+}
+
 
 void Covariates::computeCycleCovariates(int* keys,
     const int readLength,
