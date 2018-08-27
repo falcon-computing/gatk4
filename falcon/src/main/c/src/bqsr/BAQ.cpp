@@ -639,8 +639,8 @@ int BAQ::calculateErrorsSkipIndel(
   int refPos = 0;
 
   int8_t* isSnp = (int8_t*)calloc(readLength, sizeof(int8_t));
-  int8_t* isInd = (int8_t*)calloc(readLength, sizeof(int8_t));
-  int8_t* isDel = (int8_t*)calloc(readLength, sizeof(int8_t));
+  //int8_t* isInd = (int8_t*)calloc(readLength, sizeof(int8_t));
+  //int8_t* isDel = (int8_t*)calloc(readLength, sizeof(int8_t));
 
   for (int i = 0; i < numCigarElements; i++) {
     int index = 0;
@@ -663,7 +663,7 @@ int BAQ::calculateErrorsSkipIndel(
           index--;
         }
         if (index >= 0 && index < readLength){
-          isDel[index] = 1;
+          //isDel[index] = 1;
           nErrors ++;
         }
         refPos += cigarLens[i];
@@ -674,14 +674,14 @@ int BAQ::calculateErrorsSkipIndel(
       case 'I':
         if (!isNegativeStrand) {
           if (readPos >= 1 && readPos-1 < readLength){
-            isInd[readPos-1] = 1;
+            //isInd[readPos-1] = 1;
             nErrors ++;
           }
         }
         readPos += cigarLens[i];
         if (isNegativeStrand) {
           if (readPos>=0 && readPos < readLength){
-            isInd[readPos] = 1;
+            //isInd[readPos] = 1;
             nErrors ++;
           }
         }
@@ -752,8 +752,8 @@ int BAQ::calculateErrorsSkipIndel(
   if (!isBAQAvailable) {
     free(baqArray);
     free(isSnp);
-    free(isInd);
-    free(isDel);
+    //free(isInd);
+    //free(isDel);
 
     return 1;
   }
@@ -792,8 +792,8 @@ int BAQ::calculateErrorsSkipIndel(
 
   free(baqArray);
   free(isSnp);
-  free(isInd);
-  free(isDel);
+  //free(isInd);
+  //free(isDel);
 
   return 0;
 }
