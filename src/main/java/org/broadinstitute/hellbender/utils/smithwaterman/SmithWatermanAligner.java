@@ -47,6 +47,13 @@ public interface SmithWatermanAligner extends Closeable {
 
         FASTEST_AVAILABLE( () -> {
             try {
+                final SmithWatermanFalconAligner aligner = new SmithWatermanFalconAligner();
+                logger.info("Using Falcon accelerated SmithWaterman implementation");
+                return aligner;
+            } catch (UserException.HardwareFeatureException exception) {
+                logger.info("Falcon accelerated SmithWaterman implementation is not supported.");
+            }
+            try {
                 final SmithWatermanIntelAligner aligner = new SmithWatermanIntelAligner();
                 logger.info("Using AVX accelerated SmithWaterman implementation");
                 return aligner;
@@ -65,6 +72,15 @@ public interface SmithWatermanAligner extends Closeable {
             return aligner;
         }
         ),
+
+        /**
+         * use Falcon accelerated Smith-Waterman aligner
+         */
+        FALCON( () -> {
+            final SmithWatermanFalconAligner aligner = new SmithWatermanFalconAligner();
+            logger.info("Using Falcon accelerated SmithWaterman implementation");
+            return aligner;
+        }),
 
         /**
          * use the pure java implementation of Smith-Waterman, works on all hardware
