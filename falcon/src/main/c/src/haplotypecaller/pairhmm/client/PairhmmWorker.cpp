@@ -4,6 +4,7 @@
 
 #include "blaze/Client.h"
 #include "gkl-pairhmm/avx_impl.h"
+#include "ksight/tools.h"
 #include "pairhmm/client/PairhmmClient.h"
 #include "pairhmm/client/PairhmmWorker.h"
 #include "pairhmm/client/PairhmmHostInterface.h"
@@ -23,14 +24,32 @@ PairHMMWorker::PairHMMWorker(
   host_reads_(reads),
   host_haps_(haps)
 {
+  PLACE_TIMER;
 
   output_.resize(num_read * num_hap);
 
+  // calculate total cells
+  uint64_t ttl_rl     = 0;
+  uint64_t ttl_hl     = 0;
+  uint64_t ttl_rl_cpu = 0;
+  uint64_t ttl_hl_cpu = 0;
+
+  uint64_t num_cell      = 0;
+  uint64_t num_cell_cpu  = 0;
+  uint64_t num_cell_fpga = 0;
+
+  for (int i = 0; i < num_read; ++i) ttl_rl += reads[i].len;
+  for (int i = 0; i < num_hap; ++i)  ttl_hl += haps[i].len;
+  num_cell = ttl_rl * ttl_hl;
+  ksight::ksight.add("num cells", num_cell);
+
   // empirical threshold, if data too small, don't
   // bother running fpga
-  if (num_read < 32 || num_hap < 4) {
+  if (num_read < 32 || num_hap < 2 || num_cell < 5e6) {
     use_cpu_ = true;
     DLOG(INFO) << "Use AVX for all computation";
+
+    ksight::ksight.add("num cells on cpu", num_cell);
     return;
   }
 
@@ -39,6 +58,7 @@ PairHMMWorker::PairHMMWorker(
   for (int i = 0; i < num_hap; ++i) {
     if (haps[i].len >= MAX_HAP_LEN) {
       cpu_hap_idx_.push_back(i);
+      ttl_hl_cpu += haps[i].len;
     }
     else {
       max_haplen = std::max(max_haplen, haps[i].len);
@@ -52,12 +72,19 @@ PairHMMWorker::PairHMMWorker(
         reads[i].len * (reads[i].len + max_haplen) <= 
           1 + READ_BLOCK_SIZE * MAX_READ_LEN) {
       cpu_read_idx_.push_back(i);
+      ttl_rl_cpu += reads[i].len;
     }
     else {
       fpga_reads_.push_back(reads[i]);
       fpga_read_idx_.push_back(i);
     }
   }
+
+  num_cell_cpu = ttl_rl_cpu * ttl_hl + 
+                 ttl_rl * ttl_hl_cpu - 
+                 ttl_hl_cpu * ttl_rl_cpu;
+
+  ksight::ksight.add("num cells on cpu", num_cell_cpu);
   
   DLOG(INFO) << "cpu workload: num_read = " << cpu_read_idx_.size()
              << ", num_hap = " << cpu_hap_idx_.size();
@@ -88,7 +115,8 @@ inline testcase convert_avx_input(
 
 // avx compute routine
 void PairHMMWorker::compute() {
-  //PLACE_TIMER;
+  ksight::AutoTimer __timer("compute on cpu");
+
   if (use_cpu_) {
     for (int i = 0; i < num_read_; ++i) {
       for (int j = 0; j < num_hap_; ++j) {
@@ -99,13 +127,11 @@ void PairHMMWorker::compute() {
     }
   }
   else {
-    int numCPU = 0;
     for (auto i : cpu_read_idx_) {
       for (auto j : cpu_hap_idx_) {
         // use GKL routines to perform computation
         testcase avx_v = convert_avx_input(host_reads_[i], host_haps_[j]);
         output_[i * num_hap_ + j] = compute_fp_avxs(&avx_v);
-        ++numCPU;
       } 
     }
   }
@@ -113,7 +139,7 @@ void PairHMMWorker::compute() {
 
 // NOTE: need to guarantee output has size num_hap * num_read
 void PairHMMWorker::getOutput(double* output) {
-  //PLACE_TIMER;
+  PLACE_TIMER;
 
   // indexes to cpu output and fpga output
   int cpu_row  = 0;
@@ -160,7 +186,9 @@ void PairHMMWorker::run() {
     compute();
   }
   else {
-    //PLACE_TIMER;
+    //PLACE_TIMER1("compute on fpga");
+    ksight::Timer timer;
+    timer.start();
 
     // start a thread to run cpu
     boost::thread t(boost::bind(&PairHMMWorker::compute, this));
@@ -176,7 +204,7 @@ void PairHMMWorker::run() {
         int num_read = read_bound - row;
         int num_hap  = hap_bound - col;
         {
-          //PLACE_TIMER1("serialize input");
+          PLACE_TIMER1("serialize input");
 
           client_->setup(
               &fpga_reads_[row], num_read,
@@ -185,13 +213,13 @@ void PairHMMWorker::run() {
 
         // start fpga run
         {
-          //PLACE_TIMER1("start()");
+          PLACE_TIMER1("start()");
           client_->start();
         }
 
         // if cpu fallback is called, skip output copy
         {
-          //PLACE_TIMER1("copy output");
+          PLACE_TIMER1("copy output");
           
           // process output with data copy
           float* results = (float*)client_->getOutputPtr(0); 
@@ -208,6 +236,8 @@ void PairHMMWorker::run() {
         }
       }
     }
+    // don't count cpu time
+    ksight::ksight.add("compute on client", timer.stop());
     t.join();
   }
 }

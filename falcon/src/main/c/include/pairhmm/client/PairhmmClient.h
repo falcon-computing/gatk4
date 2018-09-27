@@ -7,6 +7,7 @@
 
 #include "Common.h"
 #include "blaze/Client.h"
+#include "ksight/tools.h"
 #include "pairhmm/client/m2m.h"
 #include "pairhmm/client/PairhmmHostInterface.h"
 #include "gkl-pairhmm/Context.h"
@@ -52,10 +53,11 @@ class PairHMMClient : public blaze::Client {
 
  private:
   // used to perform easy calculation on cpu
-  int     num_read_;
-  int     num_hap_;
-  read_t* reads_;
-  hap_t*  haps_;
+  int      num_read_;
+  int      num_hap_;
+  uint64_t num_cell_;
+  read_t*  reads_;
+  hap_t*   haps_;
 };
 
 PairHMMClient* get_pairhmm_client();

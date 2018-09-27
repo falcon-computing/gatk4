@@ -8,6 +8,7 @@
 #include "com_falconcomputing_genomics_haplotypecaller_FalconPairhmm.h"
 #include "gkl-pairhmm/Context.h"
 #include "gkl-pairhmm/avx_impl.h"
+#include "ksight/tools.h"
 #include "pairhmm/client/PairhmmClient.h"
 #include "pairhmm/client/PairhmmWorker.h"
 #include "pairhmm/common/PairhmmJavaData.h"
@@ -39,6 +40,7 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_haplotypecaller_FalconP
 
 JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_haplotypecaller_FalconPairhmm_computeLikelihoodsNative
 (JNIEnv* env, jobject obj, jobjectArray readDataArray, jobjectArray haplotypeDataArray, jdoubleArray likelihoodArray){
+    PLACE_TIMER;
     //==================================================================
     // get Java data
     PairhmmContext* context = get_pairhmm_context();
@@ -70,6 +72,10 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_haplotypecaller_FalconP
 JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_haplotypecaller_FalconPairhmm_doneNative
 (JNIEnv* env, jobject obj)
 {
+#ifndef NO_PROFILING
+    ksight::ksight.print_total(); 
+#endif
+
     release_pairhmm_context();
     release_pairhmm_client();
 }

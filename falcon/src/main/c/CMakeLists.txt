@@ -15,6 +15,7 @@ find_package(Threads)
 set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(Blaze REQUIRED)
 find_package(Google REQUIRED)
+find_package(KSight REQUIRED)
 find_package(IntelGKL REQUIRED)
 find_package(FalconLM REQUIRED)
 
@@ -30,8 +31,8 @@ execute_process(
     OUTPUT_VARIABLE GIT_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native -m64 -DBOOST_NO_CXX11_SCOPED_ENUMS -fPIC")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -Wall -DUSELICENSE")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native -m64 -DBOOST_NO_CXX11_SCOPED_ENUMS -fPIC -DUSELICENSE")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -DNDEBUG")
 
 if(DEPLOYMENT) 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEPLOY_${DEPLOYMENT}")
@@ -39,6 +40,10 @@ if(DEPLOYMENT)
     message(STATUS "destination deployment platform is ${DEPLOYMENT}")
 else()
     set(BIN_VERSION "${GIT_VERSION}")
+endif()
+
+if(NOPROFILE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_PROFILE")
 endif()
 
 if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -54,6 +59,7 @@ include_directories(
     ${JNI_INCLUDE_DIRS}
     ${Blaze_INCLUDE_DIRS}
     ${Google_INCLUDE_DIRS}
+    ${KSight_INCLUDE_DIRS}
     ${IntelGKL_INCLUDE_DIRS}
     ${FalconLM_INCLUDE_DIRS})
 
@@ -61,6 +67,7 @@ link_directories(
     ${Boost_LIBRARY_DIRS}
     ${Blaze_LIBRARY_DIRS}
     ${Google_LIBRARY_DIRS}
+    ${KSight_LIBRARY_DIRS}
     ${IntelGKL_LIBRARY_DIRS}
     ${FalconLM_LIBRARY_DIRS})
 
@@ -69,12 +76,19 @@ file(GLOB_RECURSE SRC_LIST src/*.cpp)
 
 add_library(falcon_genomics SHARED ${SRC_LIST})
 
-add_dependencies(falcon_genomics Google Blaze IntelGKL JsonCPP FalconLM)
+add_dependencies(falcon_genomics 
+    Blaze 
+    FalconLM
+    Google 
+    IntelGKL 
+    JsonCPP
+    KSight)
 
 target_link_libraries(falcon_genomics
     ${Blaze_LIBRARIES}
     ${Boost_LIBRARIES} 
     ${Google_LIBRARIES}
+    ${KSight_LIBRARIES}
     ${IntelGKL_LIBRARIES}
     ${FalconLM_LIBRARIES}
     ${CMAKE_DL_LIBS} 

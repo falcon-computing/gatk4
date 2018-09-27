@@ -108,6 +108,7 @@ void PairHMMClient::setup(
     read_t* reads, int num_read, 
     hap_t*  haps,  int num_hap) 
 {
+  PLACE_TIMER;
   num_read_ = num_read;
   num_hap_  = num_hap;
   reads_ = reads;
@@ -115,16 +116,15 @@ void PairHMMClient::setup(
 
   uint64_t total_rl = 0;
   uint64_t total_hl = 0;
-  uint64_t num_cell = 0;
   for (int i = 0; i < num_read; ++i) {
     total_rl += reads[i].len;
   }
   for (int i = 0; i < num_hap; ++i) {
     total_hl += haps[i].len;
   }
-  num_cell = total_rl * total_hl;
+  num_cell_ = total_rl * total_hl;
 
-  setInput(0, &num_cell, 1, 1, sizeof(int));
+  setInput(0, &num_cell_, 1, 1, sizeof(uint64_t));
 
   // serialize
   uint64_t read_size = serialize(getInputPtr(1), reads, num_read);
@@ -137,6 +137,9 @@ void PairHMMClient::setup(
 
 // load balance compute routine
 void PairHMMClient::compute() {
+  ksight::AutoTimer __timer("compute on client cpu");
+  ksight::ksight.add("num cells on cpu", num_cell_);
+
   float* output = (float*)createOutput(0, 
       1, num_read_ * num_hap_, sizeof(float));
 
