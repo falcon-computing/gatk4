@@ -72,7 +72,7 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_haplotypecaller_FalconP
 JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_haplotypecaller_FalconPairhmm_doneNative
 (JNIEnv* env, jobject obj)
 {
-#ifndef NO_PROFILING
+#ifndef NO_PROFILE
     ksight::ksight.print_total(); 
 #endif
 

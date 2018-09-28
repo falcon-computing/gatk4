@@ -42,7 +42,7 @@ else()
     set(BIN_VERSION "${GIT_VERSION}")
 endif()
 
-if(NOPROFILE)
+if(NO_PROFILE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_PROFILE")
 endif()
 

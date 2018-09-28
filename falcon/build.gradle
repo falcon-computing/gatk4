@@ -56,7 +56,7 @@ task configNative(type: Exec) {
     workingDir nativeBuildDir
 
     if (isRelease) {
-      commandLine 'cmake', '-DCMAKE_BUILD_TYPE=Release', "-DDEPLOYMENT=${cloud}", '..'
+      commandLine 'cmake', '-DCMAKE_BUILD_TYPE=Release', '-DNO_PROFILE=1', "-DDEPLOYMENT=${cloud}", '..'
       println "cmake -DCMAKE_BUILD_TYPE=Release -DDEPLOYMENT=${cloud} .."
     }
     else {
