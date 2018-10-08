@@ -9,6 +9,7 @@ final isRelease = project.hasProperty("release")
 version = (isRelease ? gitVersion() : gitVersion() + "-SNAPSHOT").replaceAll(".dirty", "")
 
 final has_cloud = project.hasProperty('cloud')
+final has_profiler = project.hasProperty('profiler')
 def cloud = findProperty('cloud') ?: ''
 if (has_cloud) {
   version = version + "-" + cloud
@@ -56,18 +57,21 @@ task configNative(type: Exec) {
     workingDir nativeBuildDir
 
     if (isRelease) {
-      commandLine 'cmake', '-DCMAKE_BUILD_TYPE=Release', '-DNO_PROFILE=1', "-DDEPLOYMENT=${cloud}", '..'
-      println "cmake -DCMAKE_BUILD_TYPE=Release -DDEPLOYMENT=${cloud} .."
+      if (has_profiler) {
+        commandLine 'cmake', '-DCMAKE_BUILD_TYPE=Release', "-DDEPLOYMENT=${cloud}", '..'
+      }
+      else {
+        commandLine 'cmake', '-DCMAKE_BUILD_TYPE=Release', '-DNO_PROFILE=1', "-DDEPLOYMENT=${cloud}", '..'
+      }
     }
     else {
       commandLine 'cmake', '-DCMAKE_BUILD_TYPE=Debug', "-DDEPLOYMENT=${cloud}", '..'
-      println "cmake -DCMAKE_BUILD_TYPE=Debug -DDEPLOYMENT=${cloud} .."
     }
 }
 
 task buildNative(type: Exec) {
     workingDir nativeBuildDir
-    commandLine 'make'
+    commandLine 'make', '-j', '8'
 }
 
 task copyNativeLib(type: Copy) {

@@ -44,6 +44,8 @@ endif()
 
 if(NO_PROFILE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_PROFILE")
+else()
+  message(STATUS "Profiling is enabled")
 endif()
 
 if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
