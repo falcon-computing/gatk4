@@ -17,6 +17,7 @@ find_package(Blaze REQUIRED)
 find_package(Google REQUIRED)
 find_package(KSight REQUIRED)
 find_package(IntelGKL REQUIRED)
+find_package(PairhmmClient REQUIRED)
 find_package(FalconLM REQUIRED)
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -62,6 +63,7 @@ include_directories(
     ${Blaze_INCLUDE_DIRS}
     ${Google_INCLUDE_DIRS}
     ${KSight_INCLUDE_DIRS}
+    ${PMMClient_INCLUDE_DIRS}
     ${IntelGKL_INCLUDE_DIRS}
     ${FalconLM_INCLUDE_DIRS})
 
@@ -70,6 +72,7 @@ link_directories(
     ${Blaze_LIBRARY_DIRS}
     ${Google_LIBRARY_DIRS}
     ${KSight_LIBRARY_DIRS}
+    ${PMMClient_LIBRARY_DIRS}
     ${IntelGKL_LIBRARY_DIRS}
     ${FalconLM_LIBRARY_DIRS})
 
@@ -82,17 +85,19 @@ add_dependencies(falcon_genomics
     Blaze 
     FalconLM
     Google 
+    PMMClient
     IntelGKL 
     JsonCPP
     KSight)
 
 target_link_libraries(falcon_genomics
-    ${Blaze_LIBRARIES}
     ${Boost_LIBRARIES} 
-    ${Google_LIBRARIES}
     ${KSight_LIBRARIES}
+    ${PMMClient_LIBRARIES}
+    ${Blaze_LIBRARIES}
     ${IntelGKL_LIBRARIES}
     ${FalconLM_LIBRARIES}
+    ${Google_LIBRARIES}
     ${CMAKE_DL_LIBS} 
     ${ZLIB_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT})
