@@ -33,6 +33,7 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native -m64 -DBOOST_NO_CXX11_SCOPED_ENUMS -fPIC -DUSELICENSE")
+#set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,defs")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -DNDEBUG")
 
 if(DEPLOYMENT) 
@@ -92,9 +93,9 @@ add_dependencies(falcon_genomics
 
 target_link_libraries(falcon_genomics
     ${Boost_LIBRARIES} 
-    ${KSight_LIBRARIES}
     ${PMMClient_LIBRARIES}
     ${Blaze_LIBRARIES}
+    ${KSight_LIBRARIES}
     ${IntelGKL_LIBRARIES}
     ${FalconLM_LIBRARIES}
     ${Google_LIBRARIES}
