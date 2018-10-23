@@ -11,12 +11,6 @@ agent {label 'merlin'}
                     extensions: [[$class: 'CloneOption', timeout: 120]]
                         ])
                      script {
-//                    checkout([$class: 'GitSCM',
-//                    branches: [[name: '*/release']],
-//                    gitTool: 'Default', 
-//                    userRemoteConfigs: [[url: 'git@github.com:falcon-computing/gatk4.git']],
-//                    extensions: [[$class: 'CloneOption', timeout: 120]]
-//                        ])
                         dir("falcon"){
                             sh "./gradlew clean install -Prelease &>> ../build.log --no-daemon"
                             }
