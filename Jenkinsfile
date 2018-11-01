@@ -10,7 +10,7 @@ agent {label 'merlin'}
 //                    gitTool: 'Default', 
 //                    userRemoteConfigs: [[url: 'git@github.com:falcon-computing/gatk4.git']],
 //                    extensions: [[$class: 'CloneOption', timeout: 120]]
-                        ])
+//                        ])
                      script {
                         dir("falcon"){
                             sh "./gradlew clean install -Prelease &>> ../build.log --no-daemon"
