@@ -5,11 +5,11 @@ agent {label 'merlin'}
         stage ("build-local-gatk4") {
             steps {
                  dir("ws-gatk4") {
-                    checkout([$class: 'GitSCM',
-                    branches: [[name: '*/release']],
-                    gitTool: 'Default', 
-                    userRemoteConfigs: [[url: 'git@github.com:falcon-computing/gatk4.git']],
-                    extensions: [[$class: 'CloneOption', timeout: 120]]
+//                    checkout([$class: 'GitSCM',
+//                    branches: [[name: '*/release']],
+//                    gitTool: 'Default', 
+//                    userRemoteConfigs: [[url: 'git@github.com:falcon-computing/gatk4.git']],
+//                    extensions: [[$class: 'CloneOption', timeout: 120]]
                         ])
                      script {
                         dir("falcon"){
