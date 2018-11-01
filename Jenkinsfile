@@ -22,6 +22,10 @@ agent {label 'merlin'}
                                 sh "mv ./export/gatk.jar ./export/GATK4.jar"
                                 sh "mv ./export/GATK4.jar /curr/limark/falcon2/tools/package/GATK4.jar"
                                 sh "rm -f build.log"
+                                link = sh(returnStdout: true, script: 'cd ~/falcon2/tools/package; link=s3://fcs-cicd-test/release/aws/gatk4/GATK4.jar; echo $link; echo $link > latest')
+                        	    sh "cd ~/falcon2/tools/package; aws s3 cp GATK4.jar s3://fcs-cicd-test/release/aws/gatk4/GATK4.jar"
+                        	    sh "cd ~/falcon2/tools/package; aws s3 cp latest s3://fcs-cicd-test/release/aws/gatk4/latest"
+                        	    sh "cd ~/falcon2/tools/package; rm -f latest"
                             }
                         }
                     }
