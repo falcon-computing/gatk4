@@ -27,14 +27,14 @@ rm -f build.log
 cd ./falcon
 
 echo "building falcon_genomics..."
-./gradlew clean install $flags &>> ../build.log
+./gradlew -g /tmp/"$USER" clean install $flags &>> ../build.log
 version=$(cat ../build.log | grep "Version:" | awk '{print $2}')
 
 echo "falcon genomics version: $version"
 cd -
 
 echo "building gatk..."
-./gradlew bundle -Dfalcon.version="$version" &>> build.log
+./gradlew -g /tmp/"$USER" bundle -Dfalcon.version="$version" &>> build.log
 
 echo "installing gatk"
 mkdir -p ./export/
