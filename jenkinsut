@@ -9,8 +9,8 @@ agent {label 'merlin'}
                  checkout scm
                      script {
                         dir("falcon"){
-                            sh "./gradlew test --no-daemon"
-                            sh "./gradlew clean install -Prelease &>> ../build.log --no-daemon"
+                            sh './gradlew test --no-daemon'
+                            sh './gradlew clean install -Prelease &>> ../build.log --no-daemon'
                             }
                                 version = sh(returnStdout: true, script: 'cat build.log | grep "Version:" | awk \'{print $2}\'')
                                 sh "./gradlew bundle -Dfalcon.version=$version &>> build.log"
