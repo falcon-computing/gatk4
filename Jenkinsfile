@@ -5,6 +5,7 @@ agent {label 'merlin'}
         stage ("build-local-gatk4") {
             steps {
                  dir("wspace-gatk4") {
+                 checkout scm
 //                    checkout([$class: 'GitSCM',
 //                    branches: [[name: '*/release']],
 //                    gitTool: 'Default', 
