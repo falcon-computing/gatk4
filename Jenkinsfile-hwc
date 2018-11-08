@@ -2,7 +2,7 @@
 pipeline {
 agent {label 'merlin'}
     stages {
-        stage ("build-local-gatk4") {
+        stage ("build-hwc-gatk4") {
             steps {
                  dir("wspace-gatk4") {
                  checkout scm
