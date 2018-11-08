@@ -1,5 +1,6 @@
 ### Jenkins Build-Status
 AWS [![Build Status](http://us-1.falcon-computing.com:8080/buildStatus/icon?job=Falcon-Build-GATK4)](http://us-1.falcon-computing.com:8080/job/Falcon-Build-GATK4/)
+HWC [![Build Status](http://us-1.falcon-computing.com:8080/buildStatus/icon?job=HWC-GATK4)](http://us-1.falcon-computing.com:8080/view/HWC/job/HWC-GATK4/)
 Local [![Build Status](http://us-1.falcon-computing.com:8080/buildStatus/icon?job=Falcon-Build-GATK4-Internal)](http://us-1.falcon-computing.com:8080/view/Internal/job/Falcon-Build-GATK4-Internal/)
 ##
 [![Build Status](https://travis-ci.org/broadinstitute/gatk.svg?branch=master)](https://travis-ci.org/broadinstitute/gatk)
