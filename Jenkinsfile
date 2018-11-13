@@ -26,7 +26,8 @@ agent {label 'merlin'}
                                 version= sh(returnStdout: true, script: 'git describe --tag').trim()
                                 sh "echo $version"
                                 sh "cd ~/falcon2/tools/package; mv GATK4.jar GATK4-$version-aws.jar"
-                                link = sh(returnStdout: true, script: 'cd ~/falcon2/tools/package; link=s3://fcs-cicd-test/release/aws/gatk4/GATK4-$version-aws.jar; echo $link; echo $link > latest')
+                                sh "cd ~/falcon2/tools/package; echo s3://fcs-cicd-test/release/aws/gatk4/GATK4-$version-aws.jar > latest"
+//                                link = sh(returnStdout: true, script: 'cd ~/falcon2/tools/package; link=s3://fcs-cicd-test/release/aws/gatk4/GATK4-$version-aws.jar; echo $link; echo $link > latest')
                         	    sh "cd ~/falcon2/tools/package; aws s3 cp GATK4-$version-aws.jar s3://fcs-cicd-test/release/aws/gatk4/GATK4-$version-aws.jar"
                         	    sh "cd ~/falcon2/tools/package; aws s3 cp latest s3://fcs-cicd-test/release/aws/gatk4/latest"
                         	    sh "cd ~/falcon2/tools/package; rm -f latest"
