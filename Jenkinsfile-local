@@ -16,8 +16,11 @@ agent {label 'merlin'}
                                 sh "mv ./export/gatk.jar ./export/GATK4.jar"
                                 sh "mv ./export/GATK4.jar /curr/limark/falcon-local/tools/package/GATK4.jar"
                                 sh "rm -f build.log"
-                                link = sh(returnStdout: true, script: 'cd ~/falcon-local/tools/package; link=s3://fcs-cicd-test/release/gatk4/GATK4.jar; echo $link; echo $link > latest')
-                        	    sh "cd ~/falcon-local/tools/package; aws s3 cp GATK4.jar s3://fcs-cicd-test/release/gatk4/GATK4.jar"
+                                version= sh(returnStdout: true, script: 'git describe --tag').trim()
+                                sh "echo $version"
+                                sh "cd ~/falcon-local/tools/package; mv GATK4.jar GATK4-$version-Internal.jar"
+                                link = sh(returnStdout: true, script: 'cd ~/falcon-local/tools/package; link=s3://fcs-cicd-test/release/gatk4/GATK4-$version-Internal.jar; echo $link; echo $link > latest')
+                        	    sh "cd ~/falcon-local/tools/package; aws s3 cp GATK4-$version-Internal.jar s3://fcs-cicd-test/release/gatk4/GATK4-$version-Internal.jar"
                         	    sh "cd ~/falcon-local/tools/package; aws s3 cp latest s3://fcs-cicd-test/release/gatk4/latest"
                         	    sh "cd ~/falcon-local/tools/package; rm -f latest"
                             }
@@ -25,14 +28,4 @@ agent {label 'merlin'}
                     }
                 }
             }
-        post {
-            always {
-
-                emailext attachLog: true, body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}console",
-                    recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
-                    subject: "Jenkins Build ${currentBuild.currentResult}: Job ${env.JOB_NAME}",
-                    to: 'roshantha@limarktech.com'
-
         }
-    }
-}
