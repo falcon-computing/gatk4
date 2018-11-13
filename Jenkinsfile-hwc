@@ -24,7 +24,7 @@ agent {label 'merlin'}
 //                                link = sh(returnStdout: true, script: 'cd ~/falcon-hwc/tools/package; link=s3://fcs-cicd-test/release/hwc/gatk4/GATK4-$version-hwc.jar; echo $link; echo $link > latest')
                         	    sh "cd ~/falcon-hwc/tools/package; aws s3 cp GATK4-$version-hwc.jar s3://fcs-cicd-test/release/hwc/gatk4/GATK4-$version-hwc.jar"
                         	    sh "cd ~/falcon-hwc/tools/package; aws s3 cp latest s3://fcs-cicd-test/release/hwc/gatk4/latest"
-                        	    sh "cd ~/falcon-local/tools/package; rm -rf *"
+                        	    sh "cd ~/falcon-hwc/tools/package; rm -rf *"
                             }
                         }
                     }
