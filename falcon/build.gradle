@@ -58,14 +58,14 @@ task configNative(type: Exec) {
 
     if (isRelease) {
       if (has_profiler) {
-        commandLine 'cmake', '-DCMAKE_BUILD_TYPE=Release', "-DDEPLOYMENT=${cloud}", '..'
+        commandLine 'cmake3', '-DCMAKE_BUILD_TYPE=Release', '-DPROFILE=True', "-DDEPLOYMENT=${cloud}", '..'
       }
       else {
-        commandLine 'cmake', '-DCMAKE_BUILD_TYPE=Release', '-DNO_PROFILE=1', "-DDEPLOYMENT=${cloud}", '..'
+        commandLine 'cmake3', '-DCMAKE_BUILD_TYPE=Release', "-DDEPLOYMENT=${cloud}", '..'
       }
     }
     else {
-      commandLine 'cmake', '-DCMAKE_BUILD_TYPE=Debug', "-DDEPLOYMENT=${cloud}", '..'
+      commandLine 'cmake3', '-DCMAKE_BUILD_TYPE=Debug', "-DDEPLOYMENT=${cloud}", '..'
     }
 }
 

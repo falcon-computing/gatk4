@@ -17,7 +17,6 @@ find_package(Blaze REQUIRED)
 find_package(Google REQUIRED)
 find_package(KSight REQUIRED)
 find_package(IntelGKL REQUIRED)
-find_package(PairhmmClient REQUIRED)
 find_package(FalconLM REQUIRED)
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -44,10 +43,11 @@ else()
     set(BIN_VERSION "${GIT_VERSION}")
 endif()
 
-if(NO_PROFILE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_PROFILE")
-else()
+if(PROFILE)
   message(STATUS "Profiling is enabled")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_PROFILE")
+  set(KSight_LIBRARIES "")
 endif()
 
 if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -60,11 +60,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVERSION=\\\"${BIN_VERSION}\\\"")
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/acc_lib/pairhmm/interface
+    ${CMAKE_CURRENT_SOURCE_DIR}/acc_lib/pairhmm/client
     ${JNI_INCLUDE_DIRS}
     ${Blaze_INCLUDE_DIRS}
     ${Google_INCLUDE_DIRS}
     ${KSight_INCLUDE_DIRS}
-    ${PMMClient_INCLUDE_DIRS}
     ${IntelGKL_INCLUDE_DIRS}
     ${FalconLM_INCLUDE_DIRS})
 
@@ -73,12 +74,14 @@ link_directories(
     ${Blaze_LIBRARY_DIRS}
     ${Google_LIBRARY_DIRS}
     ${KSight_LIBRARY_DIRS}
-    ${PMMClient_LIBRARY_DIRS}
     ${IntelGKL_LIBRARY_DIRS}
     ${FalconLM_LIBRARY_DIRS})
 
 # find source files
 file(GLOB_RECURSE SRC_LIST src/*.cpp)
+
+add_subdirectory(acc_lib/pairhmm/client)
+add_subdirectory(acc_lib/pairhmm/interface)
 
 add_library(falcon_genomics SHARED ${SRC_LIST})
 
@@ -86,12 +89,13 @@ add_dependencies(falcon_genomics
     Blaze 
     FalconLM
     Google 
-    PMMClient
     IntelGKL 
     JsonCPP
     KSight)
 
 target_link_libraries(falcon_genomics
+    pmm_client
+    pmm_interface
     ${Boost_LIBRARIES} 
     ${PMMClient_LIBRARIES}
     ${Blaze_LIBRARIES}

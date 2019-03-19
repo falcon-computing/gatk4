@@ -13,10 +13,12 @@
 #include "Common.h"
 #include "com_falconcomputing_genomics_haplotypecaller_FalconPairhmm.h"
 #include "gkl-pairhmm/avx_impl.h"
+#ifndef NO_PROFILE
 #include "ksight/tools.h"
-#include "pairhmm/PairHMMClient.h"
-#include "pairhmm/PairHMMWorker.h"
-#include "pairhmm/PairhmmJavaData.h"
+#endif
+#include "PairHMMClient.h"
+#include "PairHMMWorker.h"
+#include "PairhmmJavaData.h"
 
 std::mutex pmm_client_map_mutex;
 std::unordered_map<std::thread::id, PairHMMClient*> pmm_client_map;
@@ -66,7 +68,9 @@ JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_haplotypecaller_FalconP
 
 JNIEXPORT void JNICALL Java_com_falconcomputing_genomics_haplotypecaller_FalconPairhmm_computeLikelihoodsNative
 (JNIEnv* env, jobject obj, jobjectArray readDataArray, jobjectArray haplotypeDataArray, jdoubleArray likelihoodArray) {
+#ifndef NO_PROFILE
   PLACE_TIMER;
+#endif
 
   // get Java data
   int num_read = env->GetArrayLength(readDataArray);
