@@ -1,0 +1,3 @@
+[submodule "falcon/src/main/c/acc_lib"]
+	path = falcon/src/main/c/acc_lib
+	url = git@github.com:falcon-computing/acc_lib.git

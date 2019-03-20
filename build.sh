@@ -38,4 +38,4 @@ echo "building gatk..."
 
 echo "installing gatk"
 mkdir -p ./export/
-cp build/libs/gatk.jar ./export/
+cp build/libs/gatk.jar ./export/GATK4.jar
